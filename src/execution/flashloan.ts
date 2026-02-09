@@ -2,6 +2,10 @@
  * Flash loan builder.
  * Encodes calldata for Balancer V2 flash loans (0% fee).
  * Fallback to Aave V3 flash loans (0.05% fee).
+ *
+ * Verified Feb 2026: Balancer V2 Vault fee remains 0% — never activated since
+ * deployment. Balancer V3 uses a different mechanism (transient unlock via
+ * vault.unlock()), but V2 continues operating with zero-fee flash loans.
  */
 import { encodeFunctionData, type Hex } from 'viem'
 import { balancerVaultAbi } from '../config/abis/balancerVault.js'

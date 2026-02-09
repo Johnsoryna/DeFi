@@ -8,10 +8,18 @@ export const GOVERNANCE = {
   compoundGovernorBravo: '0xc0Da02939E1441F497fd74F78cE7Decb17B66529' as const,
   uniswapGovernorBravo: '0x408ED6354d4973f66138C91495F2f2FCbd8724C3' as const,
   aaveGovernanceCore: '0x9AEE0B04504CeF83A65AC3f0e838D0593BCb2BC7' as const,
-  aaveVotingMachine: '0x06a1795a88b82700896583e123F46BE43877bFb6' as const,
+  // VotingMachine: original deployment was 0x06a1795a88b82700896583e123F46BE43877bFb6,
+  // but Aave proposal #273 deployed new non-upgradeable VotingMachine contracts.
+  // The GovernanceV3Ethereum address book now references the address below.
+  // Verify on-chain via GovernanceCore.getVotingMachineAddress() before production use.
+  aaveVotingMachine: '0x617332a777780F546261247F621051d0b98975Eb' as const,
+  /** @deprecated Original VotingMachine — superseded by proposal #273 deployment */
+  aaveVotingMachineLegacy: '0x06a1795a88b82700896583e123F46BE43877bFb6' as const,
   aaveVotingMachinePolygon: '0x44c8b753229006A8047A05b90379A7e92185E97C' as const,
   aaveVotingMachineAvalanche: '0x4D1863d22D0ED8579f8999388BCC833CB057C2d6' as const,
+  /** @deprecated DSChief v1.2 — phased out since May 2025 MKR→SKY migration */
   makerDSChiefV12: '0x0a3f6849f78076aefaDf113F5BED87720274dDC0' as const,
+  /** Sky Chief V3 — ACTIVE governance contract using SKY tokens */
   makerNewChief: '0x929d9A1435662357F54AdcF64DcEE4d6b867a6f9' as const,
 } as const
 
@@ -37,7 +45,10 @@ export const BALANCER = {
 } as const
 
 export const UNISWAP = {
-  universalRouter: '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD' as const,
+  // New Universal Router supporting V2, V3, and V4 pools (deployed with V4 launch)
+  universalRouter: '0x66a9893cc07d91d95644aedd05d03f95e1dba8af' as const,
+  /** @deprecated Legacy Universal Router — V2/V3 only, lacks V4 pool support */
+  universalRouterLegacy: '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD' as const,
   permit2: '0x000000000022D473030F116dDEE9F6B43aC78BA3' as const,
 } as const
 
@@ -85,8 +96,10 @@ export const FORUMS = {
 } as const
 
 // ─── Snapshot Spaces ─────────────────────────────────────────────────
+// NOTE: Aave DAO migrated from 'aave.eth' to 'aavedao.eth' in January 2026.
+// See: https://snapshot.org/#/s:aavedao.eth
 export const SNAPSHOT_SPACES = [
-  'aave.eth',
+  'aavedao.eth',
   'uniswap',
   'compound-governance.eth',
 ] as const

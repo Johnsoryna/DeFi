@@ -62,7 +62,8 @@ describe('block cursors', () => {
 
 describe('processed events', () => {
   it('returns false for unprocessed event', () => {
-    expect(isEventProcessed('0xtx1', 0)).toBe(false)
+    // Use a unique hash that no other test inserts
+    expect(isEventProcessed('0xunprocessed_never_inserted', 99)).toBe(false)
   })
 
   it('marks and checks event as processed', () => {

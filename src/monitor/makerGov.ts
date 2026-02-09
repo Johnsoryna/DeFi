@@ -2,6 +2,17 @@
  * MakerDAO/Sky governance monitor.
  * DSChief uses anonymous DSNote events where topic0 = function selector (padded).
  * Also watches for the non-anonymous Etch event.
+ *
+ * GOVERNANCE MIGRATION (May 2025):
+ * MKR has been retired as the governance token. SKY is now the exclusive
+ * governance token (1:24,000 MKR→SKY conversion, penalty +1% every 3 months
+ * since Sep 2025). The governance portal is now at vote.sky.money.
+ *
+ * - DSChief v1.2 (0x0a3f...dDC0) is DEPRECATED — being phased out.
+ * - Chief V3 (0x929d...6f9) is the ACTIVE governance contract using SKY tokens.
+ *
+ * Both contracts are still monitored for completeness, but new governance
+ * activity will occur exclusively on the Chief V3 contract.
  */
 import { type WatchEventReturnType, type WatchContractEventReturnType, decodeAbiParameters, parseAbiParameters } from 'viem'
 import { getReadClient, getPaginatedLogs, getCurrentBlock } from '../clients/rpc.js'
@@ -23,8 +34,8 @@ import type { MakerDSNoteEvent } from '../types/governance.js'
 const log = createLogger('maker-gov')
 
 const DS_CHIEF_ADDRESSES: `0x${string}`[] = [
-  GOVERNANCE.makerDSChiefV12 as `0x${string}`,
-  GOVERNANCE.makerNewChief as `0x${string}`,
+  GOVERNANCE.makerDSChiefV12 as `0x${string}`,  // DEPRECATED — legacy MKR governance
+  GOVERNANCE.makerNewChief as `0x${string}`,     // ACTIVE — Sky Chief V3 (SKY tokens)
 ]
 
 const unwatchers: (WatchEventReturnType | WatchContractEventReturnType)[] = []

@@ -2,8 +2,14 @@
  * dYdX v4 client wrapper.
  * REST + WebSocket for perpetual trading on the dYdX Cosmos L1 chain.
  *
- * SECURITY: @dydxprotocol/v4-client-js was compromised in Jan 2026.
- * Only use verified clean versions. NEVER install 3.4.1, 1.22.1, 1.15.2, or 1.0.31.
+ * SECURITY — SUPPLY CHAIN ATTACK (January 27–30, 2026):
+ * @dydxprotocol/v4-client-js versions 3.4.1, 1.22.1, 1.15.2, and 1.0.31
+ * were compromised with wallet-stealing malware (seed phrase exfiltration).
+ * PyPI package dydx-v4-client 1.1.5post1 also included a Remote Access Trojan.
+ * All malicious versions have been removed from npm; C2 domain has been seized.
+ *
+ * SAFE VERSION: 3.4.0 — pin this version explicitly if using the npm package.
+ * This bot uses raw REST/WebSocket calls and does NOT depend on the npm package.
  */
 import { createLogger } from '../lib/logger.js'
 import { withRetry } from '../lib/retry.js'

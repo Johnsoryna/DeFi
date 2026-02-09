@@ -52,7 +52,7 @@ docker-compose up --build
 | Compound | Governor Bravo | ProposalCreated, VoteCast, ProposalQueued, ProposalExecuted |
 | Uniswap | Governor Bravo | (same as Compound — shared ABI) |
 | Aave V3 | GovernanceCore + VotingMachine | ProposalCreated, VotingActivated, VoteEmitted |
-| MakerDAO/Sky | DSChief v1.2 + New Chief | DSNote (lock, free, vote, lift), Etch |
+| MakerDAO/Sky | DSChief v1.2 (deprecated) + Chief V3 (active, SKY tokens) | DSNote (lock, free, vote, lift), Etch |
 
 Off-chain: **Snapshot** (GraphQL polling), **Discourse forums** (Aave, Compound, MakerDAO).
 
@@ -65,13 +65,17 @@ Off-chain: **Snapshot** (GraphQL polling), **Discourse forums** (Aave, Compound,
 
 ## Security Notes
 
-- **dYdX v4 client**: The `@dydxprotocol/v4-client-js` npm package was compromised in January 2026. Versions 3.4.1, 1.22.1, 1.15.2, and 1.0.31 contain wallet stealers. Only use verified clean versions.
+- **dYdX v4 client**: The `@dydxprotocol/v4-client-js` npm package was compromised on **January 27, 2026** (resolved January 30). Versions **3.4.1, 1.22.1, 1.15.2, and 1.0.31** contain wallet-stealing malware that exfiltrated seed phrases. The PyPI package `dydx-v4-client` 1.1.5post1 also included a RAT. **Safe npm version: 3.4.0.** This bot uses raw REST/WebSocket and does not depend on the npm package.
 - **MEV Protection**: All on-chain transactions route through Flashbots Protect (`https://rpc.flashbots.net/fast`). Requires `maxPriorityFeePerGas > 0`.
 - **Private keys**: Never commit `.env`. Wallet mnemonic and private key are loaded from environment variables only.
 
 ## Cost
 
-Every data source used is free-tier accessible. **DefiLlama yield endpoints are NOT free** ($300/mo) — APY is computed from on-chain reserve data instead.
+Every data source used is free-tier accessible.
+
+**DefiLlama:** As of 2026, ALL `/yields/*` endpoints (pools, charts, borrow rates, perps, LSD rates) require a **$300/month** API key. This bot does **not** call any yield endpoints — TVL and price endpoints remain free. APY is computed from on-chain reserve data instead.
+
+**Etherscan:** Free tier reduced to **3 calls/second** (was 5). Daily limit remains 100,000 calls. Free API key at [etherscan.io](https://etherscan.io).
 
 ## License
 

@@ -12,6 +12,8 @@ const configSchema = z.object({
 
   // MEV Protection
   flashbotsRpc: z.string().default('https://rpc.flashbots.net/fast'),
+  // MEV Blocker: ownership transferred to Special Mechanisms Group (from CoW Protocol/Agnostic Relay/Beaver Build)
+  // Still free, returns 90% of backrun auction profits to users
   mevBlockerRpc: z.string().default('https://rpc.mevblocker.io'),
 
   // Wallet

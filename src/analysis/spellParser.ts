@@ -63,7 +63,8 @@ async function fetchEtherscanSource(address: string): Promise<string | null> {
       return data.result[0].SourceCode
     },
     `etherscan-source-${address}`,
-    { maxRetries: 2, baseDelayMs: 1200 },
+    // Etherscan free tier: 3 calls/sec (reduced from 5 as of Feb 2026)
+    { maxRetries: 2, baseDelayMs: 400 },
   )
 }
 

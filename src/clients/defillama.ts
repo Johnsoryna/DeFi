@@ -1,7 +1,14 @@
 /**
  * DefiLlama API client.
- * Free: TVL + prices only. Yields/APY requires $300/mo — NOT used here.
- * Compute APY from on-chain reserve data instead.
+ *
+ * IMPORTANT (verified Feb 2026): ALL /yields/* endpoints (pools, charts,
+ * borrow rates, perps, LSD rates) are behind a $300/month paywall.
+ * This client uses ONLY the free endpoints:
+ *   - TVL:    /api/protocols, /api/protocol/{slug}, /api/tvl/{protocol}
+ *   - Prices: /coins/prices/current/{coins}, /coins/prices/historical/{ts}/{coins}
+ *
+ * APY/yield data is computed from on-chain reserve data instead.
+ * Official SDK: @defillama/api (npm), defillama-sdk (PyPI) — released Feb 5, 2026.
  */
 import { createLogger } from '../lib/logger.js'
 import { withRetry } from '../lib/retry.js'

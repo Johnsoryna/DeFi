@@ -18,7 +18,7 @@ let running = false
 // ─── Space to Protocol Mapping ──────────────────────────────────────
 
 const SPACE_TO_PROTOCOL: Record<string, GovernanceProtocol> = {
-  'aave.eth': 'aave',
+  'aavedao.eth': 'aave',         // Migrated from 'aave.eth' in Jan 2026
   uniswap: 'uniswap',
   'compound-governance.eth': 'compound',
 }
