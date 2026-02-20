@@ -32,6 +32,11 @@ async function main() {
     // Aptos uses GitHub AIPs, not Discourse
     // Balancer forum: checked, Discourse-based but mostly gauge votes (expect 0 alpha)
     balancer: 'https://forum.balancer.fi',
+    // ─── New Candidates (Feb 2026) ──────────────────────────────────────
+    // Venus: BSC lending protocol, identical governance model to AAVE (LTV/supply caps/freeze)
+    venus: 'https://community.venus.io',
+    // Rocket Pool: ETH liquid staking, protocol fee and parameter governance
+    rocketpool: 'https://dao.rocketpool.net',
   }
   const forumCount = await collectForumPosts(db, newForums, FROM, TO)
   console.log(`Collected ${forumCount} new forum posts`)
@@ -42,6 +47,9 @@ async function main() {
     'pendle-politics.eth',   // Pendle governance
     'frax.eth',              // Frax Finance
     'balancer.eth',          // Balancer (likely mostly gauge-weight votes → expect 0)
+    // New candidates
+    'venus-xvs.eth',         // Venus Protocol governance
+    'rocketpool-dao.eth',    // Rocket Pool DAO
   ]
   const snapCount = await collectSnapshots(db, gruppeB_spaces, FROM, TO)
   console.log(`Collected ${snapCount} new Snapshot proposals for Gruppe B`)

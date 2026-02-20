@@ -478,6 +478,8 @@ const PROTOCOL_GOV_TOKEN: Record<string, string> = {
   // ─── Gruppe B: Snapshot/forum data confirmed, wired (Feb 2026) ───
   // frax: REMOVED — 0 trades in backtest (20 snaps + 25 forum posts, no risk-param alpha)
   balancer: 'BAL',    // Pool governance, 2 trades, net +$860 — BALUSDT on Binance
+  // venus: REMOVED — 0 trades. Asset listing proposals max conf 0.50 (below 0.55 threshold).
+  // rocketpool: REMOVED — 0 trades. Partnership/staking proposals, no risk-parameter alpha.
 }
 
 // Asset → Protocol mapping (which protocol manages this asset)
@@ -517,6 +519,7 @@ const ASSET_PROTOCOL: Record<string, string> = {
   // ─── Gruppe B (Feb 2026) ─────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest (no risk-param alpha in frax governance)
   BAL: 'balancer',
+  // XVS/RPL: REMOVED — 0 trades in backtest (venus: asset listings; rocketpool: partnership gov)
 }
 
 // ─── Tradeable Asset Whitelist ────────────────────────────────────────
@@ -554,6 +557,7 @@ const ESTABLISHED_PROTOCOLS = new Set([
   // ─── Gruppe B (Feb 2026) ─────────────────────────────────────
   // 'frax': REMOVED — 0 trades in backtest
   'balancer',
+  // 'venus', 'rocketpool': REMOVED — 0 trades in backtest
 ])
 
 // Protocols with historically weak governance alpha requiring elevated signal quality.

@@ -55,6 +55,8 @@ export type GovernanceProtocol =
   | 'yearn'
   | 'convex'
   | 'balancer'  // BAL — pool governance, liquidity parameters (2 trades, net +$860)
+  // venus: TESTED — 0 trades. Asset listing proposals, max confidence 0.50 (below 0.55 threshold).
+  // rocketpool: TESTED — 0 trades. Partnership/staking proposals, no risk-parameter alpha.
 
 // ─── Impact Categories ──────────────────────────────────────────────
 

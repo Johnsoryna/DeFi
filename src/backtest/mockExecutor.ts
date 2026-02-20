@@ -52,6 +52,8 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   // ─── Gruppe B (Feb 2026) ────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest
   BAL: 2.5,   // $2M-5M vol tier (lower volume)
+  // XVS: REMOVED — 0 trades in backtest (venus: asset listing proposals)
+  // RPL: REMOVED — 0 trades in backtest (rocketpool: partnership proposals)
 }
 
 // Binance Futures taker fee by 30-day volume tier:

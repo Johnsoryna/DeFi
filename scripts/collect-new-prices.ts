@@ -31,6 +31,11 @@ const TOKENS: Array<{ symbol: string; coin: string }> = [
   { symbol: 'DRIFT', coin: 'coingecko:drift-protocol' },
   { symbol: 'PYTH', coin: 'coingecko:pyth-network' },
   { symbol: 'STX', coin: 'coingecko:blockstack' },
+  // ─── New Candidates (Feb 2026) ─────────────────────────────────────────────
+  // Venus: BSC lending token, XVSUSDT on Binance Futures
+  { symbol: 'XVS', coin: 'coingecko:venus' },
+  // Rocket Pool: ETH staking protocol token, RPLUSDT on Binance Futures
+  { symbol: 'RPL', coin: 'coingecko:rocket-pool' },
 ]
 
 const FROM_TS = Math.floor(new Date('2025-02-01T00:00:00Z').getTime() / 1000)

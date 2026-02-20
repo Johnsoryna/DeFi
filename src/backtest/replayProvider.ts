@@ -60,7 +60,8 @@ const SPACE_PROTOCOL: Record<string, GovernanceProtocol> = {
   // ─── Gruppe B (Feb 2026) ─────────────────────────────────────────────────
   // 'frax.eth': REMOVED — 0 trades in backtest
   'balancer.eth': 'balancer',
-  // â”€â”€â”€ REMOVED (illiquid on dYdX v4) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // 'venus-xvs.eth': REMOVED — 0 trades (asset listing proposals, conf <0.55)
+  // 'rocketpool-dao.eth': REMOVED — 0 trades (partnership proposals, no risk-param alpha)
 }
 
 // â”€â”€â”€ Forum URL → Protocol Mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -99,7 +100,8 @@ const FORUM_PROTOCOL: Record<string, GovernanceProtocol> = {
   // ─── Gruppe B (Feb 2026) ─────────────────────────────────────────────────
   // 'https://gov.frax.finance': REMOVED — 0 trades in backtest
   'https://forum.balancer.fi': 'balancer',
-  // â”€â”€â”€ REMOVED (illiquid on dYdX v4) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // 'https://community.venus.io': REMOVED — 0 trades (asset listing proposals, conf <0.55)
+  // 'https://dao.rocketpool.net': REMOVED — 0 trades (partnership proposals, no risk-param alpha)
 }
 
 // â”€â”€â”€ Event Construction Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
