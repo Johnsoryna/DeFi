@@ -93,7 +93,7 @@ describe('derived constants', () => {
   })
 
   it('SNAPSHOT_SPACES has expected entries', () => {
-    expect(SNAPSHOT_SPACES).toHaveLength(13)
+    expect(SNAPSHOT_SPACES).toHaveLength(14)
     // Core profitable spaces must be present
     expect(SNAPSHOT_SPACES).toContain('aavedao.eth')
     expect(SNAPSHOT_SPACES).toContain('compound-governance.eth')

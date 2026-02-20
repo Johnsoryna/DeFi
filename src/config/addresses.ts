@@ -117,6 +117,9 @@ export const FORUMS = {
   pyth: 'https://forum.pyth.network' as const,
   stacks: 'https://forum.stacks.org' as const,
   jito: 'https://forum.jito.network' as const,
+  // ─── Gruppe B (Feb 2026) ─────────────────────────────────────────
+  // frax: REMOVED — 0 trades in backtest (no risk-param alpha)
+  balancer: 'https://forum.balancer.fi' as const,
 } as const
 
 // ─── Snapshot Spaces ─────────────────────────────────────────────────
@@ -136,6 +139,9 @@ export const SNAPSHOT_SPACES = [
   'starknet.eth',
   'ens.eth',
   'ethenagovernance.eth',
+  // ─── Gruppe B (Feb 2026) ─────────────────────────────────────────
+  // 'frax.eth': REMOVED — 0 trades in backtest
+  'balancer.eth',
 ] as const
 
 // ─── All Governance Token Addresses (for delegation tracking) ────────

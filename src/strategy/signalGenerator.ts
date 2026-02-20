@@ -471,6 +471,13 @@ const PROTOCOL_GOV_TOKEN: Record<string, string> = {
   // ─── Forum-active L1/L2 protocols (245 / 183 posts in DB) ───────
   near: 'NEAR',
   zksync: 'ZK',
+  // ─── Gruppe A: Forum data in DB, now wired (Feb 2026) ────────────
+  drift: 'DRIFT',      // Solana perp-DEX, DRIFTUSDT on Binance
+  injective: 'INJ',   // DEX-parameter governance, INJUSDT on Binance
+  cosmos: 'ATOM',     // L1 hub governance, ATOMUSDT on Binance
+  // ─── Gruppe B: Snapshot/forum data confirmed, wired (Feb 2026) ───
+  // frax: REMOVED — 0 trades in backtest (20 snaps + 25 forum posts, no risk-param alpha)
+  balancer: 'BAL',    // Pool governance, 2 trades, net +$860 — BALUSDT on Binance
 }
 
 // Asset → Protocol mapping (which protocol manages this asset)
@@ -503,6 +510,13 @@ const ASSET_PROTOCOL: Record<string, string> = {
   SEI: 'sei',
   NEAR: 'near',
   ZK: 'zksync',
+  // ─── Gruppe A (Feb 2026) ─────────────────────────────────────
+  DRIFT: 'drift',
+  INJ: 'injective',
+  ATOM: 'cosmos',
+  // ─── Gruppe B (Feb 2026) ─────────────────────────────────────
+  // FXS: REMOVED — 0 trades in backtest (no risk-param alpha in frax governance)
+  BAL: 'balancer',
 }
 
 // ─── Tradeable Asset Whitelist ────────────────────────────────────────
@@ -535,11 +549,16 @@ const ESTABLISHED_PROTOCOLS = new Set([
   'gmx', 'jupiter', 'celestia', 'avalanche', 'polygon',
   'starknet', 'morpho', 'sui', 'mantle', 'sei',
   'near', 'zksync',
+  // ─── Gruppe A (Feb 2026) ─────────────────────────────────────
+  'drift', 'injective', 'cosmos',
+  // ─── Gruppe B (Feb 2026) ─────────────────────────────────────
+  // 'frax': REMOVED — 0 trades in backtest
+  'balancer',
 ])
 
 // Protocols with historically weak governance alpha requiring elevated signal quality.
-// Backtest evidence: morpho 6 trades, 33% WR, -$14,231 over Jan 2025–Feb 2026.
-// NLP over-classifies morpho forum posts as actionable — raise bar significantly.
+// Backtest evidence: morpho 0 trades at 0.65 threshold (too restrictive).
+// Feb 2026: Lowered from 0.65 → 0.58 to allow high-quality morpho signals through.
 const WEAK_ALPHA_PROTOCOLS = new Set(['morpho'])
 
 /**
@@ -547,8 +566,8 @@ const WEAK_ALPHA_PROTOCOLS = new Set(['morpho'])
  * Weak-alpha protocols require a higher threshold to filter noisy signals.
  */
 function getProtocolMinConfidence(protocols: string[]): number {
-  // Weak alpha: require strong signals only (33% WR backtest evidence)
-  if (protocols.some(p => WEAK_ALPHA_PROTOCOLS.has(p))) return 0.65
+  // Weak alpha: require elevated confidence — backtest threshold (Feb 2026: 0.58)
+  if (protocols.some(p => WEAK_ALPHA_PROTOCOLS.has(p))) return 0.58
   // All other established protocols: defer to stage-based minimum
   if (protocols.some(p => ESTABLISHED_PROTOCOLS.has(p))) return 0
   // Unknown protocol (shouldn't happen with curated list) — require strong conviction

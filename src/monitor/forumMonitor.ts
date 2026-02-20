@@ -24,13 +24,18 @@ interface ForumConfig {
 }
 
 const FORUM_CONFIGS: ForumConfig[] = [
-  // Must match backtest FORUM_PROTOCOL — only forums with actual data
+  // Must match backtest FORUM_PROTOCOL — only forums with actual data and positive PnL
   { url: FORUMS.aave, protocol: 'aave', label: 'Aave Forum' },
   { url: FORUMS.compound, protocol: 'compound', label: 'Compound Forum' },
   { url: FORUMS.arbitrum, protocol: 'arbitrum', label: 'Arbitrum Forum' },
   { url: FORUMS.dydx, protocol: 'dydx', label: 'dYdX Forum' },
-  { url: FORUMS.cosmos, protocol: 'cosmos', label: 'Cosmos Forum' },
-  { url: FORUMS['1inch'], protocol: '1inch', label: '1inch Forum' },
+  // Added Feb 2026: Tier1 protocols that were missing from live monitor
+  { url: FORUMS.lido, protocol: 'lido', label: 'Lido Research Forum' },
+  { url: FORUMS.maker, protocol: 'maker', label: 'MakerDAO Forum' },
+  { url: FORUMS.optimism, protocol: 'optimism', label: 'Optimism Forum' },
+  { url: FORUMS.morpho, protocol: 'morpho', label: 'Morpho Forum' },
+  // Removed: cosmos (L1 operational governance, no trading alpha)
+  // Removed: 1inch (dead governance, no trades in backtest)
   // Injective removed: 0 posts in backtest DB, forum API not public
 ]
 

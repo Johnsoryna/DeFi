@@ -25,6 +25,16 @@ const SPACE_TO_PROTOCOL: Record<string, GovernanceProtocol> = {
   '1inch.eth': '1inch',
   'cvx.eth': 'convex',
   'veyfi.eth': 'yearn',
+  // Added Feb 2026: spaces that were in backtest DB but missing from live monitor
+  'lido-snapshot.eth': 'lido',
+  'gmx.eth': 'gmx',
+  'ethenagovernance.eth': 'ethena',
+  'starknet.eth': 'starknet',
+  'ens.eth': 'ens',
+  'morpho.eth': 'morpho',
+  // Gruppe B (Feb 2026)
+  // 'frax.eth': REMOVED — 0 trades in backtest
+  'balancer.eth': 'balancer',
 }
 
 // ─── GraphQL Query ──────────────────────────────────────────────────

@@ -49,6 +49,9 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   // Non-governance assets (reference)
   WSTETH: 2.0, RETH: 2.5, CBETH: 2.5,
   // Tier C assets (GMX, MORPHO, SKY, EIGEN, MNT) NOT in this map = default 2.0x
+  // ─── Gruppe B (Feb 2026) ────────────────────────────────────────
+  // FXS: REMOVED — 0 trades in backtest
+  BAL: 2.5,   // $2M-5M vol tier (lower volume)
 }
 
 // Binance Futures taker fee by 30-day volume tier:

@@ -72,6 +72,9 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   DRIFT: 'DRIFTUSDT',
   PYTH: 'PYTHUSDT',
   STX: 'STXUSDT',
+  // ─── Gruppe B (Feb 2026) ────────────────────────────────────────
+  // FXS: REMOVED — 0 trades in backtest
+  BAL: 'BALUSDT',
 }
 
 // Liquidity-tiered slippage multipliers for Binance Futures
@@ -92,6 +95,9 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   CVX: 2.0,
   SKY: 2.0, EIGEN: 2.0, GMX: 2.0, POL: 2.0,
   MNT: 2.0, STRK: 2.0, ZK: 2.0, DRIFT: 2.0, AXL: 2.0,
+  // ─── Gruppe B (Feb 2026) ────────────────────────────────────────
+  // FXS: REMOVED — 0 trades in backtest
+  BAL: 2.5,   // $2M-5M vol tier (lower volume)
 }
 
 function resolveSymbol(asset: string): string | null {

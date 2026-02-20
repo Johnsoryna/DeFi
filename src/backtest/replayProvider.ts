@@ -57,6 +57,9 @@ const SPACE_PROTOCOL: Record<string, GovernanceProtocol> = {
   'starknet.eth': 'starknet',
   'ens.eth': 'ens',
   'ethenagovernance.eth': 'ethena',
+  // ─── Gruppe B (Feb 2026) ─────────────────────────────────────────────────
+  // 'frax.eth': REMOVED — 0 trades in backtest
+  'balancer.eth': 'balancer',
   // â”€â”€â”€ REMOVED (illiquid on dYdX v4) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 }
 
@@ -93,6 +96,9 @@ const FORUM_PROTOCOL: Record<string, GovernanceProtocol> = {
   'https://forum.polygon.technology': 'polygon',
   'https://gov.yearn.fi': 'yearn',
   'https://gov.blur.foundation': 'blur',
+  // ─── Gruppe B (Feb 2026) ─────────────────────────────────────────────────
+  // 'https://gov.frax.finance': REMOVED — 0 trades in backtest
+  'https://forum.balancer.fi': 'balancer',
   // â”€â”€â”€ REMOVED (illiquid on dYdX v4) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 }
 

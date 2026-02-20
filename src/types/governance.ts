@@ -54,6 +54,7 @@ export type GovernanceProtocol =
   | '1inch'
   | 'yearn'
   | 'convex'
+  | 'balancer'  // BAL — pool governance, liquidity parameters (2 trades, net +$860)
 
 // ─── Impact Categories ──────────────────────────────────────────────
 
