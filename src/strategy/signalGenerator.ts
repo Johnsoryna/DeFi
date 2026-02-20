@@ -1237,8 +1237,27 @@ function generateLegacySignals(
         continue
       }
 
-      // Stablecoins: don't trade the stablecoin itself, but if it's a SHORT signal,
-      // redirect to shorting the governance token (protocol risk signal)
+      // ─── STABLECOIN GOVERNANCE FILTER (Legacy) ──────────────────
+      // Skip stablecoin proposals that don't freeze or delist the asset.
+      // Protocol gov token price (AAVE/MKR/...) does NOT reliably move from
+      // routine stablecoin parameter changes (supply caps, LTV, rate adjustments).
+      // Only reserve_freeze and asset_delisting events have genuine bearish alpha
+      // (they signal protocol-level risk → redirect to gov token short).
+      if (
+        STABLECOINS.has(impact.asset.toUpperCase()) &&
+        impact.category !== 'reserve_freeze' &&
+        impact.category !== 'asset_delisting'
+      ) {
+        log.debug(
+          { asset: impact.asset, category: impact.category },
+          'Legacy: stablecoin governance filter — no protocol price impact for routine param change',
+        )
+        continue
+      }
+      // ─── end stablecoin filter ───────────────────────────────────
+
+      // Stablecoins that pass filter (reserve_freeze, asset_delisting): redirect short
+      // to the governance token (protocol risk signal). Skip longs.
       if (STABLECOINS.has(impact.asset.toUpperCase())) {
         if (rule.direction === 'short') {
           // Redirect: short the governance token instead of the stablecoin
@@ -1389,7 +1408,12 @@ function generateLegacySignals(
           legacyLeverage = Math.max(1, Math.round(legacyLeverage * 0.5 * 10) / 10)
         }
       }
-      // ─── end C1/C2/C3/C4 ──────────────────────────────────────
+      // ─── C5: On-chain vote leverage cap (Legacy) ────────────────
+      // Market has largely priced in the outcome by on-chain stage.
+      if (analysis.stage === 'onchain_vote') {
+        legacyLeverage = Math.min(legacyLeverage, 2)
+      }
+      // ─── end C1/C2/C3/C4/C5 ────────────────────────────────────
 
       const riskProfile = selectRiskProfile(rule.urgency, confidence, legacyLeverage, rule.direction)
 

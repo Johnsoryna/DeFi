@@ -295,6 +295,14 @@ async function main() {
     )
   }
 
+  // NOTE on D-grade interpretation:
+  // maxSizePct and shortMaxRiskPct are LINEAR SCALING parameters, not decision-logic parameters.
+  // A ±20% change in maxSizePct scales ALL position sizes proportionally → P&L varies ~linearly.
+  // This is expected mechanical behavior, NOT evidence of overfitting to a specific parameter value.
+  // The strategy logic (entry/exit decisions, filters, direction) is unchanged by these parameters.
+  // D-grade for scaling parameters should be read as "high leverage" not "fragile", as long as
+  // All+ count is high (7/7 means profitable at every tested value — the opposite of overfit).
+
   // ═══════════════════════════════════════════════════════════════
   //  TEST 3: MONTE CARLO — Trade Reordering Simulation
   // ═══════════════════════════════════════════════════════════════
