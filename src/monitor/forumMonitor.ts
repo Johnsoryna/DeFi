@@ -34,6 +34,11 @@ const FORUM_CONFIGS: ForumConfig[] = [
   { url: FORUMS.maker, protocol: 'maker', label: 'MakerDAO Forum' },
   { url: FORUMS.optimism, protocol: 'optimism', label: 'Optimism Forum' },
   { url: FORUMS.morpho, protocol: 'morpho', label: 'Morpho Forum' },
+  // Curve: 3 backtest trades, WR 67%, +$4,516 — alpha from forum posts ONLY (not Snapshot).
+  // gov.curve.fi is a Discourse forum (risk param changes, gauge controller updates).
+  // NOTE: Curve SNAPSHOT proposals (gauge weight votes) have no alpha and are correctly
+  // excluded via NON_ALPHA_SNAPSHOT_PROTOCOLS in index.ts. Forum != Snapshot.
+  { url: FORUMS.curve, protocol: 'curve', label: 'Curve Governance Forum' },
   // Removed: cosmos (L1 operational governance, no trading alpha)
   // Removed: 1inch (dead governance, no trades in backtest)
   // Injective removed: 0 posts in backtest DB, forum API not public
