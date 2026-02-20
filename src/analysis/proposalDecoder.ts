@@ -5,7 +5,6 @@
  */
 import {
   decodeFunctionData,
-  encodePacked,
   keccak256,
   toBytes,
   concat,
@@ -25,7 +24,7 @@ const log = createLogger('proposal-decoder')
 // ─── Known ABIs for Target Contracts ────────────────────────────────
 
 /** Collect all known function ABIs for decoding proposal calldata */
-const KNOWN_ABIS = [
+const _KNOWN_ABIS = [
   ...aavePoolConfiguratorAbi,
   ...compoundConfiguratorAbi,
 ] as const
@@ -143,6 +142,7 @@ export function decodeAavePayload(
 
     if (calldata && calldata.length > 10) {
       // Try decoding with known Aave PoolConfigurator ABIs
+      let decoded = false
       try {
         for (const abiItem of aavePoolConfiguratorAbi) {
           if (abiItem.type !== 'function') continue
@@ -151,20 +151,38 @@ export function decodeAavePayload(
               abi: [abiItem],
               data: calldata,
             })
-            params = { functionName: result.functionName, args: result.args }
+            // Map args to named parameters using ABI input names
+            // viem returns args as a tuple, we need named params for the classifier
+            params = { functionName: result.functionName }
+            if (result.args && abiItem.inputs) {
+              for (let j = 0; j < abiItem.inputs.length; j++) {
+                const inputName = abiItem.inputs[j].name
+                const value = (result.args as readonly unknown[])[j]
+                // Store by name (e.g. 'asset', 'ltv', 'newBorrowCap')
+                params[inputName] = value
+                // Also store by positional key for backward compatibility
+                params[`param${j}`] = value
+              }
+            }
+            decoded = true
             break
           } catch {
             continue
           }
         }
-      } catch {
+        if (!decoded) {
+          log.debug({ calldata: calldata.slice(0, 20), target }, 'Failed to decode Aave calldata with known ABIs')
+          params = { raw: calldata }
+        }
+      } catch (err) {
+        log.debug({ err, calldata: calldata.slice(0, 20) }, 'Error decoding Aave calldata')
         params = { raw: calldata }
       }
     }
 
     actions.push({
       target,
-      signature: signature || (params as any).functionName || 'unknown',
+      signature: signature || (params as Record<string, unknown>).functionName as string || 'unknown',
       params,
       value: 0n,
     })

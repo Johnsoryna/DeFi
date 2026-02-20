@@ -12,15 +12,19 @@ import type { SnapshotProposalEvent, GovernanceProtocol } from '../types/governa
 
 const log = createLogger('snapshot')
 
-let pollTimer: ReturnType<typeof setTimeout> | null = null
 let running = false
 
 // ─── Space to Protocol Mapping ──────────────────────────────────────
 
 const SPACE_TO_PROTOCOL: Record<string, GovernanceProtocol> = {
-  'aavedao.eth': 'aave',         // Migrated from 'aave.eth' in Jan 2026
-  uniswap: 'uniswap',
+  // Must match backtest SPACE_PROTOCOL exactly
+  'aavedao.eth': 'aave',
   'compound-governance.eth': 'compound',
+  'arbitrumfoundation.eth': 'arbitrum',
+  'dydxgov.eth': 'dydx',
+  '1inch.eth': '1inch',
+  'cvx.eth': 'convex',
+  'veyfi.eth': 'yearn',
 }
 
 // ─── GraphQL Query ──────────────────────────────────────────────────
@@ -94,12 +98,21 @@ async function pollOnce(): Promise<void> {
   try {
     const proposals = await fetchActiveProposals()
 
+    // Track the latest proposal ID per space to update cursor once at the end
+    const latestPerSpace = new Map<string, string>()
+
     for (const proposal of proposals) {
       const space = proposal.space.id
       const lastSeen = getSnapshotCursor(space)
 
+      // Track the latest proposal ID for this space
+      if (!latestPerSpace.has(space) || proposal.id > (latestPerSpace.get(space) ?? '')) {
+        latestPerSpace.set(space, proposal.id)
+      }
+
       // Only emit for new proposals not previously seen
-      if (lastSeen === proposal.id) continue
+      // Check if proposal ID is newer than last seen (string comparison works for Snapshot IDs)
+      if (lastSeen && proposal.id <= lastSeen) continue
 
       const protocol = SPACE_TO_PROTOCOL[space]
       if (!protocol) continue
@@ -122,8 +135,12 @@ async function pollOnce(): Promise<void> {
       }
 
       eventBus.emit('governance:snapshot', event)
-      setSnapshotCursor(space, proposal.id)
       log.info({ space, title: proposal.title, snapshotId: proposal.id }, 'New Snapshot proposal detected')
+    }
+
+    // Update cursors to the latest seen ID per space
+    for (const [space, latestId] of latestPerSpace) {
+      setSnapshotCursor(space, latestId)
     }
   } catch (error) {
     log.error({ err: error }, 'Snapshot poll error')
@@ -145,16 +162,18 @@ export async function startSnapshotMonitor(): Promise<void> {
     { spaces: SNAPSHOT_SPACES, intervalMs: config.snapshotPollIntervalMs },
     'Starting Snapshot monitor',
   )
-  // Run first poll synchronously, then loop in background
+  // Run first poll synchronously, then loop in background with auto-restart
   await pollOnce()
-  pollLoop().catch((err) => log.error({ err }, 'Snapshot poll loop crashed'))
+  function startPollLoop() {
+    pollLoop().catch((err) => {
+      log.error({ err }, 'Snapshot poll loop crashed, restarting in 10s')
+      if (running) setTimeout(startPollLoop, 10_000)
+    })
+  }
+  startPollLoop()
 }
 
 export function stopSnapshotMonitor(): void {
   running = false
-  if (pollTimer) {
-    clearTimeout(pollTimer)
-    pollTimer = null
-  }
   log.info('Snapshot monitor stopped')
 }

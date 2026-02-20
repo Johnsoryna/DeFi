@@ -3,18 +3,22 @@
  *
  * IMPORTANT (verified Feb 2026): ALL /yields/* endpoints (pools, charts,
  * borrow rates, perps, LSD rates) are behind a $300/month paywall.
+ * Pro tier: 1,000 req/min, 1M calls/month ($300/mo).
+ *
  * This client uses ONLY the free endpoints:
  *   - TVL:    /api/protocols, /api/protocol/{slug}, /api/tvl/{protocol}
  *   - Prices: /coins/prices/current/{coins}, /coins/prices/historical/{ts}/{coins}
  *
+ * Free tier rate limit: undocumented but exists (will get 429 if exceeded).
+ * Our usage: ~1 price call every 30s + occasional TVL lookups = well within limits.
+ *
  * APY/yield data is computed from on-chain reserve data instead.
- * Official SDK: @defillama/api (npm), defillama-sdk (PyPI) — released Feb 5, 2026.
  */
 import { createLogger } from '../lib/logger.js'
 import { withRetry } from '../lib/retry.js'
 import { APIS } from '../config/addresses.js'
 
-const log = createLogger('defillama')
+const _log = createLogger('defillama')
 
 // ─── TVL Endpoints ──────────────────────────────────────────────────
 
@@ -45,7 +49,7 @@ export async function getAllProtocols(): Promise<ProtocolTvl[]> {
 /**
  * Get detailed TVL data for a specific protocol.
  */
-export async function getProtocolDetail(slug: string): Promise<any> {
+export async function getProtocolDetail(slug: string): Promise<unknown> {
   return withRetry(
     async () => {
       const res = await fetch(`https://api.llama.fi/protocol/${slug}`)

@@ -93,45 +93,28 @@ export interface LiquidationSimResult {
   liquidationRisks: LiquidationRisk[]
 }
 
-// ─── Pendle Market Data ─────────────────────────────────────────────
+// ─── Binance Futures Market Data ─────────────────────────────────────
 
-export interface PendleMarket {
-  address: string
-  chainId: number
-  name: string
-  ptAddress: string
-  ytAddress: string
-  syAddress: string
-  underlyingAsset: string
-  expiry: string        // ISO timestamp
-  impliedApy: number
-  underlyingApy: number
-  tvl: number
-  ptDiscount: number
-}
-
-// ─── dYdX Market Data ───────────────────────────────────────────────
-
-export interface DydxMarket {
-  market: string          // e.g. 'AAVE-USD'
+export interface BinanceMarket {
+  symbol: string          // e.g. 'AAVEUSDT'
   status: string
-  oraclePrice: string
+  markPrice: string
   baseAsset: string
-  tickSize: string
-  stepSize: string
-  initialMarginFraction: string
-  maintenanceMarginFraction: string
+  quoteAsset: string
+  tickSize: string        // Price precision step
+  stepSize: string        // Quantity precision step
+  minNotional: string     // Minimum order notional (5 USDT)
+  maxLeverage: number
 }
 
-export interface DydxPosition {
-  market: string
-  status: string
-  side: string
-  size: string
-  maxSize: string
+export interface BinancePosition {
+  symbol: string
+  positionSide: string    // 'LONG' | 'SHORT' | 'BOTH'
+  positionAmt: string     // Signed quantity (negative = short)
   entryPrice: string
-  exitPrice?: string
-  unrealizedPnl: string
-  realizedPnl: string
-  netFunding: string
+  markPrice: string
+  unrealizedProfit: string
+  leverage: string
+  marginType: string      // 'cross' | 'isolated'
+  liquidationPrice: string
 }

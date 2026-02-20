@@ -14,11 +14,11 @@
  * Both contracts are still monitored for completeness, but new governance
  * activity will occur exclusively on the Chief V3 contract.
  */
-import { type WatchEventReturnType, type WatchContractEventReturnType, decodeAbiParameters, parseAbiParameters } from 'viem'
+import { type WatchEventReturnType, type WatchContractEventReturnType } from 'viem'
 import { getReadClient, getPaginatedLogs, getCurrentBlock } from '../clients/rpc.js'
 import { dsChiefAbi } from '../config/abis/dsChief.js'
 import { GOVERNANCE } from '../config/addresses.js'
-import { MAKER_DSNOTE_SELECTORS, MAKER_DSNOTE_TOPICS } from '../config/events.js'
+import { MAKER_DSNOTE_SELECTORS } from '../config/events.js'
 import { eventBus } from '../lib/eventBus.js'
 import { createLogger } from '../lib/logger.js'
 import {
@@ -33,8 +33,18 @@ import type { MakerDSNoteEvent } from '../types/governance.js'
 
 const log = createLogger('maker-gov')
 
+/** Shape of raw EVM event logs (viem Log-like object) */
+interface RawEventLog {
+  transactionHash?: string | null
+  logIndex?: number | null
+  blockNumber?: bigint | number | null
+  removed?: boolean
+  topics?: string[]
+  data?: string
+  args?: Record<string, unknown>
+}
+
 const DS_CHIEF_ADDRESSES: `0x${string}`[] = [
-  GOVERNANCE.makerDSChiefV12 as `0x${string}`,  // DEPRECATED — legacy MKR governance
   GOVERNANCE.makerNewChief as `0x${string}`,     // ACTIVE — Sky Chief V3 (SKY tokens)
 ]
 
@@ -58,13 +68,20 @@ function selectorFromTopic(topic0: string): string | undefined {
 
 // ─── Event Processing ───────────────────────────────────────────────
 
-function processDSNoteLog(eventLog: any): void {
+function processDSNoteLog(eventLog: RawEventLog): void {
   const txHash = eventLog.transactionHash
   const logIndex = eventLog.logIndex
+  const blockNumber = eventLog.blockNumber
+
+  // Null safety checks
+  if (!txHash || logIndex === undefined || logIndex === null || !blockNumber) {
+    log.warn({ eventLog }, 'Incomplete Maker event log — skipping')
+    return
+  }
 
   if (eventLog.removed) {
     log.warn({ txHash }, 'Reorg — rolling back Maker event')
-    rollbackEvent(txHash)
+    rollbackEvent(txHash, logIndex)
     return
   }
 
@@ -80,14 +97,20 @@ function processDSNoteLog(eventLog: any): void {
   if (!functionName) return
 
   // topic1 contains the caller address (for DSNote)
-  const caller = topics.length > 1
-    ? ('0x' + topics[1].slice(26)) as string
-    : 'unknown'
+  // Validate topic length before extracting address
+  let caller = 'unknown'
+  if (topics.length > 1 && topics[1] && topics[1].length >= 26) {
+    try {
+      caller = ('0x' + topics[1].slice(26)) as string
+    } catch {
+      log.debug({ topic: topics[1] }, 'Failed to extract caller address from topic')
+    }
+  }
 
   const event: MakerDSNoteEvent = {
     type: 'maker_dsnote',
     protocol: 'maker',
-    blockNumber: eventLog.blockNumber!,
+    blockNumber: BigInt(blockNumber),
     transactionHash: txHash,
     logIndex,
     removed: false,
@@ -97,37 +120,38 @@ function processDSNoteLog(eventLog: any): void {
   }
 
   eventBus.emit('governance:proposal', event)
-  markEventProcessed(eventLog.blockNumber, txHash, logIndex, `maker:${functionName}`, 'maker')
+  markEventProcessed(BigInt(blockNumber), txHash, logIndex, `maker:${functionName}`, 'maker')
   log.info({ functionName, caller }, 'Processed Maker DSNote event')
 }
 
 // ─── Etch Event (non-anonymous) ─────────────────────────────────────
 
-function processEtchLog(eventLog: any): void {
+function processEtchLog(eventLog: RawEventLog): void {
   const txHash = eventLog.transactionHash
-  const logIndex = eventLog.logIndex
+  const logIndex = eventLog.logIndex ?? 0
+  const blockNumber = eventLog.blockNumber != null ? BigInt(eventLog.blockNumber) : 0n
 
   if (eventLog.removed) {
-    rollbackEvent(txHash)
+    if (txHash) rollbackEvent(txHash)
     return
   }
 
-  if (isEventProcessed(txHash, logIndex)) return
+  if (txHash && isEventProcessed(txHash, logIndex)) return
 
   const event: MakerDSNoteEvent = {
     type: 'maker_dsnote',
     protocol: 'maker',
-    blockNumber: eventLog.blockNumber!,
-    transactionHash: txHash,
+    blockNumber,
+    transactionHash: txHash ?? '0x',
     logIndex,
     removed: false,
     functionName: 'etch',
-    caller: eventLog.args?.slate ?? 'unknown',
+    caller: (eventLog.args?.slate as string) ?? 'unknown',
     rawData: eventLog.data ?? '0x',
   }
 
   eventBus.emit('governance:proposal', event)
-  markEventProcessed(eventLog.blockNumber, txHash, logIndex, 'maker:etch', 'maker')
+  markEventProcessed(blockNumber, txHash ?? '0x', logIndex, 'maker:etch', 'maker')
   log.info('Processed Maker Etch event')
 }
 
@@ -147,7 +171,6 @@ async function backfillDSNotes(address: `0x${string}`): Promise<void> {
   log.info({ address, fromBlock: fromBlock.toString() }, 'Backfilling Maker DSNote events')
 
   // Query raw logs with DSNote selector topics
-  const client = getReadClient()
   const logs = await getPaginatedLogs({
     address,
     fromBlock: fromBlock + 1n,
@@ -185,7 +208,13 @@ function subscribeDSNotes(address: `0x${string}`): void {
       }
     },
     onError: (error) => {
-      log.error({ err: error, address }, 'DSNote subscription error')
+      const isSocketClosed = error?.name === 'SocketClosedError' ||
+        (error?.message ?? '').includes('socket has been closed')
+      if (isSocketClosed) {
+        log.warn({ address }, 'DSNote WSS disconnected — will auto-recover via HTTP polling')
+      } else {
+        log.error({ err: error, address }, 'DSNote subscription error')
+      }
     },
   })
 
@@ -203,7 +232,13 @@ function subscribeDSNotes(address: `0x${string}`): void {
       }
     },
     onError: (error) => {
-      log.error({ err: error }, 'Etch subscription error')
+      const isSocketClosed = error?.name === 'SocketClosedError' ||
+        (error?.message ?? '').includes('socket has been closed')
+      if (isSocketClosed) {
+        log.warn('Etch WSS disconnected — will auto-recover via HTTP polling')
+      } else {
+        log.error({ err: error }, 'Etch subscription error')
+      }
     },
   })
 
@@ -214,9 +249,19 @@ function subscribeDSNotes(address: `0x${string}`): void {
 // ─── Public API ─────────────────────────────────────────────────────
 
 export async function startMakerGovMonitor(): Promise<void> {
+  // Stop existing monitors first to prevent memory leaks
+  if (unwatchers.length > 0) {
+    log.debug('Stopping existing Maker monitors before restart')
+    stopMakerGovMonitor()
+  }
+
   for (const address of DS_CHIEF_ADDRESSES) {
-    await backfillDSNotes(address)
-    subscribeDSNotes(address)
+    try {
+      await backfillDSNotes(address)
+      subscribeDSNotes(address)
+    } catch (err) {
+      log.error({ err, address }, 'Failed to start Maker monitor for address')
+    }
   }
   log.info('Maker/Sky governance monitor started')
 }

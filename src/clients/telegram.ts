@@ -1,6 +1,10 @@
 /**
  * Telegram Bot API client.
- * 100% free. Rate limits: ~1 msg/sec/chat, ~30 msg/sec globally.
+ * 100% free. Rate limits (verified Feb 2026):
+ *   - Global: 30 messages/sec per bot token
+ *   - Groups/channels: 1 message per 3 seconds (since Bot API layer 167, Feb 2025)
+ *   - Private chats: up to 30 msg/sec
+ * Bot API 7.8+ returns X-RateLimit-Remaining and Retry-After headers.
  */
 import { createLogger } from '../lib/logger.js'
 import { withRetry, rateLimited } from '../lib/retry.js'
@@ -14,7 +18,7 @@ const API_BASE = config.telegramBotToken
 
 // Rate limit: 1 message per second per chat
 const sendRateLimited = rateLimited(
-  async (endpoint: string, body: Record<string, unknown>): Promise<any> => {
+  async (endpoint: string, body: Record<string, unknown>): Promise<unknown> => {
     if (!API_BASE) {
       log.warn('Telegram bot token not configured — message not sent')
       return null

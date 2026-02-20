@@ -62,12 +62,13 @@ export function computeHealthFactor(
   if (totalDebtBase === 0n) return Infinity
 
   // HF = collateral * LT / 10000 / debt
-  // Scale up for precision, then divide
+  // Use higher precision scaling to avoid Number() precision loss
   const numerator = totalCollateralBase * liquidationThreshold
   const denominator = totalDebtBase * BPS
 
-  // Convert to float with sufficient precision
-  return Number(numerator * 10000n / denominator) / 10000
+  // Scale to 6 decimal places for precision
+  const scaled = (numerator * 1000000n) / denominator
+  return Number(scaled) / 1000000
 }
 
 /**
@@ -79,6 +80,7 @@ export function simulateHfAfterLtChange(
   oldLtBps: number,
   newLtBps: number,
 ): number {
+  if (oldLtBps === 0) return Infinity
   return currentHf * (newLtBps / oldLtBps)
 }
 
@@ -88,6 +90,7 @@ export function simulateHfAfterLtChange(
  * Positions with HF < this threshold become at risk.
  */
 export function hfLiquidationThreshold(oldLtBps: number, newLtBps: number): number {
+  if (newLtBps === 0) return Infinity
   return oldLtBps / newLtBps
 }
 

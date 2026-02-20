@@ -1,16 +1,17 @@
 /**
  * Snapshot GraphQL API client.
- * Free, no API key. Rate limit: 60 req/min.
+ * Free without API key: 100 req/min.
+ * With API key: 2M req/month (key available at https://docs.snapshot.box/tools/api/api-keys).
  */
 import { createLogger } from '../lib/logger.js'
 import { withRetry, rateLimited } from '../lib/retry.js'
 import { APIS } from '../config/addresses.js'
 
-const log = createLogger('snapshot-client')
+const _log = createLogger('snapshot-client')
 
-// Rate limit: ~1 req/sec to stay within 60/min
+// Rate limit: ~1 req/sec to stay within 100/min (no API key)
 const snapshotFetch = rateLimited(
-  async (query: string, variables: Record<string, unknown> = {}): Promise<any> => {
+  async (query: string, variables: Record<string, unknown> = {}): Promise<unknown> => {
     return withRetry(
       async () => {
         const res = await fetch(APIS.snapshotGraphql, {
@@ -19,7 +20,7 @@ const snapshotFetch = rateLimited(
           body: JSON.stringify({ query, variables }),
         })
         if (!res.ok) throw new Error(`Snapshot API ${res.status}`)
-        const data = (await res.json()) as { data: any; errors?: any[] }
+        const data = (await res.json()) as { data: unknown; errors?: Array<{ message: string }> }
         if (data.errors) throw new Error(`Snapshot GraphQL: ${JSON.stringify(data.errors)}`)
         return data.data
       },
@@ -62,7 +63,8 @@ export async function getActiveProposals(spaces: string[]): Promise<SnapshotProp
     }`,
     { spaces },
   )
-  return data.proposals ?? []
+  const result = data as Record<string, unknown>
+  return (result.proposals ?? []) as SnapshotProposal[]
 }
 
 export async function getProposal(proposalId: string): Promise<SnapshotProposal | null> {
@@ -76,7 +78,8 @@ export async function getProposal(proposalId: string): Promise<SnapshotProposal 
     }`,
     { id: proposalId },
   )
-  return data.proposal ?? null
+  const result = data as Record<string, unknown>
+  return (result.proposal ?? null) as SnapshotProposal | null
 }
 
 export interface SnapshotVote {
@@ -103,7 +106,8 @@ export async function getVotes(
     }`,
     { proposal: proposalId, first },
   )
-  return data.votes ?? []
+  const result = data as Record<string, unknown>
+  return (result.votes ?? []) as SnapshotVote[]
 }
 
 export async function getVotingPower(
@@ -119,5 +123,6 @@ export async function getVotingPower(
     }`,
     { voter, space, proposal },
   )
-  return data.vp?.vp ?? 0
+  const result = data as Record<string, Record<string, number>>
+  return result.vp?.vp ?? 0
 }

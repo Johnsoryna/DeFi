@@ -1,24 +1,22 @@
 /**
  * Unified position tracker.
- * Aggregates positions from dYdX, Aave, and Pendle into a single portfolio view.
+ * Aggregates positions from Binance Futures and Aave into a single portfolio view.
  */
 import { getReadClient } from '../clients/rpc.js'
-import * as dydxClient from '../clients/dydx.js'
-import * as pendleClient from '../clients/pendle.js'
+import * as binanceClient from '../clients/binance.js'
 import { aavePoolAbi } from '../config/abis/aavePool.js'
-import { erc20DelegationAbi } from '../config/abis/erc20Delegation.js'
 import { AAVE_V3 } from '../config/addresses.js'
 import { eventBus } from '../lib/eventBus.js'
 import { createLogger } from '../lib/logger.js'
-import { upsertPosition, getPositions as getDbPositions } from '../lib/store.js'
+import { upsertPosition } from '../lib/store.js'
 import { formatTokenAmount } from '../lib/bignum.js'
-import { config } from '../config/index.js'
 import { sleep } from '../lib/retry.js'
 import type { Position, Portfolio } from '../types/trading.js'
 
 const log = createLogger('position-tracker')
 
 let running = false
+let refreshing = false // Mutex to prevent overlapping refreshes
 let walletAddress: string | null = null
 
 // ─── Configuration ──────────────────────────────────────────────────
@@ -27,28 +25,27 @@ export function setWalletAddress(address: string): void {
   walletAddress = address
 }
 
-// ─── dYdX Positions ─────────────────────────────────────────────────
+// ─── Binance Futures Positions ───────────────────────────────────────
 
-async function fetchDydxPositions(): Promise<Position[]> {
-  if (!walletAddress) return []
-
+async function fetchBinancePositions(): Promise<Position[]> {
   try {
-    const positions = await dydxClient.getPositions(walletAddress)
+    const positions = await binanceClient.getPositions()
     return positions.map((p) => ({
-      id: `dydx:${p.market}`,
-      protocol: 'dydx' as const,
+      id: `binance:${p.symbol}`,
+      protocol: 'binance' as const,
       type: 'perp' as const,
-      asset: p.market.replace('-USD', ''),
-      size: p.side === 'SHORT' ? `-${p.size}` : p.size,
+      asset: p.symbol.replace('USDT', ''),
+      size: p.positionAmt,
       entryPrice: p.entryPrice,
-      currentPrice: '0', // Will be updated by price monitor
-      unrealizedPnl: p.unrealizedPnl,
-      realizedPnl: p.realizedPnl,
-      accruedYield: p.netFunding,
+      currentPrice: p.markPrice,
+      unrealizedPnl: p.unrealizedProfit,
+      realizedPnl: '0',
+      accruedYield: '0',
+      leverage: parseInt(p.leverage, 10),
       lastUpdated: new Date().toISOString(),
     }))
   } catch (err) {
-    log.error({ err }, 'Failed to fetch dYdX positions')
+    log.error({ err }, 'Failed to fetch Binance positions')
     return []
   }
 }
@@ -116,101 +113,18 @@ async function fetchAavePositions(): Promise<Position[]> {
   return positions
 }
 
-// ─── Pendle Positions ───────────────────────────────────────────────
-
-async function fetchPendlePositions(): Promise<Position[]> {
-  if (!walletAddress) return []
-
-  const positions: Position[] = []
-  const client = getReadClient()
-
-  try {
-    // Get active Pendle markets
-    const markets = await pendleClient.getActiveMarkets(1)
-
-    for (const market of markets.slice(0, 10)) {
-      // Check PT balance
-      if (market.ptAddress) {
-        try {
-          const balance = await client.readContract({
-            address: market.ptAddress as `0x${string}`,
-            abi: erc20DelegationAbi, // balanceOf is standard ERC20
-            functionName: 'balanceOf',
-            args: [walletAddress as `0x${string}`],
-          }) as bigint
-
-          if (balance > 0n) {
-            positions.push({
-              id: `pendle:pt:${market.address}`,
-              protocol: 'pendle',
-              type: 'yield_pt',
-              asset: market.name,
-              size: formatTokenAmount(balance, 18),
-              entryPrice: '0',
-              currentPrice: '0',
-              unrealizedPnl: '0',
-              realizedPnl: '0',
-              accruedYield: '0',
-              maturity: market.expiry,
-              lastUpdated: new Date().toISOString(),
-            })
-          }
-        } catch {
-          // Token may not support balanceOf — skip
-        }
-      }
-
-      // Check YT balance
-      if (market.ytAddress) {
-        try {
-          const balance = await client.readContract({
-            address: market.ytAddress as `0x${string}`,
-            abi: erc20DelegationAbi,
-            functionName: 'balanceOf',
-            args: [walletAddress as `0x${string}`],
-          }) as bigint
-
-          if (balance > 0n) {
-            positions.push({
-              id: `pendle:yt:${market.address}`,
-              protocol: 'pendle',
-              type: 'yield_yt',
-              asset: market.name,
-              size: formatTokenAmount(balance, 18),
-              entryPrice: '0',
-              currentPrice: '0',
-              unrealizedPnl: '0',
-              realizedPnl: '0',
-              accruedYield: '0',
-              maturity: market.expiry,
-              lastUpdated: new Date().toISOString(),
-            })
-          }
-        } catch {
-          // skip
-        }
-      }
-    }
-  } catch (err) {
-    log.error({ err }, 'Failed to fetch Pendle positions')
-  }
-
-  return positions
-}
-
 // ─── Aggregation ────────────────────────────────────────────────────
 
 /**
  * Fetch all positions and aggregate into a portfolio.
  */
 export async function refreshPositions(): Promise<Portfolio> {
-  const [dydx, aave, pendle] = await Promise.all([
-    fetchDydxPositions(),
+  const [binance, aave] = await Promise.all([
+    fetchBinancePositions(),
     fetchAavePositions(),
-    fetchPendlePositions(),
   ])
 
-  const allPositions = [...dydx, ...aave, ...pendle]
+  const allPositions = [...binance, ...aave]
 
   // Persist to SQLite
   for (const pos of allPositions) {
@@ -226,7 +140,6 @@ export async function refreshPositions(): Promise<Portfolio> {
       realizedPnl: pos.realizedPnl,
       accruedYield: pos.accruedYield,
       healthFactor: pos.healthFactor,
-      maturity: pos.maturity,
     })
   }
 
@@ -245,10 +158,18 @@ export async function refreshPositions(): Promise<Portfolio> {
     (sum, p) => sum + parseFloat(p.accruedYield || '0'),
     0,
   )
+  const totalValue = allPositions.reduce(
+    (sum, p) => {
+      const size = Math.abs(parseFloat(p.size || '0'))
+      const price = parseFloat(p.currentPrice || '0')
+      return sum + size * price
+    },
+    0,
+  )
 
   return {
     positions: allPositions,
-    totalValue: '0', // Requires price data
+    totalValue: totalValue.toFixed(2),
     totalUnrealizedPnl: totalUnrealizedPnl.toFixed(2),
     totalRealizedPnl: totalRealizedPnl.toFixed(2),
     totalAccruedYield: totalAccruedYield.toFixed(2),
@@ -260,14 +181,20 @@ export async function refreshPositions(): Promise<Portfolio> {
 
 async function refreshLoop(): Promise<void> {
   while (running) {
-    try {
-      const portfolio = await refreshPositions()
-      log.info(
-        { positions: portfolio.positions.length, unrealizedPnl: portfolio.totalUnrealizedPnl },
-        'Position refresh complete',
-      )
-    } catch (err) {
-      log.error({ err }, 'Position refresh error')
+    // Mutex: skip if previous refresh is still running (prevents overlapping state)
+    if (!refreshing) {
+      refreshing = true
+      try {
+        const portfolio = await refreshPositions()
+        log.info(
+          { positions: portfolio.positions.length, unrealizedPnl: portfolio.totalUnrealizedPnl },
+          'Position refresh complete',
+        )
+      } catch (err) {
+        log.error({ err }, 'Position refresh error')
+      } finally {
+        refreshing = false
+      }
     }
     await sleep(30_000) // Refresh every 30s
   }
@@ -275,7 +202,13 @@ async function refreshLoop(): Promise<void> {
 
 export function startPositionTracker(): void {
   running = true
-  refreshLoop().catch((err) => log.error({ err }, 'Position tracker loop crashed'))
+  function startRefreshLoop() {
+    refreshLoop().catch((err) => {
+      log.error({ err }, 'Position tracker loop crashed, restarting in 10s')
+      if (running) setTimeout(startRefreshLoop, 10_000)
+    })
+  }
+  startRefreshLoop()
   log.info('Position tracker started')
 }
 

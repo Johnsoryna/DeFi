@@ -65,12 +65,14 @@ export async function withRetry<T>(
 /**
  * Rate-limited function wrapper — ensures minimum interval between calls.
  */
-export function rateLimited<T extends (...args: any[]) => Promise<any>>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function rateLimited<T extends (...args: any[]) => Promise<unknown>>(
   fn: T,
   minIntervalMs: number,
 ): T {
   let lastCall = 0
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (async (...args: any[]) => {
     const now = Date.now()
     const elapsed = now - lastCall

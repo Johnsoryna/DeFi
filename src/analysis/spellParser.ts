@@ -75,8 +75,6 @@ async function fetchEtherscanSource(address: string): Promise<string | null> {
  * Extracts DssExecLib function calls from the actions() function body.
  */
 export function parseSpellSource(source: string, spellAddress: string): DecodedAction[] {
-  const actions: DecodedAction[] = []
-
   // Find the actions() function body
   const actionsBody = extractActionsBody(source)
   if (!actionsBody) {
@@ -182,11 +180,22 @@ function parseArgs(argsStr: string): string[] {
   let depth = 0
   let inString = false
   let stringChar = ''
+  let escaped = false
 
   for (const ch of argsStr) {
     if (inString) {
       current += ch
-      if (ch === stringChar) inString = false
+      if (escaped) {
+        escaped = false
+        continue
+      }
+      if (ch === '\\') {
+        escaped = true
+        continue
+      }
+      if (ch === stringChar) {
+        inString = false
+      }
       continue
     }
 

@@ -11,6 +11,7 @@ import fs from 'node:fs'
 const log = createLogger('store')
 
 let db: Database.Database
+let dbClosed = false
 
 /**
  * Initialize SQLite database and create tables.
@@ -21,6 +22,7 @@ export function initStore(): Database.Database {
     fs.mkdirSync(dbDir, { recursive: true })
   }
 
+  dbClosed = false
   db = new Database(config.dbPath)
   db.pragma('journal_mode = WAL')
   db.pragma('foreign_keys = ON')
@@ -110,6 +112,7 @@ export function initStore(): Database.Database {
  */
 export function getDb(): Database.Database {
   if (!db) throw new Error('Store not initialized. Call initStore() first.')
+  if (dbClosed) throw new Error('Store has been closed. Cannot perform database operations.')
   return db
 }
 
@@ -123,13 +126,15 @@ export function getLastProcessedBlock(contractAddress: string): bigint {
 }
 
 export function setLastProcessedBlock(contractAddress: string, blockNumber: bigint): void {
+  // Use string representation to avoid precision loss for very large block numbers
+  const blockStr = blockNumber.toString()
   getDb()
     .prepare(
       `INSERT INTO block_cursors (contract_address, last_block, updated_at)
        VALUES (?, ?, datetime('now'))
        ON CONFLICT(contract_address) DO UPDATE SET last_block = ?, updated_at = datetime('now')`,
     )
-    .run(contractAddress, Number(blockNumber), Number(blockNumber))
+    .run(contractAddress, blockStr, blockStr)
 }
 
 // ─── Processed Events ───────────────────────────────────────────────
@@ -148,16 +153,22 @@ export function markEventProcessed(
   eventType: string,
   protocol: string,
 ): void {
+  // Use string representation to avoid precision loss
   getDb()
     .prepare(
       `INSERT OR IGNORE INTO processed_events (block_number, tx_hash, log_index, event_type, protocol)
        VALUES (?, ?, ?, ?, ?)`,
     )
-    .run(Number(blockNumber), txHash, logIndex, eventType, protocol)
+    .run(blockNumber.toString(), txHash, logIndex, eventType, protocol)
 }
 
-export function rollbackEvent(txHash: string): void {
-  getDb().prepare('DELETE FROM processed_events WHERE tx_hash = ?').run(txHash)
+export function rollbackEvent(txHash: string, logIndex?: number): void {
+  // If logIndex provided, delete only that specific event; otherwise delete all events with that txHash
+  if (logIndex !== undefined) {
+    getDb().prepare('DELETE FROM processed_events WHERE tx_hash = ? AND log_index = ?').run(txHash, logIndex)
+  } else {
+    getDb().prepare('DELETE FROM processed_events WHERE tx_hash = ?').run(txHash)
+  }
 }
 
 // ─── Proposal Operations ────────────────────────────────────────────
@@ -319,8 +330,16 @@ export function setSnapshotCursor(space: string, lastSeenId: string): void {
 // ─── Cleanup ────────────────────────────────────────────────────────
 
 export function closeStore(): void {
-  if (db) {
+  if (db && !dbClosed) {
     db.close()
+    dbClosed = true
     log.info('Database closed')
   }
+}
+
+/**
+ * Reset the closed flag (for testing purposes).
+ */
+export function resetDbState(): void {
+  dbClosed = false
 }

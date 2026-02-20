@@ -6,7 +6,7 @@
 import { createLogger } from '../lib/logger.js'
 import { withRetry } from '../lib/retry.js'
 
-const log = createLogger('discourse')
+const _log = createLogger('discourse')
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -67,16 +67,17 @@ export async function getTopic(
           headers: { Accept: 'application/json' },
         })
         if (!res.ok) throw new Error(`Discourse ${res.status}: topic ${id}`)
-        const data = (await res.json()) as any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data = (await res.json()) as Record<string, any>
         return {
           title: data.title,
-          posts: (data.post_stream?.posts ?? []).map((p: any) => ({
-            id: p.id,
-            topic_id: p.topic_id,
-            raw: p.raw ?? '',
-            cooked: p.cooked ?? '',
-            username: p.username,
-            created_at: p.created_at,
+          posts: (data.post_stream?.posts ?? []).map((p: Record<string, string | number>) => ({
+            id: p.id as number,
+            topic_id: p.topic_id as number,
+            raw: (p.raw ?? '') as string,
+            cooked: (p.cooked ?? '') as string,
+            username: p.username as string,
+            created_at: p.created_at as string,
           })),
         }
       },

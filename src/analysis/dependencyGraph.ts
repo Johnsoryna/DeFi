@@ -13,7 +13,6 @@ import { createLogger } from '../lib/logger.js'
 import type {
   DependencyNode,
   DependencyEdge,
-  EdgeType,
   ParamChange,
 } from '../types/protocol.js'
 import type { CascadeImpact } from '../types/governance.js'
@@ -120,6 +119,7 @@ export async function buildDependencyGraph(): Promise<ProtocolGraph> {
           abi: aavePoolAbi,
           functionName: 'getReserveData',
           args: [reserve as `0x${string}`],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         }) as any
 
         const configDecoded = decodeAaveReserveConfig(data.configuration)
@@ -165,6 +165,7 @@ export async function buildDependencyGraph(): Promise<ProtocolGraph> {
             abi: compoundCometAbi,
             functionName: 'getAssetInfo',
             args: [i],
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           }) as any
 
           const nodeId = `compound:${label}:${info.asset.toLowerCase()}`
@@ -182,25 +183,34 @@ export async function buildDependencyGraph(): Promise<ProtocolGraph> {
           })
 
           // Cross-protocol edge: if asset exists in both Aave and Compound
+          // Check if edge already exists to prevent duplicates
           const aaveNodeId = `aave:${info.asset.toLowerCase()}`
           if (g.nodes.has(aaveNodeId)) {
-            g.addEdge({
-              from: aaveNodeId,
-              to: nodeId,
-              type: 'collateral',
-              weight: 0.5,
-              description: 'Same asset listed on both Aave and Compound',
-            })
-            g.addEdge({
-              from: nodeId,
-              to: aaveNodeId,
-              type: 'collateral',
-              weight: 0.5,
-              description: 'Same asset listed on both Compound and Aave',
-            })
+            const edgeKey1 = `${aaveNodeId}->${nodeId}`
+            const edgeKey2 = `${nodeId}->${aaveNodeId}`
+            
+            if (!g.edges.some(e => `${e.from}->${e.to}` === edgeKey1)) {
+              g.addEdge({
+                from: aaveNodeId,
+                to: nodeId,
+                type: 'collateral',
+                weight: 0.5,
+                description: 'Same asset listed on both Aave and Compound',
+              })
+            }
+            
+            if (!g.edges.some(e => `${e.from}->${e.to}` === edgeKey2)) {
+              g.addEdge({
+                from: nodeId,
+                to: aaveNodeId,
+                type: 'collateral',
+                weight: 0.5,
+                description: 'Same asset listed on both Compound and Aave',
+              })
+            }
           }
-        } catch {
-          // Skip asset
+        } catch (err) {
+          log.debug({ label, assetIndex: i, err }, 'Failed to read Compound asset')
         }
       }
 
@@ -246,8 +256,8 @@ export async function buildDependencyGraph(): Promise<ProtocolGraph> {
             relativeWeight: weight.toString(),
           },
         })
-      } catch {
-        // Skip gauge
+      } catch (err) {
+        log.debug({ gaugeIndex: i, err }, 'Failed to read Curve gauge')
       }
     }
 
@@ -271,7 +281,7 @@ function simulateCascadeImpact(
   affectedNodeId: string,
   edge: DependencyEdge,
   paramChange: ParamChange,
-  affectedNode: DependencyNode,
+  _affectedNode: DependencyNode,
 ): CascadeImpact | null {
   // Determine cascade severity based on edge type and param change
   let severity: 'low' | 'medium' | 'high' | 'critical' = 'low'

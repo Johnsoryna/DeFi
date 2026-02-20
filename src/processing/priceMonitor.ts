@@ -1,9 +1,9 @@
 /**
  * Price monitor.
- * Primary: dYdX WebSocket v4_markets channel for oracle prices.
- * Secondary: DefiLlama prices API for assets not on dYdX.
+ * Primary: Binance Futures WebSocket markPrice stream for all symbols.
+ * Secondary: DefiLlama prices API for assets not on Binance.
  */
-import * as dydxClient from '../clients/dydx.js'
+import * as binanceClient from '../clients/binance.js'
 import * as defiLlama from '../clients/defillama.js'
 import { TOKENS } from '../config/addresses.js'
 import { eventBus } from '../lib/eventBus.js'
@@ -32,42 +32,55 @@ export function getAllPrices(): Map<string, { price: string; source: string; upd
   return new Map(prices)
 }
 
-// ─── dYdX WebSocket Price Feed ──────────────────────────────────────
+// ─── Binance WebSocket Price Feed ───────────────────────────────────
 
-function handleDydxMarketUpdate(data: any): void {
+interface BinanceMarkPriceEntry {
+  s: string   // Symbol (e.g. 'AAVEUSDT')
+  p: string   // Mark price
+  e?: string  // Event type
+}
+
+function handleBinanceMarkPriceUpdate(data: unknown): void {
   try {
-    if (data.type === 'channel_data' || data.type === 'subscribed') {
-      const markets = data.contents?.markets ?? data.contents?.trading ?? {}
+    const entries = Array.isArray(data) ? data as BinanceMarkPriceEntry[] : [data as BinanceMarkPriceEntry]
 
-      for (const [market, info] of Object.entries(markets) as [string, any][]) {
-        const oraclePrice = info?.oraclePrice
-        if (!oraclePrice) continue
+    for (const entry of entries) {
+      const symbol = entry.s
+      const markPrice = entry.p
+      if (!symbol || !markPrice) continue
 
-        const asset = market.replace('-USD', '').toUpperCase()
-        const prev = prices.get(asset)
+      // Strip 'USDT' suffix to get base asset symbol
+      if (!symbol.endsWith('USDT')) continue
+      const asset = symbol.replace('USDT', '').toUpperCase()
 
-        prices.set(asset, {
-          price: oraclePrice,
-          source: 'dydx',
-          updatedAt: Date.now(),
-        })
+      const prev = prices.get(asset)
 
-        // Emit price update if changed
-        if (!prev || prev.price !== oraclePrice) {
-          eventBus.emit('price:update', { asset, price: oraclePrice, source: 'dydx' })
-        }
+      prices.set(asset, {
+        price: markPrice,
+        source: 'binance',
+        updatedAt: Date.now(),
+      })
+
+      if (!prev || prev.price !== markPrice) {
+        eventBus.emit('price:update', { asset, price: markPrice, source: 'binance' })
       }
     }
   } catch (err) {
-    log.error({ err }, 'Error processing dYdX market update')
+    log.error({ err }, 'Error processing Binance mark price update')
   }
 }
 
 // ─── DefiLlama Price Feed ───────────────────────────────────────────
 
+// L2 governance tokens need their native chain for DeFi Llama lookups
+const L2_TOKEN_CHAINS: Record<string, string> = {
+  ARB: 'arbitrum',
+  OP: 'optimism',
+}
+
 const TOKEN_COINS = Object.entries(TOKENS).map(([symbol, address]) => ({
   symbol: symbol.toUpperCase(),
-  coin: defiLlama.buildCoinId('ethereum', address),
+  coin: defiLlama.buildCoinId(L2_TOKEN_CHAINS[symbol.toUpperCase()] ?? 'ethereum', address),
 }))
 
 async function fetchDefiLlamaPrices(): Promise<void> {
@@ -82,8 +95,8 @@ async function fetchDefiLlamaPrices(): Promise<void> {
       const asset = tokenConfig.symbol
       const prev = prices.get(asset)
 
-      // Only update if dYdX hasn't provided a more recent price
-      if (prev && prev.source === 'dydx' && Date.now() - prev.updatedAt < 30_000) {
+      // Only update if Binance hasn't provided a more recent price
+      if (prev && prev.source === 'binance' && Date.now() - prev.updatedAt < 30_000) {
         continue
       }
 
@@ -111,7 +124,7 @@ async function fetchDefiLlamaPrices(): Promise<void> {
 async function pollLoop(): Promise<void> {
   while (running) {
     await fetchDefiLlamaPrices()
-    await sleep(30_000) // Refresh DefiLlama prices every 30s
+    await sleep(30_000)
   }
 }
 
@@ -120,13 +133,13 @@ async function pollLoop(): Promise<void> {
 export function startPriceMonitor(): void {
   running = true
 
-  // Start dYdX WebSocket feed
-  dydxClient.connectWebSocket({
-    onMarketUpdate: handleDydxMarketUpdate,
+  // Start Binance Futures WebSocket feed (mark prices for all symbols)
+  binanceClient.connectWebSocket({
+    onMarkPriceUpdate: handleBinanceMarkPriceUpdate,
   })
 
   // Start DefiLlama polling as secondary source
-  fetchDefiLlamaPrices().catch(() => {})
+  fetchDefiLlamaPrices().catch((err) => log.error({ err }, 'Initial DefiLlama price fetch failed'))
   pollLoop().catch((err) => log.error({ err }, 'Price poll loop crashed'))
 
   log.info('Price monitor started')
@@ -134,6 +147,6 @@ export function startPriceMonitor(): void {
 
 export function stopPriceMonitor(): void {
   running = false
-  dydxClient.disconnectWebSocket()
+  binanceClient.disconnectWebSocket()
   log.info('Price monitor stopped')
 }

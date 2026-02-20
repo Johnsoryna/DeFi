@@ -11,10 +11,49 @@ export type GovernanceStage =
   | 'onchain_vote'
   | 'timelock'
   | 'executed'
+  | 'canceled'
 
 // ─── Protocol Identifiers ───────────────────────────────────────────
 
-export type GovernanceProtocol = 'compound' | 'uniswap' | 'aave' | 'maker'
+export type GovernanceProtocol =
+  | 'compound'
+  | 'uniswap'
+  | 'aave'
+  | 'maker'
+  | 'lido'
+  | 'arbitrum'
+  | 'curve'
+  | 'optimism'
+  | 'synthetix'
+  | 'dydx'
+  | 'ethena'
+  | 'eigenlayer'
+  | 'ens'
+  | 'gmx'
+  | 'jupiter'
+  | 'celestia'
+  | 'avalanche'
+  | 'polygon'
+  | 'starknet'
+  | 'morpho'
+  | 'sui'
+  | 'mantle'
+  | 'sei'
+  // ─── New Tier A protocols (dYdX vol >$5K/day) ──────────
+  | 'cosmos'        // ATOM — $301K vol
+  | 'aptos'         // APT — $62K vol
+  | 'axelar'        // AXL — $57K vol
+  | 'near'          // NEAR — $53K vol
+  | 'injective'     // INJ — $35K vol
+  | 'blur'          // BLUR — $31K vol
+  | 'jito'          // JTO — $28K vol
+  | 'zksync'        // ZK — $19K vol
+  | 'drift'         // DRIFT — $19K vol
+  | 'pyth'          // PYTH — $8K vol
+  | 'stacks'        // STX — $12K vol
+  | '1inch'
+  | 'yearn'
+  | 'convex'
 
 // ─── Impact Categories ──────────────────────────────────────────────
 
@@ -190,6 +229,49 @@ export interface CascadeImpact {
   impactType: string
   estimatedEffect: string
   severity: 'low' | 'medium' | 'high' | 'critical'
+}
+
+// ─── Dynamic Proposal Types (Intelligence Engine) ────────────────────
+
+export type ProposalType =
+  | 'technical_parameter'   // LTV, Cap, Rate changes
+  | 'asset_onboarding'      // Listings, new collaterals
+  | 'protocol_deployment'   // Deploy on new chains, launch new products
+  | 'treasury_funding'      // Committee funding, grants, service providers
+  | 'governance_process'    // Legal, frameworks, voting rules
+  | 'risk_mitigation'       // Freeze, deprecation, wind-down
+  | 'infrastructure'        // Stewards, oracles, automation
+  | 'economic_policy'       // Emissions, incentives, safety module
+
+export type PriceImpactExpectation =
+  | 'strong_positive'
+  | 'positive'
+  | 'neutral'
+  | 'negative'
+  | 'strong_negative'
+
+export interface DynamicImpact {
+  type: ProposalType
+  affectedAssets: string[]
+  affectedProtocols: string[]
+  technicalCategory?: ImpactCategory
+  expectedPriceImpact: PriceImpactExpectation
+  tradingOpportunity: boolean
+  confidence: number
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  rationale: string
+}
+
+/**
+ * Extended analysis with NLP-based classification.
+ * Backward compatible with ProposalAnalysis (extends it).
+ */
+export interface IntelligentAnalysis extends ProposalAnalysis {
+  proposalType: ProposalType
+  dynamicImpacts: DynamicImpact[]
+  nlpConfidence: number
+  sentiment: 'bullish' | 'bearish' | 'neutral'
+  extractedAssets: string[]
 }
 
 // ─── Tracked Proposal State ─────────────────────────────────────────

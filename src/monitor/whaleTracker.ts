@@ -49,6 +49,7 @@ function tokenAddressToSymbol(address: string): string {
 
 // ─── Event Processing ───────────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function processDelegateChanged(eventLog: any, tokenAddress: string): void {
   const txHash = eventLog.transactionHash
   const logIndex = eventLog.logIndex
@@ -77,6 +78,7 @@ function processDelegateChanged(eventLog: any, tokenAddress: string): void {
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function processDelegateVotesChanged(eventLog: any, tokenAddress: string): void {
   const txHash = eventLog.transactionHash
   const logIndex = eventLog.logIndex
@@ -91,13 +93,20 @@ function processDelegateVotesChanged(eventLog: any, tokenAddress: string): void 
   powerMap.set(delegate, newPower)
 
   // Check if this is a significant change for a top delegate
+  // Guard against division by zero
   if (oldPower > 0n) {
     const changePct = Number(((newPower - oldPower) * 10000n) / oldPower) / 100
     if (Math.abs(changePct) >= SIGNIFICANT_CHANGE_PCT) {
+      const blockNumber = eventLog.blockNumber
+      if (!blockNumber) {
+        log.warn({ txHash }, 'Missing blockNumber in whale event')
+        return
+      }
+
       const event: DelegateVotesChangedEvent = {
         type: 'delegate_votes_changed',
         protocol: 'compound', // Generic
-        blockNumber: eventLog.blockNumber!,
+        blockNumber: BigInt(blockNumber),
         transactionHash: txHash,
         logIndex,
         removed: eventLog.removed ?? false,
@@ -124,9 +133,14 @@ function processDelegateVotesChanged(eventLog: any, tokenAddress: string): void 
 }
 
 // ─── Subscriptions ──────────────────────────────────────────────────
+// Viem's watchContractEvent with pollingInterval uses HTTP polling internally.
+// When the primary WSS transport drops, Viem automatically falls back to the
+// next transport in the chain (PublicNode HTTP → Cloudflare → Alchemy).
+// No manual resubscription is needed — just log the disconnect.
 
 function subscribeToken(tokenAddress: `0x${string}`): void {
   const client = getReadClient()
+  const symbol = tokenAddressToSymbol(tokenAddress)
 
   const unwatchChanged = client.watchContractEvent({
     address: tokenAddress,
@@ -142,7 +156,13 @@ function subscribeToken(tokenAddress: `0x${string}`): void {
       }
     },
     onError: (error) => {
-      log.error({ err: error, token: tokenAddressToSymbol(tokenAddress) }, 'DelegateChanged subscription error')
+      const isSocketClosed = error?.name === 'SocketClosedError' ||
+        (error?.message ?? '').includes('socket has been closed')
+      if (isSocketClosed) {
+        log.warn({ token: symbol }, 'WSS disconnected — will auto-recover via HTTP polling')
+      } else {
+        log.error({ err: error, token: symbol }, 'DelegateChanged subscription error')
+      }
     },
   })
 
@@ -154,15 +174,24 @@ function subscribeToken(tokenAddress: `0x${string}`): void {
     onLogs: (logs) => {
       for (const eventLog of logs) {
         processDelegateVotesChanged(eventLog, tokenAddress)
+        if (!eventLog.removed && eventLog.blockNumber) {
+          setLastProcessedBlock(tokenAddress, eventLog.blockNumber)
+        }
       }
     },
     onError: (error) => {
-      log.error({ err: error, token: tokenAddressToSymbol(tokenAddress) }, 'DelegateVotesChanged subscription error')
+      const isSocketClosed = error?.name === 'SocketClosedError' ||
+        (error?.message ?? '').includes('socket has been closed')
+      if (isSocketClosed) {
+        // Same disconnect — already logged by DelegateChanged handler
+      } else {
+        log.error({ err: error, token: symbol }, 'DelegateVotesChanged subscription error')
+      }
     },
   })
 
   unwatchers.push(unwatchChanged, unwatchVotes)
-  log.info({ token: tokenAddressToSymbol(tokenAddress), address: tokenAddress }, 'Subscribed to delegation events')
+  log.info({ token: symbol, address: tokenAddress }, 'Subscribed to delegation events')
 }
 
 // ─── Bootstrap ──────────────────────────────────────────────────────
@@ -187,12 +216,14 @@ async function bootstrapToken(tokenAddress: `0x${string}`): Promise<void> {
 
   const logs = await getPaginatedLogs({
     address: tokenAddress,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     events: erc20DelegationAbi.filter((item) => item.type === 'event') as any,
     fromBlock: fromBlock + 1n,
     toBlock: currentBlock,
   })
 
   for (const eventLog of logs) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const eventName = (eventLog as any).eventName as string
     if (eventName === 'DelegateChanged') {
       processDelegateChanged(eventLog, tokenAddress)
@@ -207,9 +238,19 @@ async function bootstrapToken(tokenAddress: `0x${string}`): Promise<void> {
 // ─── Public API ─────────────────────────────────────────────────────
 
 export async function startWhaleTracker(): Promise<void> {
+  // Stop existing trackers first to prevent memory leaks
+  if (unwatchers.length > 0) {
+    log.debug('Stopping existing whale trackers before restart')
+    stopWhaleTracker()
+  }
+
   for (const addr of DELEGATION_TOKEN_ADDRESSES) {
-    await bootstrapToken(addr as `0x${string}`)
-    subscribeToken(addr as `0x${string}`)
+    try {
+      await bootstrapToken(addr as `0x${string}`)
+      subscribeToken(addr as `0x${string}`)
+    } catch (err) {
+      log.error({ err, address: addr }, 'Failed to start whale tracker for token')
+    }
   }
   log.info('Whale delegation tracker started')
 }
@@ -219,6 +260,7 @@ export function stopWhaleTracker(): void {
     unwatch()
   }
   unwatchers.length = 0
+  delegatePower.clear()
   log.info('Whale delegation tracker stopped')
 }
 
@@ -232,6 +274,6 @@ export function getTopDelegates(
   const powerMap = getTokenPowerMap(tokenAddress)
   return [...powerMap.entries()]
     .map(([delegate, power]) => ({ delegate, power }))
-    .sort((a, b) => (b.power > a.power ? 1 : -1))
+    .sort((a, b) => (b.power > a.power ? 1 : b.power < a.power ? -1 : 0))
     .slice(0, n)
 }

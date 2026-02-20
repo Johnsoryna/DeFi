@@ -7,11 +7,10 @@ import {
   AAVE_V3,
   COMPOUND_V3,
   TOKENS,
-  DYDX,
+  BINANCE,
   APIS,
   FORUMS,
   SNAPSHOT_SPACES,
-  GOVERNOR_BRAVO_ADDRESSES,
   DELEGATION_TOKEN_ADDRESSES,
 } from '../../src/config/addresses.js'
 
@@ -46,41 +45,57 @@ describe('contract addresses', () => {
     expect(TOKENS.UNI).toBeDefined()
     expect(TOKENS.MKR).toBeDefined()
     expect(TOKENS.SKY).toBeDefined()
+    // Curated protocol tokens
+    expect(TOKENS.LDO).toBeDefined()
+    expect(TOKENS.CRV).toBeDefined()
+    expect(TOKENS.SNX).toBeDefined()
+    expect(TOKENS.ARB).toBeDefined()
+    expect(TOKENS.OP).toBeDefined()
+    // New protocol tokens
+    expect(TOKENS.DYDX).toBeDefined()
+    expect(TOKENS.ENA).toBeDefined()
+    expect(TOKENS.EIGEN).toBeDefined()
+    // Newest protocol tokens (Ethereum mainnet)
+    expect(TOKENS.POL).toBeDefined()
+    expect(TOKENS.STRK).toBeDefined()
+    expect(TOKENS.MORPHO).toBeDefined()
+    expect(TOKENS.MNT).toBeDefined()
   })
 })
 
 describe('API endpoints', () => {
-  it('dYdX endpoints are HTTPS/WSS', () => {
-    expect(DYDX.indexerRest).toMatch(/^https:\/\//)
-    expect(DYDX.indexerWs).toMatch(/^wss:\/\//)
-    expect(DYDX.chainRpc).toMatch(/^https:\/\//)
+  it('Binance Futures endpoints are HTTPS/WSS', () => {
+    expect(BINANCE.futuresRest).toMatch(/^https:\/\//)
+    expect(BINANCE.futuresWs).toMatch(/^wss:\/\//)
   })
 
   it('external API URLs are well-formed', () => {
     expect(APIS.snapshotGraphql).toMatch(/^https:\/\//)
-    expect(APIS.tallyGraphql).toMatch(/^https:\/\//)
-    expect(APIS.cowswap).toMatch(/^https:\/\//)
-    expect(APIS.pendleApi).toMatch(/^https:\/\//)
     expect(APIS.defiLlamaProtocols).toMatch(/^https:\/\//)
   })
 
   it('forum URLs are HTTPS', () => {
-    expect(FORUMS.aave).toMatch(/^https:\/\//)
-    expect(FORUMS.compound).toMatch(/^https:\/\//)
-    expect(FORUMS.maker).toMatch(/^https:\/\//)
+    // All forum URLs should be HTTPS
+    for (const [, url] of Object.entries(FORUMS)) {
+      expect(url).toMatch(/^https:\/\//)
+    }
+    // Spot-check key protocols
+    expect(FORUMS.aave).toContain('aave')
+    expect(FORUMS.compound).toContain('comp')
+    expect(FORUMS.cosmos).toContain('cosmos')
   })
 })
 
 describe('derived constants', () => {
-  it('GOVERNOR_BRAVO_ADDRESSES has 2 entries', () => {
-    expect(GOVERNOR_BRAVO_ADDRESSES).toHaveLength(2)
-  })
-
-  it('DELEGATION_TOKEN_ADDRESSES has 5 entries', () => {
+  it('DELEGATION_TOKEN_ADDRESSES has expected entries', () => {
+    // 5 profitable governance tokens with delegation support
     expect(DELEGATION_TOKEN_ADDRESSES).toHaveLength(5)
   })
 
-  it('SNAPSHOT_SPACES has 3 entries', () => {
-    expect(SNAPSHOT_SPACES).toHaveLength(3)
+  it('SNAPSHOT_SPACES has expected entries', () => {
+    expect(SNAPSHOT_SPACES).toHaveLength(13)
+    // Core profitable spaces must be present
+    expect(SNAPSHOT_SPACES).toContain('aavedao.eth')
+    expect(SNAPSHOT_SPACES).toContain('compound-governance.eth')
   })
 })

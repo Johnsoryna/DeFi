@@ -14,7 +14,7 @@ const log = createLogger('forum')
 
 let running = false
 
-// ─── Forum Configuration ────────────────────────────────────────────
+// â”€â”€â”€ Forum Configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface ForumConfig {
   url: string
@@ -24,12 +24,17 @@ interface ForumConfig {
 }
 
 const FORUM_CONFIGS: ForumConfig[] = [
+  // Must match backtest FORUM_PROTOCOL — only forums with actual data
   { url: FORUMS.aave, protocol: 'aave', label: 'Aave Forum' },
   { url: FORUMS.compound, protocol: 'compound', label: 'Compound Forum' },
-  { url: FORUMS.maker, protocol: 'maker', label: 'MakerDAO Forum' },
+  { url: FORUMS.arbitrum, protocol: 'arbitrum', label: 'Arbitrum Forum' },
+  { url: FORUMS.dydx, protocol: 'dydx', label: 'dYdX Forum' },
+  { url: FORUMS.cosmos, protocol: 'cosmos', label: 'Cosmos Forum' },
+  { url: FORUMS['1inch'], protocol: '1inch', label: '1inch Forum' },
+  // Injective removed: 0 posts in backtest DB, forum API not public
 ]
 
-// ─── Discourse API Types ────────────────────────────────────────────
+// â”€â”€â”€ Discourse API Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface DiscourseTopic {
   id: number
@@ -48,7 +53,7 @@ interface DiscourseLatestResponse {
   }
 }
 
-// ─── Polling Logic ──────────────────────────────────────────────────
+// â”€â”€â”€ Polling Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function fetchLatestTopics(forumUrl: string): Promise<DiscourseTopic[]> {
   const response = await withRetry(
@@ -75,7 +80,7 @@ async function pollForum(forumConfig: ForumConfig): Promise<void> {
     const newTopics = topics.filter((t) => t.id > lastSeenId)
 
     // Optionally filter by governance category IDs
-    const filtered = forumConfig.governanceCategoryIds
+    const filtered = forumConfig.governanceCategoryIds && Array.isArray(forumConfig.governanceCategoryIds)
       ? newTopics.filter((t) => forumConfig.governanceCategoryIds!.includes(t.category_id))
       : newTopics
 
@@ -107,8 +112,10 @@ async function pollForum(forumConfig: ForumConfig): Promise<void> {
         setForumCursor(forumConfig.url, maxId)
       }
     }
-  } catch (error) {
-    log.error({ err: error, forum: forumConfig.label }, 'Forum poll error')
+  } catch (_error) {
+    // Downgrade to warn for forums that are unreachable (e.g. Injective returns HTML)
+    // These still match backtest config but may not have public Discourse API access
+    log.warn({ forum: forumConfig.label }, 'Forum poll failed — will retry next cycle')
   }
 }
 
@@ -123,7 +130,7 @@ async function pollLoop(): Promise<void> {
   }
 }
 
-// ─── Public API ─────────────────────────────────────────────────────
+// â”€â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function startForumMonitor(): Promise<void> {
   running = true
@@ -135,8 +142,14 @@ export async function startForumMonitor(): Promise<void> {
   for (const forumConfig of FORUM_CONFIGS) {
     await pollForum(forumConfig)
   }
-  // Background poll loop
-  pollLoop().catch((err) => log.error({ err }, 'Forum poll loop crashed'))
+  // Background poll loop with auto-restart
+  function startPollLoop() {
+    pollLoop().catch((err) => {
+      log.error({ err }, 'Forum poll loop crashed, restarting in 10s')
+      if (running) setTimeout(startPollLoop, 10_000)
+    })
+  }
+  startPollLoop()
 }
 
 export function stopForumMonitor(): void {

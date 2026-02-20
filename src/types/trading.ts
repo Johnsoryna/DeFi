@@ -1,10 +1,12 @@
 /**
  * Trading types — signals, positions, and orders.
+ *
+ * All trading goes through Binance USDT-M perpetual futures.
  */
 
 // ─── Trade Signals ──────────────────────────────────────────────────
 
-export type ExecutionProtocol = 'dydx' | 'pendle' | 'spot'
+export type ExecutionProtocol = 'binance'
 
 export type OrderSide = 'long' | 'short'
 
@@ -14,7 +16,7 @@ export interface TradeSignal {
   id: string
   asset: string
   direction: OrderSide
-  sizePct: number // % of portfolio
+  sizePct: number // % of portfolio (notional before leverage)
   protocol: ExecutionProtocol
   confidence: number // 0-1
   rationale: string
@@ -22,19 +24,30 @@ export interface TradeSignal {
   governanceStage: string
   timestamp: number
   urgency: 'low' | 'medium' | 'high'
+
+  // ─── Leverage & Risk (optional — backward compatible) ────────
+  /** Leverage multiplier (1x = no leverage). Binance supports up to 125x (we cap at 10-20x). */
+  leverage?: number
+  /** Stop-loss as fraction of entry price (e.g. 0.05 = 5% below entry for long). */
+  stopLossPct?: number
+  /** Take-profit as fraction of entry price (e.g. 0.10 = 10% above entry for long). */
+  takeProfitPct?: number
+  /** Trailing stop: activation threshold as fraction (e.g. 0.05 = activate after 5% profit). */
+  trailingStopActivation?: number
+  /** Trailing stop: distance from peak as fraction (e.g. 0.02 = close if drops 2% from peak). */
+  trailingStopDistance?: number
+  /** Maximum holding period in hours. Auto-close after this time. */
+  maxHoldingHours?: number
 }
 
 // ─── Positions ──────────────────────────────────────────────────────
 
-export type PositionProtocol = 'dydx' | 'aave' | 'pendle' | 'spot'
+export type PositionProtocol = 'binance' | 'aave'
 
 export type PositionType =
   | 'perp'
   | 'lending_supply'
   | 'lending_borrow'
-  | 'yield_pt'
-  | 'yield_yt'
-  | 'spot'
 
 export interface Position {
   id: string
@@ -47,8 +60,8 @@ export interface Position {
   unrealizedPnl: string
   realizedPnl: string
   accruedYield: string
+  leverage?: number         // Leverage multiplier (1 = no leverage, >1 = leveraged)
   healthFactor?: number     // Aave only
-  maturity?: string         // Pendle only (ISO timestamp)
   lastUpdated: string       // ISO timestamp
 }
 
@@ -65,37 +78,26 @@ export interface Portfolio {
 
 // ─── Order Parameters ───────────────────────────────────────────────
 
-export interface DydxOrderParams {
-  market: string         // e.g. 'AAVE-USD'
-  side: OrderSide
-  type: OrderType
-  size: string
-  price?: string         // For limit/stop orders
-  triggerPrice?: string  // For stop orders
-  timeInForce: 'GTT' | 'IOC' | 'FOK'
-  goodTilBlock?: number
-  postOnly?: boolean
+export type BinanceOrderType = 'LIMIT' | 'MARKET' | 'STOP_MARKET' | 'TAKE_PROFIT_MARKET' | 'STOP' | 'TAKE_PROFIT'
+
+export type BinanceSide = 'BUY' | 'SELL'
+
+export type BinancePositionSide = 'LONG' | 'SHORT' | 'BOTH'
+
+export type BinanceTimeInForce = 'GTC' | 'IOC' | 'FOK' | 'GTX'
+
+export interface BinanceOrderParams {
+  symbol: string               // e.g. 'AAVEUSDT'
+  side: BinanceSide
+  positionSide?: BinancePositionSide
+  type: BinanceOrderType
+  quantity?: string
+  price?: string               // For LIMIT orders
+  stopPrice?: string           // For STOP_MARKET / TAKE_PROFIT_MARKET
+  timeInForce?: BinanceTimeInForce
   reduceOnly?: boolean
-}
-
-export interface PendleSwapParams {
-  chainId: number
-  marketAddress: string
-  tokenIn: string
-  tokenOut: string // PT or YT address
-  amountIn: string
-  slippage: number // e.g. 0.01 = 1%
-  receiver: string
-}
-
-export interface DexSwapParams {
-  tokenIn: string
-  tokenOut: string
-  amountIn: string
-  slippage: number
-  receiver: string
-  deadline?: number
-  preferredRouter: 'cowswap' | 'uniswap'
+  closePosition?: boolean
+  newClientOrderId?: string
 }
 
 // ─── Execution Results ──────────────────────────────────────────────
@@ -103,11 +105,17 @@ export interface DexSwapParams {
 export interface ExecutionResult {
   success: boolean
   signalId: string
-  protocol: ExecutionProtocol
+  protocol: ExecutionProtocol | string
   orderId?: string
   transactionHash?: string
   executedSize?: string
   executedPrice?: string
   error?: string
   timestamp: number
+  metadata?: {
+    gasCostUsd?: number
+    slippagePct?: number
+    basePrice?: number
+    [key: string]: unknown
+  }
 }

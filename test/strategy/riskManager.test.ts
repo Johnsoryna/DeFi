@@ -11,8 +11,8 @@ function makeSignal(overrides: Partial<TradeSignal> = {}): TradeSignal {
     asset: 'AAVE',
     direction: 'long',
     sizePct: 5,
-    protocol: 'dydx',
-    confidence: 0.6,
+    protocol: 'binance',
+    confidence: 0.7,
     rationale: 'Test signal',
     proposalId: 'compound:42',
     governanceStage: 'onchain_vote',
@@ -26,7 +26,7 @@ describe('RiskManager', () => {
   describe('validateSignal', () => {
     it('passes valid signal', () => {
       const rm = new RiskManager()
-      const signal = makeSignal({ confidence: 0.6, sizePct: 5 })
+      const signal = makeSignal({ confidence: 0.7, sizePct: 5 })
       const result = rm.validateSignal(signal)
       expect(result).not.toBeNull()
       expect(result!.sizePct).toBe(5)
@@ -175,7 +175,7 @@ describe('RiskManager', () => {
       const positions: Position[] = [
         {
           id: 'dydx:AAVE',
-          protocol: 'dydx',
+          protocol: 'binance',
           type: 'perp',
           asset: 'AAVE',
           size: '10',

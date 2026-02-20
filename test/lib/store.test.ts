@@ -123,8 +123,8 @@ describe('proposals', () => {
 describe('positions', () => {
   it('creates and retrieves a position', () => {
     upsertPosition({
-      id: 'dydx:AAVE-USD',
-      protocol: 'dydx',
+      id: 'binance:AAVEUSDT',
+      protocol: 'binance',
       type: 'perp',
       asset: 'AAVE',
       size: '10.5',
@@ -132,9 +132,9 @@ describe('positions', () => {
       currentPrice: '96.50',
       unrealizedPnl: '13.65',
     })
-    const positions = getPositions('dydx')
+    const positions = getPositions('binance')
     expect(positions.length).toBeGreaterThan(0)
-    const p = positions.find((pos) => pos.id === 'dydx:AAVE-USD')
+    const p = positions.find((pos) => pos.id === 'binance:AAVEUSDT')
     expect(p).toBeDefined()
     expect(p!.asset).toBe('AAVE')
     expect(p!.size).toBe('10.5')
@@ -142,8 +142,8 @@ describe('positions', () => {
 
   it('updates an existing position', () => {
     upsertPosition({
-      id: 'dydx:AAVE-USD',
-      protocol: 'dydx',
+      id: 'binance:AAVEUSDT',
+      protocol: 'binance',
       type: 'perp',
       asset: 'AAVE',
       size: '5.0',
@@ -151,15 +151,15 @@ describe('positions', () => {
       currentPrice: '98.00',
       unrealizedPnl: '14.00',
     })
-    const positions = getPositions('dydx')
-    const p = positions.find((pos) => pos.id === 'dydx:AAVE-USD')
+    const positions = getPositions('binance')
+    const p = positions.find((pos) => pos.id === 'binance:AAVEUSDT')
     expect(p!.size).toBe('5.0')
   })
 
   it('deletes a position', () => {
-    deletePosition('dydx:AAVE-USD')
-    const positions = getPositions('dydx')
-    expect(positions.find((pos) => pos.id === 'dydx:AAVE-USD')).toBeUndefined()
+    deletePosition('binance:AAVEUSDT')
+    const positions = getPositions('binance')
+    expect(positions.find((pos) => pos.id === 'binance:AAVEUSDT')).toBeUndefined()
   })
 })
 

@@ -131,18 +131,79 @@ async function sendToDiscord(alert: Alert): Promise<void> {
   }
 }
 
+// ─── Deduplication ──────────────────────────────────────────────────
+
+// Track recent alerts to avoid spam (proposalId -> last alert timestamp)
+const recentAlerts = new Map<string, number>()
+const DEDUP_WINDOW_MS = 3600_000 // 1 hour
+
+/**
+ * Check if we should suppress this alert due to recent duplicate.
+ * Returns true if alert should be sent, false if it's a duplicate.
+ */
+function shouldSendAlert(alert: Alert): boolean {
+  // Only deduplicate proposal-related alerts
+  if (alert.type !== 'proposal_detected') return true
+  
+  const proposalId = alert.metadata?.proposalId as string | undefined
+  if (!proposalId) return true
+
+  const lastSent = recentAlerts.get(proposalId)
+  const now = Date.now()
+
+  if (lastSent && (now - lastSent) < DEDUP_WINDOW_MS) {
+    log.debug({ proposalId, lastSent: new Date(lastSent).toISOString() }, 'Alert suppressed: duplicate within dedup window')
+    return false
+  }
+
+  recentAlerts.set(proposalId, now)
+  
+  // Cleanup old entries periodically
+  if (recentAlerts.size > 100) {
+    for (const [key, timestamp] of recentAlerts) {
+      if (now - timestamp > DEDUP_WINDOW_MS * 2) {
+        recentAlerts.delete(key)
+      }
+    }
+  }
+
+  return true
+}
+
 // ─── Main Dispatch ──────────────────────────────────────────────────
 
 async function dispatchAlert(alert: Alert): Promise<void> {
+  // Check deduplication
+  if (!shouldSendAlert(alert)) {
+    // Still log to database for record-keeping
+    try {
+      logAlert({
+        type: alert.type,
+        severity: alert.severity,
+        channel: alert.channel,
+        title: `[DEDUPED] ${alert.title}`,
+        message: alert.message,
+        metadata: alert.metadata,
+      })
+    } catch (err) {
+      log.error({ err, alertId: alert.id }, 'Failed to log deduped alert to database')
+    }
+    return
+  }
+
   // Log to database
-  logAlert({
-    type: alert.type,
-    severity: alert.severity,
-    channel: alert.channel,
-    title: alert.title,
-    message: alert.message,
-    metadata: alert.metadata,
-  })
+  try {
+    logAlert({
+      type: alert.type,
+      severity: alert.severity,
+      channel: alert.channel,
+      title: alert.title,
+      message: alert.message,
+      metadata: alert.metadata,
+    })
+  } catch (err) {
+    log.error({ err, alertId: alert.id }, 'Failed to log alert to database')
+  }
 
   // Dispatch to configured channels
   const promises: Promise<void>[] = []

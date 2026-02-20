@@ -5,7 +5,7 @@
 import { getReadClient } from '../clients/rpc.js'
 import { aavePoolAbi } from '../config/abis/aavePool.js'
 import { AAVE_V3, APIS } from '../config/addresses.js'
-import { computeHealthFactor, simulateHfAfterLtChange, hfLiquidationThreshold, bpsToPercent } from '../lib/bignum.js'
+import { simulateHfAfterLtChange, hfLiquidationThreshold, bpsToPercent } from '../lib/bignum.js'
 import { createLogger } from '../lib/logger.js'
 import { withRetry } from '../lib/retry.js'
 import { config } from '../config/index.js'
@@ -120,6 +120,17 @@ export async function simulateLtChange(
   newLtBps: number,
   asset?: string,
 ): Promise<LiquidationSimResult> {
+  // Input validation
+  if (oldLtBps < 0 || oldLtBps > 10000) {
+    throw new Error(`Invalid oldLtBps: ${oldLtBps}. Must be 0-10000.`)
+  }
+  if (newLtBps < 0 || newLtBps > 10000) {
+    throw new Error(`Invalid newLtBps: ${newLtBps}. Must be 0-10000.`)
+  }
+  if (newLtBps === 0) {
+    throw new Error('newLtBps cannot be 0 (would cause division by zero)')
+  }
+
   const paramChange: ParamChange = {
     param: 'liquidationThreshold',
     oldValue: oldLtBps,

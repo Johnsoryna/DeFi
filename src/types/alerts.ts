@@ -12,6 +12,7 @@ export type AlertType =
   | 'stage_transition'
   | 'trade_executed'
   | 'stop_loss_triggered'
+  | 'trade_exit'
   | 'health_warning'
   | 'whale_movement'
   | 'system_error'

@@ -16,7 +16,7 @@ function makeAnalysis(overrides: Partial<ProposalAnalysis> = {}): ProposalAnalys
     actions: [],
     impacts: [],
     cascadeImpacts: [],
-    confidenceScore: 0.5,
+    confidenceScore: 0.7,  // Higher default to pass stricter filters
     timestamp: Date.now(),
     ...overrides,
   }
@@ -42,27 +42,45 @@ describe('generateSignals', () => {
 
     const shortSignal = signals.find(s => s.direction === 'short')
     expect(shortSignal).toBeDefined()
-    expect(shortSignal!.protocol).toBe('dydx')
+    expect(shortSignal!.protocol).toBe('binance')
     expect(shortSignal!.confidence).toBeGreaterThan(0)
   })
 
-  it('generates long signal for supply cap increase', () => {
-    const analysis = makeAnalysis({
+  it('on-chain: only allows shorts for freeze/LT/delisting, blocks generic caps', () => {
+    // Cap changes at on-chain stage are filtered (not in bearish-categories set)
+    const capAnalysis = makeAnalysis({
       stage: 'onchain_vote',
+      confidenceScore: 0.8,  // High confidence for test
       impacts: [
         {
           category: 'supply_cap_change',
           asset: 'WETH',
-          currentValue: '50000',
-          proposedValue: '100000',
+          currentValue: '100000',
+          proposedValue: '50000',
           severity: 'medium',
         },
       ],
     })
+    const capSignals = generateSignals(capAnalysis, [])
+    expect(capSignals.length).toBe(0) // Filtered: not in bearish-categories
 
-    const signals = generateSignals(analysis, [])
-    const longSignal = signals.find(s => s.direction === 'long')
-    expect(longSignal).toBeDefined()
+    // LT decrease at timelock stage IS allowed (in bearish-categories)
+    const ltAnalysis = makeAnalysis({
+      stage: 'timelock',  // Lower threshold (0.30) for legacy path
+      confidenceScore: 0.8,  // High confidence for test
+      impacts: [
+        {
+          category: 'liquidation_threshold_change',
+          asset: 'WETH',
+          currentValue: '90',
+          proposedValue: '85',
+          severity: 'high',
+        },
+      ],
+    })
+    const ltSignals = generateSignals(ltAnalysis, [])
+    const shortSignal = ltSignals.find(s => s.direction === 'short')
+    expect(shortSignal).toBeDefined()
   })
 
   it('generates critical signals for reserve freeze', () => {
@@ -78,7 +96,7 @@ describe('generateSignals', () => {
     })
 
     const signals = generateSignals(analysis, [])
-    // Should generate both a short (dydx) and a PT trade (pendle)
+    // Should generate a short signal on dYdX
     expect(signals.length).toBeGreaterThanOrEqual(1)
     expect(signals.some(s => s.direction === 'short')).toBe(true)
   })
@@ -111,7 +129,7 @@ describe('generateSignals', () => {
 
     const existingPosition: Position = {
       id: 'dydx:WETH',
-      protocol: 'dydx',
+      protocol: 'binance',
       type: 'perp',
       asset: 'WETH',
       size: '10',
@@ -124,8 +142,8 @@ describe('generateSignals', () => {
     }
 
     const signals = generateSignals(analysis, [existingPosition])
-    // Should not generate a dydx signal for WETH since position exists
-    const dydxWethSignal = signals.find(s => s.asset === 'WETH' && s.protocol === 'dydx')
+    // Should not generate a binance signal for WETH since position exists
+    const dydxWethSignal = signals.find(s => s.asset === 'WETH' && s.protocol === 'binance')
     expect(dydxWethSignal).toBeUndefined()
   })
 

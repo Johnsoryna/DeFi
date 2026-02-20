@@ -34,13 +34,21 @@ const unwatchers: WatchContractEventReturnType[] = []
 
 // ─── Event Processing ───────────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function processGovernanceCoreLog(eventLog: any): void {
   const txHash = eventLog.transactionHash
   const logIndex = eventLog.logIndex
+  const blockNumber = eventLog.blockNumber
+
+  // Null safety checks
+  if (!txHash || logIndex === undefined || logIndex === null || !blockNumber) {
+    log.warn({ eventLog }, 'Incomplete Aave event log — skipping')
+    return
+  }
 
   if (eventLog.removed) {
     log.warn({ txHash }, 'Reorg detected — rolling back Aave event')
-    rollbackEvent(txHash)
+    rollbackEvent(txHash, logIndex)
     return
   }
 
@@ -54,7 +62,7 @@ function processGovernanceCoreLog(eventLog: any): void {
       const event: ProposalCreatedEvent = {
         type: 'proposal_created',
         protocol: 'aave',
-        blockNumber: eventLog.blockNumber!,
+        blockNumber: BigInt(blockNumber),
         transactionHash: txHash,
         logIndex,
         removed: false,
@@ -73,7 +81,7 @@ function processGovernanceCoreLog(eventLog: any): void {
       const event: ProposalQueuedEvent = {
         type: 'proposal_queued',
         protocol: 'aave',
-        blockNumber: eventLog.blockNumber!,
+        blockNumber: BigInt(blockNumber),
         transactionHash: txHash,
         logIndex,
         removed: false,
@@ -88,7 +96,7 @@ function processGovernanceCoreLog(eventLog: any): void {
       const event: ProposalExecutedEvent = {
         type: 'proposal_executed',
         protocol: 'aave',
-        blockNumber: eventLog.blockNumber!,
+        blockNumber: BigInt(blockNumber),
         transactionHash: txHash,
         logIndex,
         removed: false,
@@ -105,44 +113,57 @@ function processGovernanceCoreLog(eventLog: any): void {
       return
   }
 
-  markEventProcessed(eventLog.blockNumber, txHash, logIndex, eventName, 'aave')
+  markEventProcessed(BigInt(blockNumber), txHash, logIndex, eventName, 'aave')
   log.info({ eventName, proposalId: args.proposalId?.toString() }, 'Processed Aave governance event')
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function processVotingMachineLog(eventLog: any): void {
   const txHash = eventLog.transactionHash
   const logIndex = eventLog.logIndex
+  const blockNumber = eventLog.blockNumber
+
+  // Null safety checks
+  if (!txHash || logIndex === undefined || logIndex === null || !blockNumber) {
+    log.warn({ eventLog }, 'Incomplete Aave voting event log — skipping')
+    return
+  }
 
   if (eventLog.removed) {
-    rollbackEvent(txHash)
+    rollbackEvent(txHash, logIndex)
     return
   }
 
   if (isEventProcessed(txHash, logIndex)) return
 
   const args = eventLog.args
+  // Handle support as either boolean or number
+  const support = typeof args.support === 'boolean' ? (args.support ? 1 : 0) : Number(args.support)
+  
   const event: VoteCastEvent = {
     type: 'vote_cast',
     protocol: 'aave',
-    blockNumber: eventLog.blockNumber!,
+    blockNumber: BigInt(blockNumber),
     transactionHash: txHash,
     logIndex,
     removed: false,
     proposalId: args.proposalId,
     voter: args.voter,
-    support: args.support ? 1 : 0,
+    support,
     votes: args.votingPower,
   }
 
   eventBus.emit('governance:vote', event)
-  markEventProcessed(eventLog.blockNumber, txHash, logIndex, 'VoteEmitted', 'aave')
+  markEventProcessed(BigInt(blockNumber), txHash, logIndex, 'VoteEmitted', 'aave')
 }
 
 // ─── Backfill ───────────────────────────────────────────────────────
 
 async function backfillContract(
   address: `0x${string}`,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   abi: readonly any[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   processor: (log: any) => void,
   label: string,
 ): Promise<void> {
@@ -160,6 +181,7 @@ async function backfillContract(
 
   const logs = await getPaginatedLogs({
     address,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     events: abi.filter((item) => item.type === 'event') as any,
     fromBlock: fromBlock + 1n,
     toBlock: currentBlock,
@@ -193,7 +215,13 @@ function subscribeGovernanceCore(): void {
         }
       },
       onError: (error) => {
-        log.error({ err: error, eventName }, 'GovernanceCore subscription error')
+        const isSocketClosed = error?.name === 'SocketClosedError' ||
+          (error?.message ?? '').includes('socket has been closed')
+        if (isSocketClosed) {
+          log.warn({ eventName }, 'WSS disconnected — will auto-recover via HTTP polling')
+        } else {
+          log.error({ err: error, eventName }, 'GovernanceCore subscription error')
+        }
       },
     })
     unwatchers.push(unwatch)
@@ -219,7 +247,13 @@ function subscribeVotingMachine(): void {
       }
     },
     onError: (error) => {
-      log.error({ err: error }, 'VotingMachine subscription error')
+      const isSocketClosed = error?.name === 'SocketClosedError' ||
+        (error?.message ?? '').includes('socket has been closed')
+      if (isSocketClosed) {
+        log.warn('VotingMachine WSS disconnected — will auto-recover via HTTP polling')
+      } else {
+        log.error({ err: error }, 'VotingMachine subscription error')
+      }
     },
   })
 
@@ -230,11 +264,22 @@ function subscribeVotingMachine(): void {
 // ─── Public API ─────────────────────────────────────────────────────
 
 export async function startAaveGovMonitor(): Promise<void> {
-  await backfillContract(GOVERNANCE_CORE, aaveGovernanceCoreAbi, processGovernanceCoreLog, 'GovernanceCore')
-  await backfillContract(VOTING_MACHINE, aaveVotingMachineAbi, processVotingMachineLog, 'VotingMachine')
-  subscribeGovernanceCore()
-  subscribeVotingMachine()
-  log.info('Aave governance monitor started')
+  // Stop existing monitors first to prevent memory leaks
+  if (unwatchers.length > 0) {
+    log.debug('Stopping existing Aave monitors before restart')
+    stopAaveGovMonitor()
+  }
+
+  try {
+    await backfillContract(GOVERNANCE_CORE, aaveGovernanceCoreAbi, processGovernanceCoreLog, 'GovernanceCore')
+    await backfillContract(VOTING_MACHINE, aaveVotingMachineAbi, processVotingMachineLog, 'VotingMachine')
+    subscribeGovernanceCore()
+    subscribeVotingMachine()
+    log.info('Aave governance monitor started')
+  } catch (err) {
+    log.error({ err }, 'Failed to start Aave governance monitor')
+    throw err
+  }
 }
 
 export function stopAaveGovMonitor(): void {

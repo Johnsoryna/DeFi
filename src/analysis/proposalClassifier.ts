@@ -44,6 +44,9 @@ const FUNCTION_IMPACT_MAP: Record<string, ImpactCategory> = {
   setIlkLiquidationPenalty: 'liquidation_threshold_change',
   setIlkMaxLiquidationAmount: 'liquidation_threshold_change',
 
+  // Compound proxy upgrades (typically IR curve changes)
+  deployAndUpgradeTo: 'interest_rate_change',
+
   // Asset listing / delisting patterns
   initReserve: 'asset_listing',
   initReserves: 'asset_listing',
@@ -57,7 +60,7 @@ const FUNCTION_IMPACT_MAP: Record<string, ImpactCategory> = {
 
 // ─── Known Target Addresses ─────────────────────────────────────────
 
-const KNOWN_TARGETS = new Map<string, string>([
+const _KNOWN_TARGETS = new Map<string, string>([
   [AAVE_V3.poolConfigurator.toLowerCase(), 'Aave V3 PoolConfigurator'],
   [AAVE_V3.pool.toLowerCase(), 'Aave V3 Pool'],
   [COMPOUND_V3.cUSDCv3.toLowerCase(), 'Compound cUSDCv3'],
@@ -65,9 +68,25 @@ const KNOWN_TARGETS = new Map<string, string>([
   [COMPOUND_V3.cUSDTv3.toLowerCase(), 'Compound cUSDTv3'],
 ])
 
+// Compound Configurator — updateAsset*(comet, asset, newValue) puts the
+// comet address in param0 and the ACTUAL asset in param1.
+const _COMPOUND_CONFIGURATOR = '0x316f9708bb98af7da9c68c1c3b5e79039cd336e3'
+
+/**
+ * Compound Configurator functions where param0=comet, param1=asset.
+ * For these we must use param1 (the real asset), not param0 (the comet market).
+ */
+const COMPOUND_CONFIG_FUNCTIONS = new Set([
+  'updateAssetSupplyCap',
+  'updateAssetBorrowCollateralFactor',
+  'updateAssetLiquidateCollateralFactor',
+  'updateAssetLiquidationFactor',
+  'updateAssetPriceFeed',
+])
+
 // ─── Severity Assessment ────────────────────────────────────────────
 
-function assessSeverity(category: ImpactCategory, params: Record<string, unknown>): 'low' | 'medium' | 'high' | 'critical' {
+function assessSeverity(category: ImpactCategory, _params: Record<string, unknown>): 'low' | 'medium' | 'high' | 'critical' {
   switch (category) {
     case 'reserve_freeze':
     case 'asset_delisting':
@@ -110,9 +129,12 @@ export function classifyAction(action: DecodedAction): ImpactCategory {
 
 /**
  * Classify all actions in a proposal and generate impact assessments.
+ * Deduplicates: multiple actions with the same category+asset in one proposal
+ * produce only ONE impact (keeps the one with the most detail).
  */
 export function classifyProposal(actions: DecodedAction[]): ProposalImpact[] {
   const impacts: ProposalImpact[] = []
+  const seen = new Set<string>() // "category:asset" dedup key
 
   for (const action of actions) {
     const category = classifyAction(action)
@@ -123,6 +145,15 @@ export function classifyProposal(actions: DecodedAction[]): ProposalImpact[] {
     }
 
     const asset = extractAffectedAsset(action)
+
+    // Deduplicate: same category + same asset → skip
+    const dedupKey = `${category}:${asset.toLowerCase()}`
+    if (seen.has(dedupKey)) {
+      log.debug({ category, asset, signature: action.signature }, 'Duplicate impact — skipping')
+      continue
+    }
+    seen.add(dedupKey)
+
     const severity = assessSeverity(category, action.params)
 
     const impact: ProposalImpact = {
@@ -166,23 +197,40 @@ function extractFunctionName(signature: string): string {
 
 function extractAffectedAsset(action: DecodedAction): string {
   const params = action.params
+  const funcName = extractFunctionName(action.signature)
 
-  // Check common parameter patterns for asset address
-  if (params.param0 && typeof params.param0 === 'string' && params.param0.startsWith('0x')) {
+  // Compound Configurator: updateAsset*(comet, asset, newValue)
+  // param0 = comet market (cUSDCv3/cWETHv3), param1 = actual asset being modified
+  if (
+    COMPOUND_CONFIG_FUNCTIONS.has(funcName) &&
+    params.param1 && typeof params.param1 === 'string' && params.param1.startsWith('0x')
+  ) {
+    return params.param1
+  }
+
+  // Aave PoolConfigurator: configureReserveAsCollateral(asset, ltv, lt, lb)
+  // param0 IS the asset for Aave functions
+  if (params?.param0 && typeof params.param0 === 'string' && params.param0.startsWith('0x')) {
     return params.param0
   }
 
-  if (params.asset && typeof params.asset === 'string') {
+  if (params?.asset && typeof params.asset === 'string') {
     return params.asset
   }
 
-  if (params.ilk && typeof params.ilk === 'string') {
+  if (params?.ilk && typeof params.ilk === 'string') {
     return params.ilk
   }
 
   return action.target
 }
 
+/**
+ * Extract parameter values from decoded action.
+ * NOTE: This only extracts 'proposed' values from the calldata.
+ * Extracting 'current' values would require on-chain state reads,
+ * which is not implemented here for performance reasons.
+ */
 function extractParameterValues(
   category: ImpactCategory,
   action: DecodedAction,
@@ -200,7 +248,9 @@ function extractParameterValues(
 
     case 'supply_cap_change':
     case 'borrow_cap_change': {
-      const proposed = params.param1 ?? params.newBorrowCap ?? params.newSupplyCap
+      // Compound Configurator: param2 = new cap (param0=comet, param1=asset)
+      // Aave: param1 = new cap
+      const proposed = params.param2 ?? params.param1 ?? params.newBorrowCap ?? params.newSupplyCap
       if (proposed !== undefined) {
         return { proposed: String(proposed) }
       }

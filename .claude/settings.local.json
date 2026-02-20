@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(npx tsx:*)",
+      "Bash(dir:*)",
+      "Bash(npx eslint:*)",
+      "Bash(git rm:*)",
+      "Bash(git add:*)",
+      "Bash(node:*)",
+      "Bash(git checkout:*)",
+      "Bash(python3:*)",
+      "Bash(ls:*)",
+      "Bash(cd:*)",
+      "Bash(1:*)",
+      "WebSearch",
+      "WebFetch(domain:www.binance.com)",
+      "Bash(curl:*)",
+      "Bash(while IFS= read -r f)",
+      "Bash(do if grep -l \"/\\\\*\\\\|//\" \"$f\")",
+      "Bash(then echo \"$f\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(find:*)",
+      "Bash(ssh:*)",
+      "Bash(scp:*)",
+      "Bash(echo:*)"
+    ]
+  }
+}

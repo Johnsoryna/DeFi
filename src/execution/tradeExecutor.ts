@@ -1,12 +1,12 @@
 /**
  * Trade executor router.
- * Routes validated TradeSignals to the appropriate protocol executor.
+ * Routes validated TradeSignals to the Binance Futures executor.
+ *
+ * All trading goes through Binance USDT-M perpetual futures.
  */
 import { eventBus } from '../lib/eventBus.js'
 import { createLogger } from '../lib/logger.js'
-import { executeDydxSignal } from './dydxExecutor.js'
-import { executePendleSignal } from './pendleExecutor.js'
-import { executeDexSignal } from './dexExecutor.js'
+import { executeBinanceSignal } from './binanceExecutor.js'
 import { sendAlert } from './alertService.js'
 import type { TradeSignal, ExecutionResult } from '../types/trading.js'
 
@@ -15,7 +15,7 @@ const log = createLogger('trade-executor')
 // ─── Execution Router ───────────────────────────────────────────────
 
 /**
- * Route a validated trade signal to the appropriate executor.
+ * Execute a validated trade signal via Binance Futures.
  */
 async function executeSignal(signal: TradeSignal): Promise<ExecutionResult> {
   log.info(
@@ -23,37 +23,16 @@ async function executeSignal(signal: TradeSignal): Promise<ExecutionResult> {
       signalId: signal.id,
       asset: signal.asset,
       direction: signal.direction,
-      protocol: signal.protocol,
       sizePct: signal.sizePct.toFixed(2),
+      leverage: (signal.leverage ?? 1).toFixed(1) + 'x',
       confidence: signal.confidence.toFixed(3),
+      stopLoss: signal.stopLossPct ? (signal.stopLossPct * 100).toFixed(1) + '%' : 'none',
+      takeProfit: signal.takeProfitPct ? (signal.takeProfitPct * 100).toFixed(1) + '%' : 'none',
     },
     'Executing trade signal',
   )
 
-  let result: ExecutionResult
-
-  switch (signal.protocol) {
-    case 'dydx':
-      result = await executeDydxSignal(signal)
-      break
-
-    case 'pendle':
-      result = await executePendleSignal(signal)
-      break
-
-    case 'spot':
-      result = await executeDexSignal(signal)
-      break
-
-    default:
-      result = {
-        success: false,
-        signalId: signal.id,
-        protocol: signal.protocol,
-        error: `Unknown protocol: ${signal.protocol}`,
-        timestamp: Date.now(),
-      }
-  }
+  const result = await executeBinanceSignal(signal)
 
   // Emit execution result
   eventBus.emit('execution:result', result)
@@ -65,12 +44,13 @@ async function executeSignal(signal: TradeSignal): Promise<ExecutionResult> {
       'info',
       `Trade Executed: ${signal.direction.toUpperCase()} ${signal.asset}`,
       [
-        `Protocol: ${signal.protocol}`,
         `Size: ${signal.sizePct.toFixed(2)}% of portfolio`,
+        signal.leverage && signal.leverage > 1 ? `Leverage: ${signal.leverage}x` : '',
         `Confidence: ${(signal.confidence * 100).toFixed(1)}%`,
+        signal.stopLossPct ? `Stop-Loss: ${(signal.stopLossPct * 100).toFixed(1)}%` : '',
+        signal.takeProfitPct ? `Take-Profit: ${(signal.takeProfitPct * 100).toFixed(1)}%` : '',
         `Rationale: ${signal.rationale}`,
         result.orderId ? `Order: ${result.orderId}` : '',
-        result.transactionHash ? `Tx: ${result.transactionHash}` : '',
       ]
         .filter(Boolean)
         .join('\n'),
@@ -78,6 +58,7 @@ async function executeSignal(signal: TradeSignal): Promise<ExecutionResult> {
         signalId: signal.id,
         proposalId: signal.proposalId,
         stage: signal.governanceStage,
+        leverage: signal.leverage ?? 1,
       },
     )
   } else {
@@ -85,7 +66,7 @@ async function executeSignal(signal: TradeSignal): Promise<ExecutionResult> {
       'system_error',
       'error',
       `Trade Failed: ${signal.direction.toUpperCase()} ${signal.asset}`,
-      `Error: ${result.error}\nProtocol: ${signal.protocol}\nSignal: ${signal.id}`,
+      `Error: ${result.error}\nSignal: ${signal.id}`,
       { signalId: signal.id, error: result.error },
     )
   }

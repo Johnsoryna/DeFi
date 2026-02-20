@@ -39,20 +39,19 @@ const GOVERNORS: GovernorBravoConfig[] = [
     protocol: 'compound',
     label: 'Compound',
   },
-  {
-    address: GOVERNANCE.uniswapGovernorBravo as `0x${string}`,
-    protocol: 'uniswap',
-    label: 'Uniswap',
-  },
 ]
 
 const unwatchers: WatchContractEventReturnType[] = []
+
+/** Decoded args from Governor Bravo ABI events */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DecodedArgs = Record<string, any>
 
 // ─── Event Parsing ──────────────────────────────────────────────────
 
 function parseProposalCreated(
   eventLog: Log,
-  args: any,
+  args: DecodedArgs,
   protocol: GovernanceProtocol,
 ): ProposalCreatedEvent {
   return {
@@ -76,7 +75,7 @@ function parseProposalCreated(
 
 function parseVoteCast(
   eventLog: Log,
-  args: any,
+  args: DecodedArgs,
   protocol: GovernanceProtocol,
 ): VoteCastEvent {
   return {
@@ -96,7 +95,7 @@ function parseVoteCast(
 
 function parseProposalQueued(
   eventLog: Log,
-  args: any,
+  args: DecodedArgs,
   protocol: GovernanceProtocol,
 ): ProposalQueuedEvent {
   return {
@@ -113,7 +112,7 @@ function parseProposalQueued(
 
 function parseProposalExecuted(
   eventLog: Log,
-  args: any,
+  args: DecodedArgs,
   protocol: GovernanceProtocol,
 ): ProposalExecutedEvent {
   return {
@@ -129,14 +128,22 @@ function parseProposalExecuted(
 
 // ─── Log Processing ─────────────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function processGovernanceLog(eventLog: any, protocol: GovernanceProtocol): void {
   const txHash = eventLog.transactionHash
   const logIndex = eventLog.logIndex
+  const blockNumber = eventLog.blockNumber
+
+  // Null safety checks
+  if (!txHash || logIndex === undefined || logIndex === null || !blockNumber) {
+    log.warn({ eventLog }, 'Incomplete event log — skipping')
+    return
+  }
 
   // Handle chain reorg
   if (eventLog.removed) {
     log.warn({ txHash, protocol }, 'Reorg detected — rolling back event')
-    rollbackEvent(txHash)
+    rollbackEvent(txHash, logIndex)
     return
   }
 
@@ -168,7 +175,7 @@ function processGovernanceLog(eventLog: any, protocol: GovernanceProtocol): void
       return
   }
 
-  markEventProcessed(eventLog.blockNumber, txHash, logIndex, eventName, protocol)
+  markEventProcessed(BigInt(blockNumber), txHash, logIndex, eventName, protocol)
   log.info({ protocol, eventName, proposalId: govEvent.proposalId.toString() }, 'Processed governance event')
 }
 
@@ -193,6 +200,7 @@ async function backfill(gov: GovernorBravoConfig): Promise<void> {
 
   const logs = await getPaginatedLogs({
     address: gov.address,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     events: governorBravoAbi.filter((item) => item.type === 'event') as any,
     fromBlock: fromBlock + 1n,
     toBlock: currentBlock,
@@ -228,8 +236,13 @@ function subscribe(gov: GovernorBravoConfig): void {
         }
       },
       onError: (error) => {
-        log.error({ err: error, protocol: gov.label, eventName }, 'Subscription error')
-        // Backfill will run on next health check cycle
+        const isSocketClosed = error?.name === 'SocketClosedError' ||
+          (error?.message ?? '').includes('socket has been closed')
+        if (isSocketClosed) {
+          log.warn({ protocol: gov.label, eventName }, 'WSS disconnected — will auto-recover via HTTP polling')
+        } else {
+          log.error({ err: error, protocol: gov.label, eventName }, 'Subscription error')
+        }
       },
     })
 
@@ -242,9 +255,19 @@ function subscribe(gov: GovernorBravoConfig): void {
 // ─── Public API ─────────────────────────────────────────────────────
 
 export async function startGovernorBravoMonitor(): Promise<void> {
+  // Stop existing monitors first to prevent memory leaks
+  if (unwatchers.length > 0) {
+    log.debug('Stopping existing Governor Bravo monitors before restart')
+    stopGovernorBravoMonitor()
+  }
+
   for (const gov of GOVERNORS) {
-    await backfill(gov)
-    subscribe(gov)
+    try {
+      await backfill(gov)
+      subscribe(gov)
+    } catch (err) {
+      log.error({ err, protocol: gov.label }, 'Failed to start Governor Bravo monitor')
+    }
   }
   log.info('Governor Bravo monitor started')
 }

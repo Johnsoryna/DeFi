@@ -8,7 +8,6 @@ import {
   wadToDecimal,
   bpsToPercent,
   percentToBps,
-  rayRateToApy,
   computeHealthFactor,
   simulateHfAfterLtChange,
   hfLiquidationThreshold,
