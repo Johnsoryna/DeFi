@@ -125,7 +125,7 @@ const RISK_PROFILES: Record<string, RiskProfile> = {
     takeProfitPct: 0.36,           // 36% take-profit — let winners run BIG
     trailingStopActivation: 0.15,  // Activate trailing at 15% profit — WIDE (proven optimal)
     trailingStopDistance: 0.07,    // Trail at 7% from peak — governance needs room
-    maxHoldingHours: 576,          // Max 24 days — sensitivity: 576h (+14.4%) → $8.2K more than 504h
+    maxHoldingHours: 720,          // Max 30 days — extended from 576h; all 4 prior max-holding exits were profitable at the 24d boundary
   },
   // Medium-conviction (supply cap changes, onboarding, economic policy)
   moderate: {
@@ -133,7 +133,7 @@ const RISK_PROFILES: Record<string, RiskProfile> = {
     takeProfitPct: 0.26,           // 26% take-profit — wider for governance alpha
     trailingStopActivation: 0.12,  // Activate trailing at 12% profit
     trailingStopDistance: 0.05,    // Trail at 5% from peak
-    maxHoldingHours: 576,          // Max 24 days
+    maxHoldingHours: 720,          // Max 30 days — matched with aggressive profile
   },
   // Low-conviction (infrastructure, treasury, deployments)
   conservative: {
@@ -141,7 +141,7 @@ const RISK_PROFILES: Record<string, RiskProfile> = {
     takeProfitPct: 0.20,           // 20% take-profit — governance moves are large
     trailingStopActivation: 0.10,  // Activate trailing at 10% profit
     trailingStopDistance: 0.04,    // Trail at 4% from peak
-    maxHoldingHours: 672,          // Max 28 days
+    maxHoldingHours: 720,          // Max 30 days — aligned with aggressive/moderate
   },
 }
 

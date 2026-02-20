@@ -557,8 +557,8 @@ const ESTABLISHED_PROTOCOLS = new Set([
 ])
 
 // Protocols with historically weak governance alpha requiring elevated signal quality.
-// Backtest evidence: morpho 0 trades at 0.65 threshold (too restrictive).
-// Feb 2026: Lowered from 0.65 → 0.58 to allow high-quality morpho signals through.
+// Backtest evidence: morpho 4 trades at 0.58 threshold → 50% WR, -$3,342 net.
+// Reverted to 0.65: the lower threshold admits noise trades that hurt overall alpha.
 const WEAK_ALPHA_PROTOCOLS = new Set(['morpho'])
 
 /**
@@ -566,8 +566,8 @@ const WEAK_ALPHA_PROTOCOLS = new Set(['morpho'])
  * Weak-alpha protocols require a higher threshold to filter noisy signals.
  */
 function getProtocolMinConfidence(protocols: string[]): number {
-  // Weak alpha: require elevated confidence — backtest threshold (Feb 2026: 0.58)
-  if (protocols.some(p => WEAK_ALPHA_PROTOCOLS.has(p))) return 0.58
+  // Weak alpha: require elevated confidence — 0.65 threshold (reverted from 0.58: 50% WR at lower thresh)
+  if (protocols.some(p => WEAK_ALPHA_PROTOCOLS.has(p))) return 0.65
   // All other established protocols: defer to stage-based minimum
   if (protocols.some(p => ESTABLISHED_PROTOCOLS.has(p))) return 0
   // Unknown protocol (shouldn't happen with curated list) — require strong conviction
@@ -704,6 +704,27 @@ function generateDynamicSignals(
         log.debug({ asset: spec.asset }, 'Skipping stablecoin — insufficient price volatility for directional trade')
         continue
       }
+
+      // ─── STABLECOIN GOVERNANCE FILTER ──────────────────────────────
+      // When a proposal's affected assets are ALL stablecoins (e.g. USDC supply cap
+      // change on AAVE), the governance token (AAVE) does NOT move — it's routine
+      // parameter maintenance. Only real risk events (reserve_freeze, asset_delisting)
+      // carry signal for the protocol token price.
+      // Structural: backtest T14 (-$11,889) and T34 (-$11,066) were both AAVE shorts
+      // triggered by stablecoin parameter proposals — AAVE rallied regardless.
+      if (
+        impact.affectedAssets.length > 0 &&
+        impact.affectedAssets.every(a => STABLECOINS.has(a.toUpperCase())) &&
+        impact.technicalCategory !== 'reserve_freeze' &&
+        impact.technicalCategory !== 'asset_delisting'
+      ) {
+        log.debug(
+          { asset: spec.asset, affectedAssets: impact.affectedAssets, category: impact.technicalCategory },
+          'Stablecoin gov filter: all affected assets are stablecoins with no freeze/delist — governance token price unaffected',
+        )
+        continue
+      }
+      // ─── end stablecoin governance filter ──────────────────────────
 
       // ─── TRADEABLE ASSET WHITELIST ──────────────────────────────────
       // Only trade assets from our curated protocol list.
@@ -1097,6 +1118,23 @@ function generateDynamicSignals(
         }
       }
       // ─── end C4 ────────────────────────────────────────────────────
+
+      // ─── C5: ON-CHAIN VOTE LEVERAGE CAP ────────────────────────────
+      // Structural principle: by the time a proposal reaches on-chain vote,
+      // the market has largely priced in the outcome. The remaining alpha
+      // is smaller → don't pile on leverage that was sized for an early signal.
+      // Cap at 2x to limit exposure on already-priced-in information.
+      if (analysis.stage === 'onchain_vote') {
+        const prevLev = scaledLeverage
+        scaledLeverage = Math.min(scaledLeverage, 2)
+        if (prevLev > 2) {
+          log.debug(
+            { asset: spec.asset, levBefore: prevLev.toFixed(1), levAfter: scaledLeverage.toFixed(1) },
+            'C5: On-chain vote — leverage capped to 2x (market already priced in)',
+          )
+        }
+      }
+      // ─── end C5 ────────────────────────────────────────────────────
 
       const signal: TradeSignal = {
         id: randomUUID(),

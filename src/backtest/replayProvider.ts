@@ -377,7 +377,7 @@ export class EventReplayProvider {
     // CRITICAL: Inject intermediate ticks between events for accurate SL/TP
     let replayed = 0
     let lastTickTs = fromMs
-    const TICK_INTERVAL_MS = 2 * 3600_000 // Check exits every 2 simulated hours (more responsive SL/TP)
+    const TICK_INTERVAL_MS = 1 * 3600_000 // Check exits every 1 simulated hour (reduces max-loss-cap overshoot)
     for (const event of timeline) {
       // Inject intermediate ticks if there's a large gap between events
       if (onTick) {

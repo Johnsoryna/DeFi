@@ -1,56 +1,7 @@
 [
   {
     "signal": {
-      "id": "e8fb0e3b-351d-43dc-9b13-d2c664b776d1",
-      "asset": "AAVE",
-      "direction": "short",
-      "sizePct": 8.4,
-      "protocol": "binance",
-      "confidence": 0.5549999999999999,
-      "rationale": "Technical parameter decrease on GHO — bearish for AAVE",
-      "proposalId": "forum-aave-20501",
-      "governanceStage": "discussion",
-      "timestamp": 1735933438851,
-      "urgency": "low",
-      "leverage": 7,
-      "stopLossPct": 0.1,
-      "takeProfitPct": 0.312,
-      "trailingStopActivation": 0.096,
-      "trailingStopDistance": 0.04000000000000001,
-      "maxHoldingHours": 576
-    },
-    "execution": {
-      "success": true,
-      "signalId": "e8fb0e3b-351d-43dc-9b13-d2c664b776d1",
-      "protocol": "binance",
-      "orderId": "bt-1",
-      "executedSize": "167.79576554875607",
-      "executedPrice": "350.426006",
-      "timestamp": 1735933438851,
-      "metadata": {
-        "gasCostUsd": 0,
-        "slippagePct": 0.0009522,
-        "basePrice": 350.76,
-        "leverage": 7,
-        "dollarAllocation": 8400,
-        "leveragedAllocation": 58800
-      }
-    },
-    "entryPrice": 350.426006,
-    "exitPrice": 294.13916700000004,
-    "size": 167.79576554875607,
-    "direction": "short",
-    "asset": "AAVE",
-    "protocol": "binance",
-    "pnl": 9479.973240291545,
-    "holdingPeriodMs": 447361149,
-    "openedAt": 1735933438851,
-    "closedAt": 1736380800000,
-    "exitReason": "trailing-stop (peak 19.37%, now 16.14%, trail 3.0%)"
-  },
-  {
-    "signal": {
-      "id": "d3a5d192-6452-4fe7-b7b8-b4ac1eb59317",
+      "id": "9ad8e87f-2a0b-4b26-bed0-3ff8a9c3b1b6",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 8.4,
@@ -66,89 +17,89 @@
       "takeProfitPct": 0.312,
       "trailingStopActivation": 0.096,
       "trailingStopDistance": 0.04000000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "d3a5d192-6452-4fe7-b7b8-b4ac1eb59317",
+      "signalId": "9ad8e87f-2a0b-4b26-bed0-3ff8a9c3b1b6",
       "protocol": "binance",
-      "orderId": "bt-2",
-      "executedSize": "221.30964628367616",
-      "executedPrice": "290.972264",
+      "orderId": "bt-1",
+      "executedSize": "202.0808333867182",
+      "executedPrice": "290.972672",
       "timestamp": 1736877927727,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.000953598742226318,
+        "slippagePct": 0.0009522,
         "basePrice": 291.25,
         "leverage": 7,
-        "dollarAllocation": 9199.281272181719,
-        "leveragedAllocation": 64394.968905272035
+        "dollarAllocation": 8400,
+        "leveragedAllocation": 58800
       }
     },
-    "entryPrice": 290.972264,
-    "exitPrice": 323.2084874299242,
-    "size": 221.30964628367616,
+    "entryPrice": 290.972672,
+    "exitPrice": 329.7943718258141,
+    "size": 202.0808333867182,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": -7126.459808539179,
-    "holdingPeriodMs": 93272273,
+    "pnl": -7821.601454269319,
+    "holdingPeriodMs": 248072273,
     "openedAt": 1736877927727,
-    "closedAt": 1736971200000,
-    "exitReason": "stop-loss (-10.97% < -10.0%)"
+    "closedAt": 1737126000000,
+    "exitReason": "near-liquidation (PnL -7781.59 vs margin 8400.00)"
   },
   {
     "signal": {
-      "id": "118175b3-aa8a-4027-8b0b-748474edd80b",
+      "id": "9da8d152-5de3-42ae-a0f5-b56cdf5bb677",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 8.4,
       "protocol": "binance",
       "confidence": 0.5549999999999999,
-      "rationale": "Technical parameter decrease on SUSD — bearish for AAVE",
-      "proposalId": "forum-aave-20673",
+      "rationale": "Technical parameter decrease on AAVE — bearish for AAVE",
+      "proposalId": "forum-aave-20695",
       "governanceStage": "discussion",
-      "timestamp": 1737077861789,
+      "timestamp": 1737149263074,
       "urgency": "low",
       "leverage": 7,
       "stopLossPct": 0.1,
       "takeProfitPct": 0.312,
       "trailingStopActivation": 0.096,
       "trailingStopDistance": 0.04000000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "118175b3-aa8a-4027-8b0b-748474edd80b",
+      "signalId": "9da8d152-5de3-42ae-a0f5-b56cdf5bb677",
       "protocol": "binance",
-      "orderId": "bt-3",
-      "executedSize": "193.01358345419914",
-      "executedPrice": "311.942575",
-      "timestamp": 1737077861789,
+      "orderId": "bt-2",
+      "executedSize": "162.70302013539194",
+      "executedPrice": "333.212795",
+      "timestamp": 1737149263074,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0009525522885617128,
-        "basePrice": 312.24,
+        "slippagePct": 0.0009510536820262253,
+        "basePrice": 333.53,
         "leverage": 7,
-        "dollarAllocation": 8601.307749550177,
-        "leveragedAllocation": 60209.154246851234
+        "dollarAllocation": 7744.961157843071,
+        "leveragedAllocation": 54214.7281049015
       }
     },
-    "entryPrice": 311.942575,
-    "exitPrice": 346.9707730937677,
-    "size": 193.01358345419914,
+    "entryPrice": 333.212795,
+    "exitPrice": 328.2418085677982,
+    "size": 162.70302013539194,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": -6745.865747463488,
-    "holdingPeriodMs": 231738211,
-    "openedAt": 1737077861789,
-    "closedAt": 1737309600000,
-    "exitReason": "stop-loss (-11.12% < -10.0%)"
+    "pnl": 813.6738310997745,
+    "holdingPeriodMs": 149536926,
+    "openedAt": 1737149263074,
+    "closedAt": 1737298800000,
+    "exitReason": "trailing-stop (peak 11.85%, now 1.59%, trail 4.0%)"
   },
   {
     "signal": {
-      "id": "e8080b11-404c-42d6-ab07-0e06fa5047dc",
+      "id": "aee2ff77-63d7-4a28-b652-2b70de9f428b",
       "asset": "COMP",
       "direction": "short",
       "sizePct": 12,
@@ -164,14 +115,14 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "e8080b11-404c-42d6-ab07-0e06fa5047dc",
+      "signalId": "aee2ff77-63d7-4a28-b652-2b70de9f428b",
       "protocol": "binance",
-      "orderId": "bt-4",
-      "executedSize": "168.95752309038164",
+      "orderId": "bt-3",
+      "executedSize": "164.28570830401642",
       "executedPrice": "67.945391",
       "timestamp": 1738008394987,
       "metadata": {
@@ -179,25 +130,25 @@
         "slippagePct": 0.00095,
         "basePrice": 68.01,
         "leverage": 1,
-        "dollarAllocation": 11479.884884288747,
-        "leveragedAllocation": 11479.884884288747
+        "dollarAllocation": 11162.45660428549,
+        "leveragedAllocation": 11162.45660428549
       }
     },
     "entryPrice": 67.945391,
-    "exitPrice": 52.890198000000005,
-    "size": 168.95752309038164,
+    "exitPrice": 49.086588,
+    "size": 164.28570830401642,
     "direction": "short",
     "asset": "COMP",
     "protocol": "binance",
-    "pnl": 2550.8056476082875,
-    "holdingPeriodMs": 561205013,
+    "pnl": 3107.3850231037814,
+    "holdingPeriodMs": 546805013,
     "openedAt": 1738008394987,
-    "closedAt": 1738569600000,
-    "exitReason": "trailing-stop (peak 29.09%, now 22.23%, trail 4.2%)"
+    "closedAt": 1738555200000,
+    "exitReason": "trailing-stop (peak 32.37%, now 27.82%, trail 4.2%)"
   },
   {
     "signal": {
-      "id": "785aaa79-3e9f-4219-9c3e-8b64fe587cb4",
+      "id": "2582fc4d-6cce-473a-babc-c42be2235597",
       "asset": "DYDX",
       "direction": "short",
       "sizePct": 12,
@@ -213,89 +164,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "785aaa79-3e9f-4219-9c3e-8b64fe587cb4",
+      "signalId": "2582fc4d-6cce-473a-babc-c42be2235597",
       "protocol": "binance",
-      "orderId": "bt-5",
-      "executedSize": "11322.532322274463",
-      "executedPrice": "1.009736",
+      "orderId": "bt-4",
+      "executedSize": "11006.202040370215",
+      "executedPrice": "1.010040",
       "timestamp": 1738147978046,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0012499999999999998,
+        "slippagePct": 0.00095,
         "basePrice": 1.011,
         "leverage": 1,
-        "dollarAllocation": 11432.771327597207,
-        "leveragedAllocation": 11432.771327597207
+        "dollarAllocation": 11116.699356064613,
+        "leveragedAllocation": 11116.699356064613
       }
     },
-    "entryPrice": 1.009736,
-    "exitPrice": 1.141425,
-    "size": 11322.532322274463,
+    "entryPrice": 1.01004,
+    "exitPrice": 0.689761125,
+    "size": 11006.202040370215,
     "direction": "short",
     "asset": "DYDX",
     "protocol": "binance",
-    "pnl": -1488.3090945487297,
-    "holdingPeriodMs": 191221954,
+    "pnl": 3531.05702783926,
+    "holdingPeriodMs": 418021954,
     "openedAt": 1738147978046,
-    "closedAt": 1738339200000,
-    "exitReason": "stop-loss (-12.90% < -12.0%)"
+    "closedAt": 1738566000000,
+    "exitReason": "trailing-stop (peak 36.22%, now 31.79%, trail 4.2%)"
   },
   {
     "signal": {
-      "id": "8c334d20-fc08-4fcc-92f4-e8b1bfccf29d",
-      "asset": "AAVE",
-      "direction": "short",
-      "sizePct": 8.4,
-      "protocol": "binance",
-      "confidence": 0.6699999999999999,
-      "rationale": "Technical parameter decrease on SUSD — bearish for AAVE",
-      "proposalId": "snap-0x5c74445127",
-      "governanceStage": "snapshot",
-      "timestamp": 1738329600000,
-      "urgency": "low",
-      "leverage": 7,
-      "stopLossPct": 0.1,
-      "takeProfitPct": 0.312,
-      "trailingStopActivation": 0.096,
-      "trailingStopDistance": 0.04000000000000001,
-      "maxHoldingHours": 576
-    },
-    "execution": {
-      "success": true,
-      "signalId": "8c334d20-fc08-4fcc-92f4-e8b1bfccf29d",
-      "protocol": "binance",
-      "orderId": "bt-6",
-      "executedSize": "167.96616734650092",
-      "executedPrice": "328.367330",
-      "timestamp": 1738329600000,
-      "metadata": {
-        "gasCostUsd": 0,
-        "slippagePct": 0.000951288650494219,
-        "basePrice": 328.68,
-        "leverage": 7,
-        "dollarAllocation": 7879.228853839477,
-        "leveragedAllocation": 55154.601976876336
-      }
-    },
-    "entryPrice": 328.36733,
-    "exitPrice": 225.053598,
-    "size": 167.96616734650092,
-    "direction": "short",
-    "asset": "AAVE",
-    "protocol": "binance",
-    "pnl": 17364.794064702943,
-    "holdingPeriodMs": 218400000,
-    "openedAt": 1738329600000,
-    "closedAt": 1738548000000,
-    "exitReason": "take-profit (31.53% >= 31.2%)"
-  },
-  {
-    "signal": {
-      "id": "92b192ee-8b04-4c52-9469-2e253658dd63",
+      "id": "b8968459-bbdb-4c93-bb42-58c770be1306",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -311,40 +213,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "92b192ee-8b04-4c52-9469-2e253658dd63",
+      "signalId": "b8968459-bbdb-4c93-bb42-58c770be1306",
       "protocol": "binance",
-      "orderId": "bt-7",
-      "executedSize": "346.8975091988206",
-      "executedPrice": "276.324069",
+      "orderId": "bt-5",
+      "executedSize": "302.9991743158223",
+      "executedPrice": "276.324907",
       "timestamp": 1738628056303,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0009614640327877345,
+        "slippagePct": 0.0009584315546975077,
         "basePrice": 276.59,
         "leverage": 7,
-        "dollarAllocation": 13693.733021562568,
-        "leveragedAllocation": 95856.13115093797
+        "dollarAllocation": 11960.88839857582,
+        "leveragedAllocation": 83726.21879003075
       }
     },
-    "entryPrice": 276.324069,
-    "exitPrice": 258.43783435203926,
-    "size": 346.8975091988206,
+    "entryPrice": 276.324907,
+    "exitPrice": 258.43710276350413,
+    "size": 302.9991743158223,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": 6175.933408942893,
+    "pnl": 5394.872048382147,
     "holdingPeriodMs": 308743697,
     "openedAt": 1738628056303,
     "closedAt": 1738936800000,
-    "exitReason": "trailing-stop (peak 12.61%, now 6.56%, trail 5.6%)"
+    "exitReason": "trailing-stop (peak 13.09%, now 6.56%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "e096bfeb-91a5-462a-a6a9-daafc2264844",
+      "id": "b3dbc5a3-5daa-4346-a04e-21c82ac583aa",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 11.76,
@@ -360,40 +262,89 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "e096bfeb-91a5-462a-a6a9-daafc2264844",
+      "signalId": "b3dbc5a3-5daa-4346-a04e-21c82ac583aa",
       "protocol": "binance",
-      "orderId": "bt-8",
-      "executedSize": "395.6192836026043",
-      "executedPrice": "250.238976",
+      "orderId": "bt-6",
+      "executedSize": "345.5569011755565",
+      "executedPrice": "250.239760",
       "timestamp": 1739461902000,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0009622498410699957,
+        "slippagePct": 0.0009591180190143743,
         "basePrice": 250.48,
         "leverage": 7,
-        "dollarAllocation": 14142.76632571187,
-        "leveragedAllocation": 98999.36427998308
+        "dollarAllocation": 12353.153722499583,
+        "leveragedAllocation": 86472.07605749708
       }
     },
-    "entryPrice": 250.238976,
-    "exitPrice": 209.84088426101087,
-    "size": 395.6192836026043,
+    "entryPrice": 250.23976,
+    "exitPrice": 209.83032447677652,
+    "size": 345.5569011755565,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": 16063.443591511117,
-    "holdingPeriodMs": 1109298000,
+    "pnl": 14058.87860127672,
+    "holdingPeriodMs": 1105698000,
     "openedAt": 1739461902000,
-    "closedAt": 1740571200000,
-    "exitReason": "trailing-stop (peak 22.14%, now 16.22%, trail 5.6%)"
+    "closedAt": 1740567600000,
+    "exitReason": "trailing-stop (peak 22.29%, now 16.23%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "82f9f000-1c3c-460c-8b77-1c6b477d4265",
+      "id": "6b116264-67c9-4cd7-b86d-85d59c112629",
+      "asset": "AAVE",
+      "direction": "short",
+      "sizePct": 8.4,
+      "protocol": "binance",
+      "confidence": 0.5549999999999999,
+      "rationale": "Technical parameter decrease on WSTETH — bearish for AAVE",
+      "proposalId": "forum-aave-21196",
+      "governanceStage": "discussion",
+      "timestamp": 1740569989906,
+      "urgency": "low",
+      "leverage": 1,
+      "stopLossPct": 0.1,
+      "takeProfitPct": 0.312,
+      "trailingStopActivation": 0.096,
+      "trailingStopDistance": 0.04000000000000001,
+      "maxHoldingHours": 720
+    },
+    "execution": {
+      "success": true,
+      "signalId": "6b116264-67c9-4cd7-b86d-85d59c112629",
+      "protocol": "binance",
+      "orderId": "bt-7",
+      "executedSize": "47.80870144477273",
+      "executedPrice": "209.430851",
+      "timestamp": 1740569989906,
+      "metadata": {
+        "gasCostUsd": 0,
+        "slippagePct": 0.00095,
+        "basePrice": 209.63,
+        "leverage": 1,
+        "dollarAllocation": 10012.617052688032,
+        "leveragedAllocation": 10012.617052688032
+      }
+    },
+    "entryPrice": 209.430851,
+    "exitPrice": 191.3916495,
+    "size": 47.80870144477273,
+    "direction": "short",
+    "asset": "AAVE",
+    "protocol": "binance",
+    "pnl": 860.6285277504148,
+    "holdingPeriodMs": 188410094,
+    "openedAt": 1740569989906,
+    "closedAt": 1740758400000,
+    "exitReason": "trailing-stop (peak 13.48%, now 8.70%, trail 4.0%)"
+  },
+  {
+    "signal": {
+      "id": "5c0b9521-9047-45a4-baa0-f71828081864",
       "asset": "DYDX",
       "direction": "short",
       "sizePct": 12,
@@ -409,89 +360,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "82f9f000-1c3c-460c-8b77-1c6b477d4265",
+      "signalId": "5c0b9521-9047-45a4-baa0-f71828081864",
       "protocol": "binance",
-      "orderId": "bt-9",
-      "executedSize": "44915.9821554189",
-      "executedPrice": "0.728861",
+      "orderId": "bt-8",
+      "executedSize": "39520.50095003742",
+      "executedPrice": "0.729080",
       "timestamp": 1740992815570,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0012499999999999998,
+        "slippagePct": 0.00095,
         "basePrice": 0.729773,
         "leverage": 2,
-        "dollarAllocation": 16368.748978349817,
-        "leveragedAllocation": 32737.497956699634
+        "dollarAllocation": 14406.797797499417,
+        "leveragedAllocation": 28813.595594998835
       }
     },
-    "entryPrice": 0.728861,
-    "exitPrice": 0.6516475425,
-    "size": 44915.9821554189,
+    "entryPrice": 0.72908,
+    "exitPrice": 0.622709415,
+    "size": 39520.50095003742,
     "direction": "short",
     "asset": "DYDX",
     "protocol": "binance",
-    "pnl": 3462.2255278476337,
-    "holdingPeriodMs": 175984430,
+    "pnl": 4200.361172728617,
+    "holdingPeriodMs": 121984430,
     "openedAt": 1740992815570,
-    "closedAt": 1741168800000,
-    "exitReason": "trailing-stop (peak 18.05%, now 10.71%, trail 5.6%)"
+    "closedAt": 1741114800000,
+    "exitReason": "trailing-stop (peak 21.05%, now 14.70%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "0c420548-fcbc-4f66-a052-441b1987fc39",
-      "asset": "MORPHO",
-      "direction": "short",
-      "sizePct": 12,
-      "protocol": "binance",
-      "confidence": 0.61,
-      "rationale": "Emission reduction may decrease token attractiveness",
-      "proposalId": "snap-0x35bab79a83",
-      "governanceStage": "snapshot",
-      "timestamp": 1741026821000,
-      "urgency": "medium",
-      "leverage": 2,
-      "stopLossPct": 0.1,
-      "takeProfitPct": 0.312,
-      "trailingStopActivation": 0.096,
-      "trailingStopDistance": 0.04000000000000001,
-      "maxHoldingHours": 576
-    },
-    "execution": {
-      "success": true,
-      "signalId": "0c420548-fcbc-4f66-a052-441b1987fc39",
-      "protocol": "binance",
-      "orderId": "bt-10",
-      "executedSize": "17314.015643200153",
-      "executedPrice": "1.897910",
-      "timestamp": 1741026821000,
-      "metadata": {
-        "gasCostUsd": 0,
-        "slippagePct": 0.0010999999999999998,
-        "basePrice": 1.9,
-        "leverage": 2,
-        "dollarAllocation": 16430.221714693,
-        "leveragedAllocation": 32860.443429386
-      }
-    },
-    "entryPrice": 1.89791,
-    "exitPrice": 1.7719470000000002,
-    "size": 17314.015643200153,
-    "direction": "short",
-    "asset": "MORPHO",
-    "protocol": "binance",
-    "pnl": 2176.9820992528917,
-    "holdingPeriodMs": 120379000,
-    "openedAt": 1741026821000,
-    "closedAt": 1741147200000,
-    "exitReason": "trailing-stop (peak 10.95%, now 6.74%, trail 4.0%)"
-  },
-  {
-    "signal": {
-      "id": "9d78a29d-cc80-42e8-8436-123f46e46030",
+      "id": "2ce349c5-822a-4fd7-a9ff-09dbadb3520c",
       "asset": "DYDX",
       "direction": "short",
       "sizePct": 12,
@@ -507,40 +409,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "9d78a29d-cc80-42e8-8436-123f46e46030",
+      "signalId": "2ce349c5-822a-4fd7-a9ff-09dbadb3520c",
       "protocol": "binance",
-      "orderId": "bt-11",
-      "executedSize": "55439.67013519413",
-      "executedPrice": "0.614876",
+      "orderId": "bt-9",
+      "executedSize": "48484.371202461414",
+      "executedPrice": "0.615061",
       "timestamp": 1741953812474,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0012499999999999998,
+        "slippagePct": 0.00095,
         "basePrice": 0.615646,
         "leverage": 2,
-        "dollarAllocation": 17044.273573050832,
-        "leveragedAllocation": 34088.547146101664
+        "dollarAllocation": 14910.426222288457,
+        "leveragedAllocation": 29820.852444576914
       }
     },
-    "entryPrice": 0.614876,
-    "exitPrice": 0.6918617475,
-    "size": 55439.67013519413,
+    "entryPrice": 0.615061,
+    "exitPrice": 0.6903268312499999,
+    "size": 48484.371202461414,
     "direction": "short",
     "asset": "DYDX",
     "protocol": "binance",
-    "pnl": -4266.700905606783,
-    "holdingPeriodMs": 849387526,
+    "pnl": -3641.7612897277795,
+    "holdingPeriodMs": 845787526,
     "openedAt": 1741953812474,
-    "closedAt": 1742803200000,
-    "exitReason": "stop-loss (-12.38% < -12.0%)"
+    "closedAt": 1742799600000,
+    "exitReason": "stop-loss (-12.10% < -12.0%)"
   },
   {
     "signal": {
-      "id": "f37ab090-25ca-4ea2-9b47-f5f4c6a8b1aa",
+      "id": "a966f6df-226d-4060-b85c-b68356ae50b0",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 8.4,
@@ -556,40 +458,40 @@
       "takeProfitPct": 0.312,
       "trailingStopActivation": 0.096,
       "trailingStopDistance": 0.04000000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "f37ab090-25ca-4ea2-9b47-f5f4c6a8b1aa",
+      "signalId": "a966f6df-226d-4060-b85c-b68356ae50b0",
       "protocol": "binance",
-      "orderId": "bt-12",
-      "executedSize": "426.6143157427918",
-      "executedPrice": "189.887960",
+      "orderId": "bt-10",
+      "executedSize": "373.504131160864",
+      "executedPrice": "189.888439",
       "timestamp": 1742898913069,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0009577522305343761,
+        "slippagePct": 0.0009552310291287979,
         "basePrice": 190.07,
         "leverage": 7,
-        "dollarAllocation": 11572.703162500608,
-        "leveragedAllocation": 81008.92213750425
+        "dollarAllocation": 10132.016645027334,
+        "leveragedAllocation": 70924.11651519133
       }
     },
-    "entryPrice": 189.88796,
-    "exitPrice": 179.60164935029488,
-    "size": 426.6143157427918,
+    "entryPrice": 189.888439,
+    "exitPrice": 177.60928994005974,
+    "size": 373.504131160864,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": 4423.931305075945,
-    "holdingPeriodMs": 336286931,
+    "pnl": 4625.321165062132,
+    "holdingPeriodMs": 332686931,
     "openedAt": 1742898913069,
-    "closedAt": 1743235200000,
-    "exitReason": "trailing-stop (peak 10.49%, now 5.51%, trail 4.0%)"
+    "closedAt": 1743231600000,
+    "exitReason": "trailing-stop (peak 10.95%, now 6.56%, trail 4.0%)"
   },
   {
     "signal": {
-      "id": "e2e2817b-0d13-4782-9acc-bf9b3a806cfa",
+      "id": "c406d23d-4449-4bbd-ae87-7150da52a5dd",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 8.4,
@@ -605,14 +507,14 @@
       "takeProfitPct": 0.312,
       "trailingStopActivation": 0.096,
       "trailingStopDistance": 0.04000000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "e2e2817b-0d13-4782-9acc-bf9b3a806cfa",
+      "signalId": "c406d23d-4449-4bbd-ae87-7150da52a5dd",
       "protocol": "binance",
-      "orderId": "bt-13",
-      "executedSize": "92.3948714880207",
+      "orderId": "bt-11",
+      "executedSize": "81.3862895244684",
       "executedPrice": "129.307041",
       "timestamp": 1744192173897,
       "metadata": {
@@ -620,77 +522,28 @@
         "slippagePct": 0.00095,
         "basePrice": 129.43,
         "leverage": 1,
-        "dollarAllocation": 11947.307481888658,
-        "leveragedAllocation": 11947.307481888658
+        "dollarAllocation": 10523.82031707145,
+        "leveragedAllocation": 10523.82031707145
       }
     },
     "entryPrice": 129.307041,
-    "exitPrice": 144.0266955,
-    "size": 92.3948714880207,
+    "exitPrice": 144.176838,
+    "size": 81.3862895244684,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": -1360.3790050986354,
-    "holdingPeriodMs": 43826103,
+    "pnl": -1213.0390352866941,
+    "holdingPeriodMs": 274226103,
     "openedAt": 1744192173897,
-    "closedAt": 1744236000000,
-    "exitReason": "stop-loss (-11.28% < -10.0%)"
+    "closedAt": 1744466400000,
+    "exitReason": "stop-loss (-11.39% < -10.0%)"
   },
   {
     "signal": {
-      "id": "820c991f-d71f-4fcd-8a41-9c41b5b08f70",
+      "id": "4282b8a3-9031-4128-87ef-73100ef6705e",
       "asset": "AAVE",
       "direction": "short",
-      "sizePct": 12,
-      "protocol": "binance",
-      "confidence": 0.5475,
-      "rationale": "Risk mitigation on stablecoin SUSD — bearish for AAVE (protocol risk)",
-      "proposalId": "forum-aave-21770",
-      "governanceStage": "discussion",
-      "timestamp": 1744364576074,
-      "urgency": "high",
-      "leverage": 7,
-      "stopLossPct": 0.12,
-      "takeProfitPct": 0.432,
-      "trailingStopActivation": 0.12,
-      "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
-    },
-    "execution": {
-      "success": true,
-      "signalId": "820c991f-d71f-4fcd-8a41-9c41b5b08f70",
-      "protocol": "binance",
-      "orderId": "bt-14",
-      "executedSize": "879.6479842927968",
-      "executedPrice": "134.519782",
-      "timestamp": 1744364576074,
-      "metadata": {
-        "gasCostUsd": 0,
-        "slippagePct": 0.000967082513845614,
-        "basePrice": 134.65,
-        "leverage": 7,
-        "dollarAllocation": 16904.29362606519,
-        "leveragedAllocation": 118330.05538245634
-      }
-    },
-    "entryPrice": 134.519782,
-    "exitPrice": 148.02344664425462,
-    "size": 879.6479842927968,
-    "direction": "short",
-    "asset": "AAVE",
-    "protocol": "binance",
-    "pnl": -11889.121089842032,
-    "holdingPeriodMs": 109023926,
-    "openedAt": 1744364576074,
-    "closedAt": 1744473600000,
-    "exitReason": "max-loss-cap (PnL $-11752 exceeds -$10000)"
-  },
-  {
-    "signal": {
-      "id": "206c7ad3-4d3b-4596-88e4-0641a3d579d4",
-      "asset": "AAVE",
-      "direction": "short",
-      "sizePct": 2.94,
+      "sizePct": 8.4,
       "protocol": "binance",
       "confidence": 0.6174999999999999,
       "rationale": "Technical parameter decrease on AAVE — bearish for AAVE",
@@ -703,32 +556,32 @@
       "takeProfitPct": 0.312,
       "trailingStopActivation": 0.096,
       "trailingStopDistance": 0.04000000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "206c7ad3-4d3b-4596-88e4-0641a3d579d4",
+      "signalId": "4282b8a3-9031-4128-87ef-73100ef6705e",
       "protocol": "binance",
-      "orderId": "bt-15",
-      "executedSize": "193.1312119232961",
-      "executedPrice": "137.429318",
+      "orderId": "bt-12",
+      "executedSize": "530.8345014080771",
+      "executedPrice": "137.428529",
       "timestamp": 1744732482907,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.00095,
+        "slippagePct": 0.0009557379511262611,
         "basePrice": 137.56,
         "leverage": 7,
-        "dollarAllocation": 3791.698677018864,
-        "leveragedAllocation": 26541.89073913205
+        "dollarAllocation": 10421.686357863495,
+        "leveragedAllocation": 72951.80450504446
       }
     },
-    "entryPrice": 137.429318,
-    "exitPrice": 151.8341055,
-    "size": 193.1312119232961,
+    "entryPrice": 137.428529,
+    "exitPrice": 151.83526298137258,
+    "size": 530.8345014080771,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": -2783.6065808168937,
+    "pnl": -7645.402895780588,
     "holdingPeriodMs": 605117093,
     "openedAt": 1744732482907,
     "closedAt": 1745337600000,
@@ -736,7 +589,7 @@
   },
   {
     "signal": {
-      "id": "655e624a-5d28-41dd-9d14-cb586ab0a1a2",
+      "id": "82c9844e-d1ca-4dd8-aee4-5eb955665d4f",
       "asset": "CRV",
       "direction": "short",
       "sizePct": 12,
@@ -752,14 +605,14 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "655e624a-5d28-41dd-9d14-cb586ab0a1a2",
+      "signalId": "82c9844e-d1ca-4dd8-aee4-5eb955665d4f",
       "protocol": "binance",
-      "orderId": "bt-16",
-      "executedSize": "47165.30759460229",
+      "orderId": "bt-13",
+      "executedSize": "43517.32531541574",
       "executedPrice": "0.642086",
       "timestamp": 1746541574996,
       "metadata": {
@@ -767,25 +620,25 @@
         "slippagePct": 0.00095,
         "basePrice": 0.642696790648193,
         "leverage": 2,
-        "dollarAllocation": 15142.0972393779,
-        "leveragedAllocation": 30284.1944787558
+        "dollarAllocation": 13970.937647379571,
+        "leveragedAllocation": 27941.875294759142
       }
     },
     "entryPrice": 0.642086,
-    "exitPrice": 0.7213716526499999,
-    "size": 47165.30759460229,
+    "exitPrice": 0.7582156212,
+    "size": 43517.32531541574,
     "direction": "short",
     "asset": "CRV",
     "protocol": "binance",
-    "pnl": -3734.686725685288,
-    "holdingPeriodMs": 142425004,
+    "pnl": -5035.488292043789,
+    "holdingPeriodMs": 261225004,
     "openedAt": 1746541574996,
-    "closedAt": 1746684000000,
-    "exitReason": "stop-loss (-12.24% < -12.0%)"
+    "closedAt": 1746802800000,
+    "exitReason": "stop-loss (-17.97% < -12.0%)"
   },
   {
     "signal": {
-      "id": "f325ef49-ef79-489e-9ff5-77083beaa3d6",
+      "id": "717986f6-3788-4dcc-95cf-21451aba7562",
       "asset": "CRV",
       "direction": "short",
       "sizePct": 12,
@@ -801,14 +654,14 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "f325ef49-ef79-489e-9ff5-77083beaa3d6",
+      "signalId": "717986f6-3788-4dcc-95cf-21451aba7562",
       "protocol": "binance",
-      "orderId": "bt-17",
-      "executedSize": "19605.594304474278",
+      "orderId": "bt-14",
+      "executedSize": "17836.88630958534",
       "executedPrice": "0.749506",
       "timestamp": 1747082809968,
       "metadata": {
@@ -816,25 +669,25 @@
         "slippagePct": 0.00095,
         "basePrice": 0.750219,
         "leverage": 1,
-        "dollarAllocation": 14694.516288622553,
-        "leveragedAllocation": 14694.516288622553
+        "dollarAllocation": 13368.858517831028,
+        "leveragedAllocation": 13368.858517831028
       }
     },
     "entryPrice": 0.749506,
     "exitPrice": 0.7030362505500001,
-    "size": 19605.594304474278,
+    "size": 17836.88630958534,
     "direction": "short",
     "asset": "CRV",
     "protocol": "binance",
-    "pnl": 935.7538328960778,
+    "pnl": 856.9502297263041,
     "holdingPeriodMs": 623590032,
     "openedAt": 1747082809968,
     "closedAt": 1747706400000,
-    "exitReason": "trailing-stop (peak 13.21%, now 6.29%, trail 5.6%)"
+    "exitReason": "trailing-stop (peak 14.64%, now 6.29%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "26c0d1ad-25e1-424e-af1b-9a2ccbdba83f",
+      "id": "964511b9-1c50-4d21-9fa2-870d81442518",
       "asset": "BAL",
       "direction": "short",
       "sizePct": 12,
@@ -850,14 +703,14 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "26c0d1ad-25e1-424e-af1b-9a2ccbdba83f",
+      "signalId": "964511b9-1c50-4d21-9fa2-870d81442518",
       "protocol": "binance",
-      "orderId": "bt-18",
-      "executedSize": "12974.232741447291",
+      "orderId": "bt-15",
+      "executedSize": "11804.051214206744",
       "executedPrice": "1.138575",
       "timestamp": 1747378679791,
       "metadata": {
@@ -865,25 +718,25 @@
         "slippagePct": 0.0012499999999999998,
         "basePrice": 1.14,
         "leverage": 1,
-        "dollarAllocation": 14772.137043593348,
-        "leveragedAllocation": 14772.137043593348
+        "dollarAllocation": 13439.797611215441,
+        "leveragedAllocation": 13439.797611215441
       }
     },
     "entryPrice": 1.138575,
-    "exitPrice": 1.0621671000000001,
-    "size": 12974.232741447291,
+    "exitPrice": 1.0591638,
+    "size": 11804.051214206744,
     "direction": "short",
     "asset": "BAL",
     "protocol": "binance",
-    "pnl": 1044.5135712421634,
-    "holdingPeriodMs": 1962120209,
+    "pnl": 997.1809711515209,
+    "holdingPeriodMs": 1929720209,
     "openedAt": 1747378679791,
-    "closedAt": 1749340800000,
-    "exitReason": "trailing-stop (peak 12.69%, now 6.81%, trail 5.6%)"
+    "closedAt": 1749308400000,
+    "exitReason": "trailing-stop (peak 12.69%, now 7.08%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "526511da-bf8f-490e-91cc-92240356bc19",
+      "id": "2260ea75-2cfd-4bf2-810e-6fb71345ca7f",
       "asset": "DYDX",
       "direction": "short",
       "sizePct": 12,
@@ -899,40 +752,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "526511da-bf8f-490e-91cc-92240356bc19",
+      "signalId": "2260ea75-2cfd-4bf2-810e-6fb71345ca7f",
       "protocol": "binance",
-      "orderId": "bt-19",
-      "executedSize": "47532.48964565519",
-      "executedPrice": "0.621248",
+      "orderId": "bt-16",
+      "executedSize": "43238.834514820934",
+      "executedPrice": "0.621435",
       "timestamp": 1748361090371,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0012499999999999998,
+        "slippagePct": 0.00095,
         "basePrice": 0.622026,
         "leverage": 2,
-        "dollarAllocation": 14764.743174411451,
-        "leveragedAllocation": 29529.486348822902
+        "dollarAllocation": 13435.064191300991,
+        "leveragedAllocation": 26870.128382601983
       }
     },
-    "entryPrice": 0.621248,
+    "entryPrice": 0.621435,
     "exitPrice": 0.5532046424999999,
-    "size": 47532.48964565519,
+    "size": 43238.834514820934,
     "direction": "short",
     "asset": "DYDX",
     "protocol": "binance",
-    "pnl": 3248.4443286055143,
+    "pnl": 2966.3232119056047,
     "holdingPeriodMs": 367709629,
     "openedAt": 1748361090371,
     "closedAt": 1748728800000,
-    "exitReason": "trailing-stop (peak 16.97%, now 11.06%, trail 5.6%)"
+    "exitReason": "trailing-stop (peak 16.99%, now 11.09%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "62da8bca-7e03-4d1d-b1ff-1d0656ca1306",
+      "id": "d2c3ee27-a388-46b7-b168-ed6946402631",
       "asset": "AAVE",
       "direction": "long",
       "sizePct": 8.4,
@@ -948,14 +801,14 @@
       "takeProfitPct": 0.22499999999999998,
       "trailingStopActivation": 0.06923076923076922,
       "trailingStopDistance": 0.028846153846153844,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "62da8bca-7e03-4d1d-b1ff-1d0656ca1306",
+      "signalId": "d2c3ee27-a388-46b7-b168-ed6946402631",
       "protocol": "binance",
-      "orderId": "bt-20",
-      "executedSize": "99.39815053783504",
+      "orderId": "bt-17",
+      "executedSize": "90.45331773140437",
       "executedPrice": "270.676899",
       "timestamp": 1748425811248,
       "metadata": {
@@ -963,25 +816,25 @@
         "slippagePct": 0.00095,
         "basePrice": 270.42,
         "leverage": 2.6,
-        "dollarAllocation": 10347.993520737064,
-        "leveragedAllocation": 26904.783153916367
+        "dollarAllocation": 9416.77828761471,
+        "leveragedAllocation": 24483.62354779825
       }
     },
     "entryPrice": 270.676899,
-    "exitPrice": 253.718738,
-    "size": 99.39815053783504,
+    "exitPrice": 248.4137825,
+    "size": 90.45331773140437,
     "direction": "long",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": -1689.9146052274689,
-    "holdingPeriodMs": 122988752,
+    "pnl": -2024.79038106228,
+    "holdingPeriodMs": 259788752,
     "openedAt": 1748425811248,
-    "closedAt": 1748548800000,
-    "exitReason": "stop-loss (-6.18% < -5.8%)"
+    "closedAt": 1748685600000,
+    "exitReason": "stop-loss (-8.14% < -5.8%)"
   },
   {
     "signal": {
-      "id": "ca42c894-ebc8-48cf-a152-2b563929b0cd",
+      "id": "706e8136-104a-4c3f-bedc-edb6eec5ebc3",
       "asset": "ARB",
       "direction": "short",
       "sizePct": 11.76,
@@ -997,40 +850,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "ca42c894-ebc8-48cf-a152-2b563929b0cd",
+      "signalId": "706e8136-104a-4c3f-bedc-edb6eec5ebc3",
       "protocol": "binance",
-      "orderId": "bt-21",
-      "executedSize": "247401.7996826588",
-      "executedPrice": "0.404774",
+      "orderId": "bt-18",
+      "executedSize": "224839.91788375005",
+      "executedPrice": "0.404897",
       "timestamp": 1748559600000,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0012625354733165062,
+        "slippagePct": 0.0009602592419610066,
         "basePrice": 0.405286,
         "leverage": 7,
-        "dollarAllocation": 14305.984752289323,
-        "leveragedAllocation": 100141.89326602526
+        "dollarAllocation": 13005.281120575131,
+        "leveragedAllocation": 91036.96784402592
       }
     },
-    "entryPrice": 0.404774,
-    "exitPrice": 0.3466158099445587,
-    "size": 247401.7996826588,
+    "entryPrice": 0.404897,
+    "exitPrice": 0.3466151339872386,
+    "size": 224839.91788375005,
     "direction": "short",
     "asset": "ARB",
     "protocol": "binance",
-    "pnl": 14432.503285070781,
+    "pnl": 13154.160322948257,
     "holdingPeriodMs": 320400000,
     "openedAt": 1748559600000,
     "closedAt": 1748880000000,
-    "exitReason": "trailing-stop (peak 20.09%, now 14.48%, trail 5.6%)"
+    "exitReason": "trailing-stop (peak 20.11%, now 14.50%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "6b0c77ea-737f-4a72-964a-4aab61dd9433",
+      "id": "476f2a0a-db63-49b7-9cfd-110ce677e59c",
       "asset": "LDO",
       "direction": "short",
       "sizePct": 12,
@@ -1046,14 +899,14 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "6b0c77ea-737f-4a72-964a-4aab61dd9433",
+      "signalId": "476f2a0a-db63-49b7-9cfd-110ce677e59c",
       "protocol": "binance",
-      "orderId": "bt-22",
-      "executedSize": "25623.36151729986",
+      "orderId": "bt-19",
+      "executedSize": "23243.02718758301",
       "executedPrice": "0.658262",
       "timestamp": 1750690800000,
       "metadata": {
@@ -1061,17 +914,17 @@
         "slippagePct": 0.0010999999999999998,
         "basePrice": 0.658987,
         "leverage": 1,
-        "dollarAllocation": 16866.888127851063,
-        "leveragedAllocation": 16866.888127851063
+        "dollarAllocation": 15300.004219230777,
+        "leveragedAllocation": 15300.004219230777
       }
     },
     "entryPrice": 0.658262,
     "exitPrice": 0.7395085656000001,
-    "size": 25623.36151729986,
+    "size": 23243.02718758301,
     "direction": "short",
     "asset": "LDO",
     "protocol": "binance",
-    "pnl": -2077.9307388120283,
+    "pnl": -1883.214132607281,
     "holdingPeriodMs": 543600000,
     "openedAt": 1750690800000,
     "closedAt": 1751234400000,
@@ -1079,7 +932,7 @@
   },
   {
     "signal": {
-      "id": "0d9d0dfe-3f93-443b-8141-32cd858a40d5",
+      "id": "cb82ca86-a822-4a40-a3bb-2ff7beb01124",
       "asset": "ARB",
       "direction": "short",
       "sizePct": 12,
@@ -1095,40 +948,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "0d9d0dfe-3f93-443b-8141-32cd858a40d5",
+      "signalId": "cb82ca86-a822-4a40-a3bb-2ff7beb01124",
       "protocol": "binance",
-      "orderId": "bt-23",
-      "executedSize": "355483.8467422743",
-      "executedPrice": "0.314990",
+      "orderId": "bt-20",
+      "executedSize": "322366.2941629701",
+      "executedPrice": "0.315085",
       "timestamp": 1750856842346,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0012654934533155595,
+        "slippagePct": 0.0009628932212604675,
         "basePrice": 0.315389,
         "leverage": 6.7,
-        "dollarAllocation": 16712.509442125134,
-        "leveragedAllocation": 111973.8132622384
+        "dollarAllocation": 15160.132095801464,
+        "leveragedAllocation": 101572.88504186981
       }
     },
-    "entryPrice": 0.31499,
-    "exitPrice": 0.3619860052546475,
-    "size": 355483.8467422743,
+    "entryPrice": 0.315085,
+    "exitPrice": 0.34942067646547303,
+    "size": 322366.2941629701,
     "direction": "short",
     "asset": "ARB",
     "protocol": "binance",
-    "pnl": -16671.608833807786,
-    "holdingPeriodMs": 377557654,
+    "pnl": -11032.098577586565,
+    "holdingPeriodMs": 373957654,
     "openedAt": 1750856842346,
-    "closedAt": 1751234400000,
-    "exitReason": "max-loss-cap (PnL $-16543 exceeds -$10000)"
+    "closedAt": 1751230800000,
+    "exitReason": "max-loss-cap (PnL $-10926 exceeds -$10000)"
   },
   {
     "signal": {
-      "id": "784e4c62-57cd-43da-a128-476035311d01",
+      "id": "0d25277c-02d0-4c08-93ab-33089e8640e7",
       "asset": "DYDX",
       "direction": "short",
       "sizePct": 12,
@@ -1144,40 +997,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "784e4c62-57cd-43da-a128-476035311d01",
+      "signalId": "0d25277c-02d0-4c08-93ab-33089e8640e7",
       "protocol": "binance",
-      "orderId": "bt-24",
-      "executedSize": "56606.570035238394",
-      "executedPrice": "0.516603",
+      "orderId": "bt-21",
+      "executedSize": "53236.37979359761",
+      "executedPrice": "0.516759",
       "timestamp": 1751359548462,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0012499999999999998,
+        "slippagePct": 0.00095,
         "basePrice": 0.51725,
         "leverage": 2,
-        "dollarAllocation": 14621.574332644326,
-        "leveragedAllocation": 29243.148665288652
+        "dollarAllocation": 13755.17887833127,
+        "leveragedAllocation": 27510.35775666254
       }
     },
-    "entryPrice": 0.516603,
+    "entryPrice": 0.516759,
     "exitPrice": 0.58193451,
-    "size": 56606.570035238394,
+    "size": 53236.37979359761,
     "direction": "short",
     "asset": "DYDX",
     "protocol": "binance",
-    "pnl": -3654.9128729510003,
+    "pnl": -3418.814003587763,
     "holdingPeriodMs": 810851538,
     "openedAt": 1751359548462,
     "closedAt": 1752170400000,
-    "exitReason": "stop-loss (-12.51% < -12.0%)"
+    "exitReason": "stop-loss (-12.47% < -12.0%)"
   },
   {
     "signal": {
-      "id": "c82dc850-5d64-4cae-a7ee-3775e21b333d",
+      "id": "52d09655-d105-4f5b-8c11-e2c88c9378d9",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -1193,14 +1046,14 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "c82dc850-5d64-4cae-a7ee-3775e21b333d",
+      "signalId": "52d09655-d105-4f5b-8c11-e2c88c9378d9",
       "protocol": "binance",
-      "orderId": "bt-25",
-      "executedSize": "156.7117877420585",
+      "orderId": "bt-22",
+      "executedSize": "147.46526937098955",
       "executedPrice": "316.878679",
       "timestamp": 1752517508111,
       "metadata": {
@@ -1208,25 +1061,25 @@
         "slippagePct": 0.00095,
         "basePrice": 317.18,
         "leverage": 3.5,
-        "dollarAllocation": 14188.178366694823,
-        "leveragedAllocation": 49658.624283431884
+        "dollarAllocation": 13351.02850190238,
+        "leveragedAllocation": 46728.599756658325
       }
     },
     "entryPrice": 316.878679,
-    "exitPrice": 268.2646095,
-    "size": 156.7117877420585,
+    "exitPrice": 264.791313,
+    "size": 147.46526937098955,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": 7840.868377551451,
-    "holdingPeriodMs": 1812891889,
+    "pnl": 7945.094046640438,
+    "holdingPeriodMs": 1798491889,
     "openedAt": 1752517508111,
-    "closedAt": 1754330400000,
-    "exitReason": "trailing-stop (peak 21.73%, now 15.42%, trail 5.6%)"
+    "closedAt": 1754316000000,
+    "exitReason": "trailing-stop (peak 22.30%, now 16.52%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "65f42563-38ec-4a0f-bd40-64c3f44ed14d",
+      "id": "a4a239c6-51a3-442a-9798-6378764cca96",
       "asset": "EIGEN",
       "direction": "short",
       "sizePct": 12,
@@ -1242,14 +1095,14 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "65f42563-38ec-4a0f-bd40-64c3f44ed14d",
+      "signalId": "a4a239c6-51a3-442a-9798-6378764cca96",
       "protocol": "binance",
-      "orderId": "bt-26",
-      "executedSize": "9127.057693227347",
+      "orderId": "bt-23",
+      "executedSize": "8589.114067308876",
       "executedPrice": "1.538306",
       "timestamp": 1752766128401,
       "metadata": {
@@ -1257,25 +1110,25 @@
         "slippagePct": 0.0010999999999999998,
         "basePrice": 1.54,
         "leverage": 1,
-        "dollarAllocation": 14040.207611837786,
-        "leveragedAllocation": 14040.207611837786
+        "dollarAllocation": 13212.685704425647,
+        "leveragedAllocation": 13212.685704425647
       }
     },
     "entryPrice": 1.538306,
-    "exitPrice": 1.3715070000000003,
-    "size": 9127.057693227347,
+    "exitPrice": 1.3514850000000003,
+    "size": 8589.114067308876,
     "direction": "short",
     "asset": "EIGEN",
     "protocol": "binance",
-    "pnl": 1548.218078178407,
-    "holdingPeriodMs": 671471599,
+    "pnl": 1631.05225057756,
+    "holdingPeriodMs": 603071599,
     "openedAt": 1752766128401,
-    "closedAt": 1753437600000,
-    "exitReason": "trailing-stop (peak 17.44%, now 10.94%, trail 5.6%)"
+    "closedAt": 1753369200000,
+    "exitReason": "trailing-stop (peak 18.09%, now 12.24%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "129b34c6-d6ca-4b6b-9fe7-fc5069270bf2",
+      "id": "c613736b-8a47-4c78-b434-4c374a3d3f0d",
       "asset": "ARB",
       "direction": "short",
       "sizePct": 12,
@@ -1291,40 +1144,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "129b34c6-d6ca-4b6b-9fe7-fc5069270bf2",
+      "signalId": "c613736b-8a47-4c78-b434-4c374a3d3f0d",
       "protocol": "binance",
-      "orderId": "bt-27",
-      "executedSize": "133818.96161566864",
-      "executedPrice": "0.433390",
+      "orderId": "bt-24",
+      "executedSize": "125935.11781673733",
+      "executedPrice": "0.433520",
       "timestamp": 1753369200000,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0012519989404540081,
+        "slippagePct": 0.0009511488564160611,
         "basePrice": 0.433933,
         "leverage": 3.9,
-        "dollarAllocation": 14870.708157957113,
-        "leveragedAllocation": 57995.76181603274
+        "dollarAllocation": 13998.827093396047,
+        "leveragedAllocation": 54595.42566424458
       }
     },
-    "entryPrice": 0.43339,
-    "exitPrice": 0.39198760640594493,
-    "size": 133818.96161566864,
+    "entryPrice": 0.43352,
+    "exitPrice": 0.3919873725,
+    "size": 125935.11781673733,
     "direction": "short",
     "asset": "ARB",
     "protocol": "binance",
-    "pnl": 5661.056582690859,
+    "pnl": 5372.3643573685395,
     "holdingPeriodMs": 903600000,
     "openedAt": 1753369200000,
     "closedAt": 1754272800000,
-    "exitReason": "trailing-stop (peak 16.30%, now 9.67%, trail 5.6%)"
+    "exitReason": "trailing-stop (peak 16.33%, now 9.69%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "61a8dc97-241e-498f-b5e4-67ab71e4bab8",
+      "id": "2cdbae19-3006-4d74-b7a6-569951c2bd95",
       "asset": "INJ",
       "direction": "long",
       "sizePct": 12,
@@ -1340,14 +1193,14 @@
       "takeProfitPct": 0.23399999999999999,
       "trailingStopActivation": 0.072,
       "trailingStopDistance": 0.03,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "61a8dc97-241e-498f-b5e4-67ab71e4bab8",
+      "signalId": "2cdbae19-3006-4d74-b7a6-569951c2bd95",
       "protocol": "binance",
-      "orderId": "bt-28",
-      "executedSize": "2285.9752648648723",
+      "orderId": "bt-25",
+      "executedSize": "2166.0026554120545",
       "executedPrice": "14.032057",
       "timestamp": 1754935944566,
       "metadata": {
@@ -1355,17 +1208,17 @@
         "slippagePct": 0.00086,
         "basePrice": 14.02,
         "leverage": 2,
-        "dollarAllocation": 16038.467837184518,
-        "leveragedAllocation": 32076.935674369037
+        "dollarAllocation": 15196.736578046919,
+        "leveragedAllocation": 30393.473156093838
       }
     },
     "entryPrice": 14.032057,
     "exitPrice": 15.936283,
-    "size": 2285.9752648648723,
+    "size": 2166.0026554120545,
     "direction": "long",
     "asset": "INJ",
     "protocol": "binance",
-    "pnl": 4337.616605808332,
+    "pnl": 4106.322488870938,
     "holdingPeriodMs": 200855434,
     "openedAt": 1754935944566,
     "closedAt": 1755136800000,
@@ -1373,7 +1226,7 @@
   },
   {
     "signal": {
-      "id": "5af07550-9ef7-408b-8b3d-7731a50b9c5e",
+      "id": "786ae318-d6e1-46d1-bbf2-eca5ad47ee19",
       "asset": "COMP",
       "direction": "short",
       "sizePct": 12,
@@ -1389,40 +1242,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "5af07550-9ef7-408b-8b3d-7731a50b9c5e",
+      "signalId": "786ae318-d6e1-46d1-bbf2-eca5ad47ee19",
       "protocol": "binance",
-      "orderId": "bt-29",
-      "executedSize": "1191.8058333621377",
-      "executedPrice": "48.623667",
+      "orderId": "bt-26",
+      "executedSize": "1129.1935827493114",
+      "executedPrice": "48.623704",
       "timestamp": 1755198291934,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0009519874924236114,
+        "slippagePct": 0.0009512263935783409,
         "basePrice": 48.67,
         "leverage": 3.5,
-        "dollarAllocation": 16557.134198413005,
-        "leveragedAllocation": 57949.96969444552
+        "dollarAllocation": 15687.306946675379,
+        "leveragedAllocation": 54905.574313363824
       }
     },
-    "entryPrice": 48.623667,
-    "exitPrice": 42.520362668423324,
-    "size": 1191.8058333621377,
+    "entryPrice": 48.623704,
+    "exitPrice": 44.96268212350953,
+    "size": 1129.1935827493114,
     "direction": "short",
     "asset": "COMP",
     "protocol": "binance",
-    "pnl": 7487.2095946472955,
-    "holdingPeriodMs": 2076908066,
+    "pnl": 4309.700247722043,
+    "holdingPeriodMs": 1068908066,
     "openedAt": 1755198291934,
-    "closedAt": 1757275200000,
-    "exitReason": "max-holding-time (577h)"
+    "closedAt": 1756267200000,
+    "exitReason": "trailing-stop (peak 13.27%, now 7.62%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "d160ff1f-af31-4c91-8e97-03dafbba3c0d",
+      "id": "4461ce4c-9c93-4074-a595-5b72639a3c78",
       "asset": "ARB",
       "direction": "short",
       "sizePct": 10.53,
@@ -1433,45 +1286,45 @@
       "governanceStage": "onchain_vote",
       "timestamp": 1755551976000,
       "urgency": "high",
-      "leverage": 4.8,
+      "leverage": 2,
       "stopLossPct": 0.12,
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "d160ff1f-af31-4c91-8e97-03dafbba3c0d",
+      "signalId": "4461ce4c-9c93-4074-a595-5b72639a3c78",
       "protocol": "binance",
-      "orderId": "bt-30",
-      "executedSize": "138862.57849079088",
-      "executedPrice": "0.509893",
+      "orderId": "bt-27",
+      "executedSize": "54808.480596245005",
+      "executedPrice": "0.510049",
       "timestamp": 1755551976000,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.001255201270330862,
+        "slippagePct": 0.00095,
         "basePrice": 0.510534,
-        "leverage": 4.8,
-        "dollarAllocation": 14751.058609051614,
-        "leveragedAllocation": 70805.08132344774
+        "leverage": 2,
+        "dollarAllocation": 13977.505159766131,
+        "leveragedAllocation": 27955.010319532263
       }
     },
-    "entryPrice": 0.509893,
-    "exitPrice": 0.6015530171436584,
-    "size": 138862.57849079088,
+    "entryPrice": 0.510049,
+    "exitPrice": 0.60154799625,
+    "size": 54808.480596245005,
     "direction": "short",
     "asset": "ARB",
     "protocol": "binance",
-    "pnl": -12674.334481960346,
+    "pnl": -4988.363700360368,
     "holdingPeriodMs": 340824000,
     "openedAt": 1755551976000,
     "closedAt": 1755892800000,
-    "exitReason": "max-loss-cap (PnL $-12623 exceeds -$10000)"
+    "exitReason": "stop-loss (-17.79% < -12.0%)"
   },
   {
     "signal": {
-      "id": "102837d8-e8df-4220-81c0-e1be8c2968eb",
+      "id": "384ed41c-e5c8-4687-b346-8b8ad26f6001",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -1482,37 +1335,37 @@
       "governanceStage": "discussion",
       "timestamp": 1756055306524,
       "urgency": "high",
-      "leverage": 6.9,
+      "leverage": 7,
       "stopLossPct": 0.12,
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "102837d8-e8df-4220-81c0-e1be8c2968eb",
+      "signalId": "384ed41c-e5c8-4687-b346-8b8ad26f6001",
       "protocol": "binance",
-      "orderId": "bt-31",
-      "executedSize": "301.6923298568082",
-      "executedPrice": "350.192120",
+      "orderId": "bt-28",
+      "executedSize": "306.8387432117805",
+      "executedPrice": "350.191962",
       "timestamp": 1756055306524,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0009639125691244942,
+        "slippagePct": 0.0009643631153601781,
         "basePrice": 350.53,
-        "leverage": 6.9,
-        "dollarAllocation": 15311.634275069076,
-        "leveragedAllocation": 105650.27649797664
+        "leverage": 7,
+        "dollarAllocation": 15350.351634387478,
+        "leveragedAllocation": 107452.46144071234
       }
     },
-    "entryPrice": 350.19212,
-    "exitPrice": 322.0494387931399,
-    "size": 301.6923298568082,
+    "entryPrice": 350.191962,
+    "exitPrice": 322.0495719779786,
+    "size": 306.8387432117805,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": 8612.985382548164,
+    "pnl": 8790.981654512074,
     "holdingPeriodMs": 845493476,
     "openedAt": 1756055306524,
     "closedAt": 1756900800000,
@@ -1520,7 +1373,7 @@
   },
   {
     "signal": {
-      "id": "f7fb36d9-d9ae-4cf3-ac93-9b3fac1fc497",
+      "id": "415ac62f-e9fd-493a-98c1-d516847659e9",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -1536,40 +1389,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "f7fb36d9-d9ae-4cf3-ac93-9b3fac1fc497",
+      "signalId": "415ac62f-e9fd-493a-98c1-d516847659e9",
       "protocol": "binance",
-      "orderId": "bt-32",
-      "executedSize": "360.3054253531709",
-      "executedPrice": "326.703795",
+      "orderId": "bt-29",
+      "executedSize": "357.89680445353696",
+      "executedPrice": "326.703859",
       "timestamp": 1756912444000,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.00096692828746553,
+        "slippagePct": 0.0009667315668243233,
         "basePrice": 327.02,
         "leverage": 7,
-        "dollarAllocation": 16816.164266017153,
-        "leveragedAllocation": 117713.14986212007
+        "dollarAllocation": 16703.7524710419,
+        "leveragedAllocation": 116926.26729729329
       }
     },
-    "entryPrice": 326.703795,
-    "exitPrice": 268.38784779726046,
-    "size": 360.3054253531709,
+    "entryPrice": 326.703859,
+    "exitPrice": 276.9061974328384,
+    "size": 357.89680445353696,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": 21272.875354360905,
-    "holdingPeriodMs": 2076356000,
+    "pnl": 18145.140441448784,
+    "holdingPeriodMs": 2187956000,
     "openedAt": 1756912444000,
-    "closedAt": 1758988800000,
-    "exitReason": "max-holding-time (577h)"
+    "closedAt": 1759100400000,
+    "exitReason": "trailing-stop (peak 21.00%, now 15.32%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "d64de607-8980-43cb-94be-1720acef8454",
+      "id": "eb57e637-ee05-4976-bcb6-31e62bc0f818",
       "asset": "DYDX",
       "direction": "short",
       "sizePct": 12,
@@ -1585,40 +1438,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "d64de607-8980-43cb-94be-1720acef8454",
+      "signalId": "eb57e637-ee05-4976-bcb6-31e62bc0f818",
       "protocol": "binance",
-      "orderId": "bt-33",
-      "executedSize": "64271.58558616385",
-      "executedPrice": "0.609884",
+      "orderId": "bt-30",
+      "executedSize": "62025.64262388237",
+      "executedPrice": "0.610067",
       "timestamp": 1759140890056,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0012499999999999998,
+        "slippagePct": 0.00095,
         "basePrice": 0.610647,
         "leverage": 2,
-        "dollarAllocation": 19599.095929889954,
-        "leveragedAllocation": 39198.19185977991
+        "dollarAllocation": 18919.89530369206,
+        "leveragedAllocation": 37839.79060738412
       }
     },
-    "entryPrice": 0.609884,
+    "entryPrice": 0.610067,
     "exitPrice": 0.3167636251959572,
-    "size": 64271.58558616385,
+    "size": 62025.64262388237,
     "direction": "short",
     "asset": "DYDX",
     "protocol": "binance",
-    "pnl": 18902.02839499227,
+    "pnl": 18264.22592163957,
     "holdingPeriodMs": 992709944,
     "openedAt": 1759140890056,
     "closedAt": 1760133600000,
-    "exitReason": "take-profit (48.13% >= 43.2%)"
+    "exitReason": "take-profit (48.14% >= 43.2%)"
   },
   {
     "signal": {
-      "id": "a40d6a17-0432-4f28-9831-e1c72a050ecd",
+      "id": "cbbed6bf-c621-461f-8b83-9446d7d6eec7",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -1634,40 +1487,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "a40d6a17-0432-4f28-9831-e1c72a050ecd",
+      "signalId": "cbbed6bf-c621-461f-8b83-9446d7d6eec7",
       "protocol": "binance",
-      "orderId": "bt-34",
-      "executedSize": "510.7698952090139",
-      "executedPrice": "270.850665",
+      "orderId": "bt-31",
+      "executedSize": "493.1109223627273",
+      "executedPrice": "270.850989",
       "timestamp": 1759231604424,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0009720855914232169,
+        "slippagePct": 0.0009708898952522755,
         "basePrice": 271.114211048889,
         "leverage": 7,
-        "dollarAllocation": 19763.195098981076,
-        "leveragedAllocation": 138342.36569286752
+        "dollarAllocation": 19079.940144157386,
+        "leveragedAllocation": 133559.5810091017
       }
     },
-    "entryPrice": 270.850665,
-    "exitPrice": 292.59270676887934,
-    "size": 510.7698952090139,
+    "entryPrice": 270.850989,
+    "exitPrice": 292.592329556332,
+    "size": 493.1109223627273,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": -11066.44453350229,
+    "pnl": -10674.146641782007,
     "holdingPeriodMs": 203595576,
     "openedAt": 1759231604424,
     "closedAt": 1759435200000,
-    "exitReason": "max-loss-cap (PnL $-10960 exceeds -$10000)"
+    "exitReason": "max-loss-cap (PnL $-10581 exceeds -$10000)"
   },
   {
     "signal": {
-      "id": "f4f58818-357f-47c1-9550-f2a2f8ea74e7",
+      "id": "8e9ac5e4-d79c-4199-90b0-de4893c867f2",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -1683,40 +1536,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "f4f58818-357f-47c1-9550-f2a2f8ea74e7",
+      "signalId": "8e9ac5e4-d79c-4199-90b0-de4893c867f2",
       "protocol": "binance",
-      "orderId": "bt-35",
-      "executedSize": "441.4936011461879",
-      "executedPrice": "289.309774",
+      "orderId": "bt-32",
+      "executedSize": "426.30115233260085",
+      "executedPrice": "289.310092",
       "timestamp": 1759740527733,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0009694321034592929,
+        "slippagePct": 0.0009683333063896299,
         "basePrice": 289.590512038253,
         "leverage": 7,
-        "dollarAllocation": 18246.916262453087,
-        "leveragedAllocation": 127728.41383717161
+        "dollarAllocation": 17619.032222645645,
+        "leveragedAllocation": 123333.22555851951
       }
     },
-    "entryPrice": 289.309774,
-    "exitPrice": 233.25647209598054,
-    "size": 441.4936011461879,
+    "entryPrice": 289.310092,
+    "exitPrice": 234.52334642579845,
+    "size": 426.30115233260085,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": 24849.356844916063,
-    "holdingPeriodMs": 421872267,
+    "pnl": 23472.81933515614,
+    "holdingPeriodMs": 411072267,
     "openedAt": 1759740527733,
-    "closedAt": 1760162400000,
-    "exitReason": "trailing-stop (peak 24.20%, now 19.45%, trail 4.2%)"
+    "closedAt": 1760151600000,
+    "exitReason": "trailing-stop (peak 24.20%, now 19.01%, trail 4.2%)"
   },
   {
     "signal": {
-      "id": "2e5f6a67-8b11-4a9b-b1d6-40a4cb469106",
+      "id": "2ad9164e-3d8e-4bc0-8529-2eaded39c9ac",
       "asset": "ARB",
       "direction": "short",
       "sizePct": 12,
@@ -1732,89 +1585,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "2e5f6a67-8b11-4a9b-b1d6-40a4cb469106",
+      "signalId": "2ad9164e-3d8e-4bc0-8529-2eaded39c9ac",
       "protocol": "binance",
-      "orderId": "bt-36",
-      "executedSize": "65699.74493363345",
-      "executedPrice": "0.358384",
+      "orderId": "bt-33",
+      "executedSize": "63253.22207184115",
+      "executedPrice": "0.358491",
       "timestamp": 1760395431318,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0012499999999999998,
+        "slippagePct": 0.00095,
         "basePrice": 0.35883235344323594,
         "leverage": 1,
-        "dollarAllocation": 23545.725102537064,
-        "leveragedAllocation": 23545.725102537064
+        "dollarAllocation": 22675.740101494433,
+        "leveragedAllocation": 22675.740101494433
       }
     },
-    "entryPrice": 0.358384,
+    "entryPrice": 0.358491,
     "exitPrice": 0.3118326384237817,
-    "size": 65699.74493363345,
+    "size": 63253.22207184115,
     "direction": "short",
     "asset": "ARB",
     "protocol": "binance",
-    "pnl": 3060.767155609714,
+    "pnl": 2956.9606339972343,
     "holdingPeriodMs": 393368682,
     "openedAt": 1760395431318,
     "closedAt": 1760788800000,
-    "exitReason": "trailing-stop (peak 18.74%, now 13.10%, trail 5.6%)"
+    "exitReason": "trailing-stop (peak 18.77%, now 13.12%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "bb8610ff-c067-49e5-9d6d-52918fdb15a3",
-      "asset": "MORPHO",
-      "direction": "short",
-      "sizePct": 12,
-      "protocol": "binance",
-      "confidence": 0.6375,
-      "rationale": "Risk mitigation: morpho delisting/restricting AAVE — bearish for MORPHO (reduced trading activity)",
-      "proposalId": "snap-0x026c3360d4",
-      "governanceStage": "snapshot",
-      "timestamp": 1760426024000,
-      "urgency": "medium",
-      "leverage": 2,
-      "stopLossPct": 0.1,
-      "takeProfitPct": 0.312,
-      "trailingStopActivation": 0.096,
-      "trailingStopDistance": 0.04000000000000001,
-      "maxHoldingHours": 576
-    },
-    "execution": {
-      "success": true,
-      "signalId": "bb8610ff-c067-49e5-9d6d-52918fdb15a3",
-      "protocol": "binance",
-      "orderId": "bt-37",
-      "executedSize": "26363.813417825528",
-      "executedPrice": "1.803004",
-      "timestamp": 1760426024000,
-      "metadata": {
-        "gasCostUsd": 0,
-        "slippagePct": 0.0010999999999999998,
-        "basePrice": 1.8049895590521008,
-        "leverage": 2,
-        "dollarAllocation": 23767.031453610594,
-        "leveragedAllocation": 47534.06290722119
-      }
-    },
-    "entryPrice": 1.803004,
-    "exitPrice": 1.9886816277322696,
-    "size": 26363.813417825528,
-    "direction": "short",
-    "asset": "MORPHO",
-    "protocol": "binance",
-    "pnl": -4891.367608514215,
-    "holdingPeriodMs": 60376000,
-    "openedAt": 1760426024000,
-    "closedAt": 1760486400000,
-    "exitReason": "stop-loss (-10.18% < -10.0%)"
-  },
-  {
-    "signal": {
-      "id": "fa518c31-a864-4136-aac9-b90bf4359237",
+      "id": "178789a8-82c6-47ff-a762-391fd9db8310",
       "asset": "DYDX",
       "direction": "short",
       "sizePct": 12,
@@ -1830,40 +1634,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "fa518c31-a864-4136-aac9-b90bf4359237",
+      "signalId": "178789a8-82c6-47ff-a762-391fd9db8310",
       "protocol": "binance",
-      "orderId": "bt-38",
-      "executedSize": "61786.49909020887",
-      "executedPrice": "0.373781",
+      "orderId": "bt-34",
+      "executedSize": "60998.747238280215",
+      "executedPrice": "0.373893",
       "timestamp": 1760525037491,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0012499999999999998,
+        "slippagePct": 0.00095,
         "basePrice": 0.37424874395891056,
         "leverage": 1,
-        "dollarAllocation": 23094.61527853138,
-        "leveragedAllocation": 23094.61527853138
+        "dollarAllocation": 22807.017267683288,
+        "leveragedAllocation": 22807.017267683288
       }
     },
-    "entryPrice": 0.373781,
-    "exitPrice": 0.3364617566581881,
-    "size": 61786.49909020887,
+    "entryPrice": 0.373893,
+    "exitPrice": 0.334014985725063,
+    "size": 60998.747238280215,
     "direction": "short",
     "asset": "DYDX",
     "protocol": "binance",
-    "pnl": 2302.3612018736762,
-    "holdingPeriodMs": 350162509,
+    "pnl": 2431.824702983376,
+    "holdingPeriodMs": 263762509,
     "openedAt": 1760525037491,
-    "closedAt": 1760875200000,
-    "exitReason": "trailing-stop (peak 15.88%, now 10.10%, trail 5.6%)"
+    "closedAt": 1760788800000,
+    "exitReason": "trailing-stop (peak 16.53%, now 10.78%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "3085de82-3369-4930-aac0-7143d444e851",
+      "id": "90c94480-50a2-4b14-9ba0-81d91a781147",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -1879,89 +1683,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "3085de82-3369-4930-aac0-7143d444e851",
+      "signalId": "90c94480-50a2-4b14-9ba0-81d91a781147",
       "protocol": "binance",
-      "orderId": "bt-39",
-      "executedSize": "662.1959044827455",
-      "executedPrice": "245.873148",
+      "orderId": "bt-35",
+      "executedSize": "653.9181879999333",
+      "executedPrice": "245.873273",
       "timestamp": 1760542538898,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.00097820404782988,
+        "slippagePct": 0.0009776952512495945,
         "basePrice": 246.1138971447511,
         "leverage": 7,
-        "dollarAllocation": 23259.455902788537,
-        "leveragedAllocation": 162816.19131951977
+        "dollarAllocation": 22968.71499976826,
+        "leveragedAllocation": 160781.00499837782
       }
     },
-    "entryPrice": 245.873148,
-    "exitPrice": 217.30635792926458,
-    "size": 662.1959044827455,
+    "entryPrice": 245.873273,
+    "exitPrice": 216.5838089766767,
+    "size": 653.9181879999333,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": 18885.876312650053,
-    "holdingPeriodMs": 325461102,
+    "pnl": 19130.40390089873,
+    "holdingPeriodMs": 303861102,
     "openedAt": 1760542538898,
-    "closedAt": 1760868000000,
-    "exitReason": "trailing-stop (peak 17.43%, now 11.70%, trail 5.6%)"
+    "closedAt": 1760846400000,
+    "exitReason": "trailing-stop (peak 17.60%, now 12.00%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "e722c5fd-1aa7-4686-8c9f-94ef153a0abd",
-      "asset": "MORPHO",
-      "direction": "short",
-      "sizePct": 12,
-      "protocol": "binance",
-      "confidence": 0.6375,
-      "rationale": "Risk mitigation: morpho delisting/restricting AAVE — bearish for MORPHO (reduced trading activity)",
-      "proposalId": "snap-0x60b31cceca",
-      "governanceStage": "snapshot",
-      "timestamp": 1761146116000,
-      "urgency": "medium",
-      "leverage": 2,
-      "stopLossPct": 0.1,
-      "takeProfitPct": 0.312,
-      "trailingStopActivation": 0.096,
-      "trailingStopDistance": 0.04000000000000001,
-      "maxHoldingHours": 576
-    },
-    "execution": {
-      "success": true,
-      "signalId": "e722c5fd-1aa7-4686-8c9f-94ef153a0abd",
-      "protocol": "binance",
-      "orderId": "bt-40",
-      "executedSize": "28521.815936726816",
-      "executedPrice": "1.813717",
-      "timestamp": 1761146116000,
-      "metadata": {
-        "gasCostUsd": 0,
-        "slippagePct": 0.0011004326262567237,
-        "basePrice": 1.8157151630685997,
-        "leverage": 2,
-        "dollarAllocation": 25865.25251344748,
-        "leveragedAllocation": 51730.50502689496
-      }
-    },
-    "entryPrice": 1.813717,
-    "exitPrice": 2.0082644641806167,
-    "size": 28521.815936726816,
-    "direction": "short",
-    "asset": "MORPHO",
-    "protocol": "binance",
-    "pnl": -5552.985404511326,
-    "holdingPeriodMs": 168284000,
-    "openedAt": 1761146116000,
-    "closedAt": 1761314400000,
-    "exitReason": "stop-loss (-10.60% < -10.0%)"
-  },
-  {
-    "signal": {
-      "id": "b2828a96-8e3c-4bfb-8f3a-40701a0d2ff2",
+      "id": "6e99c66c-84ae-4c15-aef9-3f4552bb2af8",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -1977,40 +1732,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "b2828a96-8e3c-4bfb-8f3a-40701a0d2ff2",
+      "signalId": "6e99c66c-84ae-4c15-aef9-3f4552bb2af8",
       "protocol": "binance",
-      "orderId": "bt-41",
-      "executedSize": "791.3472725845696",
-      "executedPrice": "222.896811",
+      "orderId": "bt-36",
+      "executedSize": "804.4606345877513",
+      "executedPrice": "222.896648",
       "timestamp": 1761827522166,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0009815971958911447,
+        "slippagePct": 0.000982327894746708,
         "basePrice": 223.1158210057016,
         "leverage": 7,
-        "dollarAllocation": 25198.39765208274,
-        "leveragedAllocation": 176388.78356457918
+        "dollarAllocation": 25615.93985526176,
+        "leveragedAllocation": 179311.57898683232
       }
     },
-    "entryPrice": 222.896811,
-    "exitPrice": 198.31317484939288,
-    "size": 791.3472725845696,
+    "entryPrice": 222.896648,
+    "exitPrice": 198.62350655895014,
+    "size": 804.4606345877513,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": 19554.735024562393,
-    "holdingPeriodMs": 487677834,
+    "pnl": 19641.546177599655,
+    "holdingPeriodMs": 484077834,
     "openedAt": 1761827522166,
-    "closedAt": 1762315200000,
-    "exitReason": "trailing-stop (peak 18.15%, now 11.12%, trail 5.6%)"
+    "closedAt": 1762311600000,
+    "exitReason": "trailing-stop (peak 18.15%, now 10.98%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "d0e8aca4-acaf-4256-a0eb-4d0e1b6ab76b",
+      "id": "06df84fd-9c68-4e82-84f5-340a58cfaf5c",
       "asset": "WSTETH",
       "direction": "short",
       "sizePct": 12,
@@ -2026,32 +1781,32 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "d0e8aca4-acaf-4256-a0eb-4d0e1b6ab76b",
+      "signalId": "06df84fd-9c68-4e82-84f5-340a58cfaf5c",
       "protocol": "binance",
-      "orderId": "bt-42",
-      "executedSize": "13.142427888978986",
-      "executedPrice": "4193.598181",
+      "orderId": "bt-37",
+      "executedSize": "13.34734580362435",
+      "executedPrice": "4193.597280",
       "timestamp": 1762897684281,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.001101278515423909,
+        "slippagePct": 0.0011014933482629166,
         "basePrice": 4198.221592736951,
         "leverage": 2,
-        "dollarAllocation": 27557.030847818372,
-        "leveragedAllocation": 55114.061695636745
+        "dollarAllocation": 27986.696525833067,
+        "leveragedAllocation": 55973.393051666135
       }
     },
-    "entryPrice": 4193.598181,
+    "entryPrice": 4193.59728,
     "exitPrice": 3574.1627308889083,
-    "size": 13.142427888978986,
+    "size": 13.34734580362435,
     "direction": "short",
     "asset": "WSTETH",
     "protocol": "binance",
-    "pnl": 8097.345626227841,
+    "pnl": 8226.38681883547,
     "holdingPeriodMs": 1109515719,
     "openedAt": 1762897684281,
     "closedAt": 1764007200000,
@@ -2059,7 +1814,7 @@
   },
   {
     "signal": {
-      "id": "0dd67e8e-4f56-41e0-96ff-619f69fe7f27",
+      "id": "9e5218cc-4ad9-482d-95c3-4cc33f026c9c",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -2075,40 +1830,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "0dd67e8e-4f56-41e0-96ff-619f69fe7f27",
+      "signalId": "9e5218cc-4ad9-482d-95c3-4cc33f026c9c",
       "protocol": "binance",
-      "orderId": "bt-43",
-      "executedSize": "1296.773827272618",
-      "executedPrice": "156.320200",
+      "orderId": "bt-38",
+      "executedSize": "1317.008988347946",
+      "executedPrice": "156.320077",
       "timestamp": 1763809919000,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0009881779861120898,
+        "slippagePct": 0.0009889687364810758,
         "basePrice": 156.47482529725383,
         "leverage": 7,
-        "dollarAllocation": 28958.849206908424,
-        "leveragedAllocation": 202711.94444835896
+        "dollarAllocation": 29410.706560614733,
+        "leveragedAllocation": 205874.94592430315
       }
     },
-    "entryPrice": 156.3202,
-    "exitPrice": 164.38457215829308,
-    "size": 1296.773827272618,
+    "entryPrice": 156.320077,
+    "exitPrice": 164.19657179089904,
+    "size": 1317.008988347946,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": -10469.829464902507,
-    "holdingPeriodMs": 67681000,
+    "pnl": -10385.766933077912,
+    "holdingPeriodMs": 64081000,
     "openedAt": 1763809919000,
-    "closedAt": 1763877600000,
-    "exitReason": "max-loss-cap (PnL $-10247 exceeds -$10000)"
+    "closedAt": 1763874000000,
+    "exitReason": "max-loss-cap (PnL $-10159 exceeds -$10000)"
   },
   {
     "signal": {
-      "id": "1b8d19ca-4d04-4032-b634-c970bfb3815f",
+      "id": "e1e32522-86b6-4d85-a855-ccf21acd7347",
       "asset": "LDO",
       "direction": "short",
       "sizePct": 12,
@@ -2124,32 +1879,32 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "1b8d19ca-4d04-4032-b634-c970bfb3815f",
+      "signalId": "e1e32522-86b6-4d85-a855-ccf21acd7347",
       "protocol": "binance",
-      "orderId": "bt-44",
-      "executedSize": "129808.19187197647",
+      "orderId": "bt-39",
+      "executedSize": "131976.66890018736",
       "executedPrice": "0.630137",
       "timestamp": 1764770176111,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0011079492363360991,
+        "slippagePct": 0.0011082908386314044,
         "basePrice": 0.6308359399199078,
         "leverage": 3,
-        "dollarAllocation": 27265.648448132244,
-        "leveragedAllocation": 81796.94534439674
+        "dollarAllocation": 27721.118175205866,
+        "leveragedAllocation": 83163.3545256176
       }
     },
     "entryPrice": 0.630137,
-    "exitPrice": 0.5421988288136458,
-    "size": 129808.19187197647,
+    "exitPrice": 0.5421989878339786,
+    "size": 131976.66890018736,
     "direction": "short",
     "asset": "LDO",
     "protocol": "binance",
-    "pnl": 11590.140459676464,
+    "pnl": 11829.475413522588,
     "holdingPeriodMs": 1296223889,
     "openedAt": 1764770176111,
     "closedAt": 1766066400000,
@@ -2157,7 +1912,7 @@
   },
   {
     "signal": {
-      "id": "f091c1c8-14da-4e71-9ed0-22cc849287ff",
+      "id": "7557c2ea-17b4-4894-9874-58444d2d45a8",
       "asset": "CRV",
       "direction": "short",
       "sizePct": 12,
@@ -2173,89 +1928,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "f091c1c8-14da-4e71-9ed0-22cc849287ff",
+      "signalId": "7557c2ea-17b4-4894-9874-58444d2d45a8",
       "protocol": "binance",
-      "orderId": "bt-45",
-      "executedSize": "132109.0603626857",
+      "orderId": "bt-40",
+      "executedSize": "134317.41222937216",
       "executedPrice": "0.411887",
       "timestamp": 1764882476273,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0009511035145819344,
+        "slippagePct": 0.0009513309095149464,
         "basePrice": 0.4122795276117387,
         "leverage": 2,
-        "dollarAllocation": 27207.02916386866,
-        "leveragedAllocation": 54414.05832773732
+        "dollarAllocation": 27661.819029892882,
+        "leveragedAllocation": 55323.638059785764
       }
     },
     "entryPrice": 0.411887,
-    "exitPrice": 0.3578005255006721,
-    "size": 132109.0603626857,
+    "exitPrice": 0.3571051861676741,
+    "size": 134317.41222937216,
     "direction": "short",
     "asset": "CRV",
     "protocol": "binance",
-    "pnl": 7276.995215436937,
-    "holdingPeriodMs": 1507923727,
+    "pnl": 7523.569023142287,
+    "holdingPeriodMs": 1497123727,
     "openedAt": 1764882476273,
-    "closedAt": 1766390400000,
-    "exitReason": "trailing-stop (peak 19.09%, now 13.21%, trail 5.6%)"
+    "closedAt": 1766379600000,
+    "exitReason": "trailing-stop (peak 19.09%, now 13.38%, trail 5.6%)"
   },
   {
     "signal": {
-      "id": "f2c70bf6-396a-41f0-9dfb-d8e5645197e4",
-      "asset": "MORPHO",
-      "direction": "short",
-      "sizePct": 12,
-      "protocol": "binance",
-      "confidence": 0.6375,
-      "rationale": "Risk mitigation: MORPHO may face reduced utility or exit pressure",
-      "proposalId": "snap-0x26416069cb",
-      "governanceStage": "snapshot",
-      "timestamp": 1765255499000,
-      "urgency": "high",
-      "leverage": 2,
-      "stopLossPct": 0.12,
-      "takeProfitPct": 0.432,
-      "trailingStopActivation": 0.12,
-      "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
-    },
-    "execution": {
-      "success": true,
-      "signalId": "f2c70bf6-396a-41f0-9dfb-d8e5645197e4",
-      "protocol": "binance",
-      "orderId": "bt-46",
-      "executedSize": "46866.07992113074",
-      "executedPrice": "1.199301",
-      "timestamp": 1765255499000,
-      "metadata": {
-        "gasCostUsd": 0,
-        "slippagePct": 0.0011015516366423921,
-        "basePrice": 1.2006237635995767,
-        "leverage": 2,
-        "dollarAllocation": 28103.27328478433,
-        "leveragedAllocation": 56206.54656956866
-      }
-    },
-    "entryPrice": 1.199301,
-    "exitPrice": 1.097533653869167,
-    "size": 46866.07992113074,
-    "direction": "short",
-    "asset": "MORPHO",
-    "protocol": "binance",
-    "pnl": 4925.12868327691,
-    "holdingPeriodMs": 2078101000,
-    "openedAt": 1765255499000,
-    "closedAt": 1767333600000,
-    "exitReason": "max-holding-time (577h)"
-  },
-  {
-    "signal": {
-      "id": "e0f966aa-88f2-4aa5-866c-a6e1538b678d",
+      "id": "046a3ed7-84d6-4231-acdc-3d3307e5f6b0",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -2266,37 +1972,37 @@
       "governanceStage": "discussion",
       "timestamp": 1765396471870,
       "urgency": "medium",
-      "leverage": 4.9,
+      "leverage": 6.5,
       "stopLossPct": 0.1,
       "takeProfitPct": 0.312,
       "trailingStopActivation": 0.096,
       "trailingStopDistance": 0.04000000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "e0f966aa-88f2-4aa5-866c-a6e1538b678d",
+      "signalId": "046a3ed7-84d6-4231-acdc-3d3307e5f6b0",
       "protocol": "binance",
-      "orderId": "bt-47",
-      "executedSize": "649.8870939370315",
-      "executedPrice": "201.645036",
+      "orderId": "bt-41",
+      "executedSize": "889.6978349167911",
+      "executedPrice": "201.642596",
       "timestamp": 1765396471870,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0009702616266612494,
+        "slippagePct": 0.0009823502453428403,
         "basePrice": 201.84087475109766,
-        "leverage": 4.9,
-        "dollarAllocation": 26744.18502959131,
-        "leveragedAllocation": 131046.50664499743
+        "leverage": 6.5,
+        "dollarAllocation": 27600.150980209462,
+        "leveragedAllocation": 179400.9813713615
       }
     },
-    "entryPrice": 201.645036,
-    "exitPrice": 193.78615904775776,
-    "size": 649.8870939370315,
+    "entryPrice": 201.642596,
+    "exitPrice": 193.78840609878029,
+    "size": 889.6978349167911,
     "direction": "short",
     "asset": "AAVE",
     "protocol": "binance",
-    "pnl": 5196.494328489376,
+    "pnl": 7140.346584065474,
     "holdingPeriodMs": 446728130,
     "openedAt": 1765396471870,
     "closedAt": 1765843200000,
@@ -2304,7 +2010,7 @@
   },
   {
     "signal": {
-      "id": "2c4a8383-e47a-49b9-99cc-b34792749030",
+      "id": "c158de24-48bd-4ca8-b860-b416d94bc98c",
       "asset": "GMX",
       "direction": "short",
       "sizePct": 12,
@@ -2320,32 +2026,32 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "2c4a8383-e47a-49b9-99cc-b34792749030",
+      "signalId": "c158de24-48bd-4ca8-b860-b416d94bc98c",
       "protocol": "binance",
-      "orderId": "bt-48",
-      "executedSize": "7837.043850727804",
-      "executedPrice": "7.862782",
+      "orderId": "bt-42",
+      "executedSize": "7876.42900102107",
+      "executedPrice": "7.862781",
       "timestamp": 1767382871867,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0011029052416102578,
+        "slippagePct": 0.001102982659621888,
         "basePrice": 7.871463365703392,
         "leverage": 2,
-        "dollarAllocation": 30810.48322051592,
-        "leveragedAllocation": 61620.96644103184
+        "dollarAllocation": 30965.319243776543,
+        "leveragedAllocation": 61930.638487553086
       }
     },
-    "entryPrice": 7.862782,
-    "exitPrice": 7.226516208941667,
-    "size": 7837.043850727804,
+    "entryPrice": 7.862781,
+    "exitPrice": 7.226516722008723,
+    "size": 7876.42900102107,
     "direction": "short",
     "asset": "GMX",
     "protocol": "binance",
-    "pnl": 5178.700323289038,
+    "pnl": 5253.019893042827,
     "holdingPeriodMs": 2060328133,
     "openedAt": 1767382871867,
     "closedAt": 1769443200000,
@@ -2353,7 +2059,7 @@
   },
   {
     "signal": {
-      "id": "ad4c9cc4-ec67-47dd-9d76-6c837d8df507",
+      "id": "24066490-f314-460d-a091-6a1ac0996b23",
       "asset": "ARB",
       "direction": "short",
       "sizePct": 12,
@@ -2369,40 +2075,40 @@
       "takeProfitPct": 0.432,
       "trailingStopActivation": 0.12,
       "trailingStopDistance": 0.05600000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "ad4c9cc4-ec67-47dd-9d76-6c837d8df507",
+      "signalId": "24066490-f314-460d-a091-6a1ac0996b23",
       "protocol": "binance",
-      "orderId": "bt-49",
-      "executedSize": "963296.0469198605",
-      "executedPrice": "0.220961",
+      "orderId": "bt-43",
+      "executedSize": "967865.3558459404",
+      "executedPrice": "0.221028",
       "timestamp": 1767640232007,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.001290712779283255,
+        "slippagePct": 0.0009909812352725859,
         "basePrice": 0.22124683530760225,
         "leverage": 7,
-        "dollarAllocation": 30407.3024475744,
-        "leveragedAllocation": 212851.1171330208
+        "dollarAllocation": 30560.70587004913,
+        "leveragedAllocation": 213924.9410903439
       }
     },
-    "entryPrice": 0.220961,
-    "exitPrice": 0.15642544043432893,
-    "size": 963296.0469198605,
+    "entryPrice": 0.221028,
+    "exitPrice": 0.12467982770753555,
+    "size": 967865.3558459404,
     "direction": "short",
     "asset": "ARB",
     "protocol": "binance",
-    "pnl": 62764.96032585604,
-    "holdingPeriodMs": 2076567993,
+    "pnl": 93915.22662695503,
+    "holdingPeriodMs": 2508567993,
     "openedAt": 1767640232007,
-    "closedAt": 1769716800000,
-    "exitReason": "max-holding-time (577h)"
+    "closedAt": 1770148800000,
+    "exitReason": "take-profit (43.66% >= 43.2%)"
   },
   {
     "signal": {
-      "id": "dfdd5582-282f-4ec4-9c79-144482069583",
+      "id": "908f6844-0ed7-4dd3-9a2a-4d3eb97ef127",
       "asset": "BAL",
       "direction": "short",
       "sizePct": 12,
@@ -2418,32 +2124,32 @@
       "takeProfitPct": 0.312,
       "trailingStopActivation": 0.096,
       "trailingStopDistance": 0.04000000000000001,
-      "maxHoldingHours": 576
+      "maxHoldingHours": 720
     },
     "execution": {
       "success": true,
-      "signalId": "dfdd5582-282f-4ec4-9c79-144482069583",
+      "signalId": "908f6844-0ed7-4dd3-9a2a-4d3eb97ef127",
       "protocol": "binance",
-      "orderId": "bt-50",
-      "executedSize": "515228.1420233051",
-      "executedPrice": "0.151617",
+      "orderId": "bt-44",
+      "executedSize": "566879.3519771365",
+      "executedPrice": "0.151616",
       "timestamp": 1771520151063,
       "metadata": {
         "gasCostUsd": 0,
-        "slippagePct": 0.0012570292833489183,
+        "slippagePct": 0.0012589870362959418,
         "basePrice": 0.15180741526023184,
         "leverage": 2,
-        "dollarAllocation": 39058.56669783713,
-        "leveragedAllocation": 78117.13339567426
+        "dollarAllocation": 42974.0725918837,
+        "leveragedAllocation": 85948.1451837674
       }
     },
-    "entryPrice": 0.151617,
-    "exitPrice": 0.1519754742457471,
-    "size": 515228.1420233051,
+    "entryPrice": 0.151616,
+    "exitPrice": 0.15197577182762484,
+    "size": 566879.3519771365,
     "direction": "short",
     "asset": "BAL",
     "protocol": "binance",
-    "pnl": -184.69601959947724,
+    "pnl": -203.9472205035985,
     "holdingPeriodMs": 25448937,
     "openedAt": 1771520151063,
     "closedAt": 1771545600000,

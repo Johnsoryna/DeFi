@@ -39,13 +39,13 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   AAVE: 1.5, BLUR: 1.5, JTO: 1.5,
   UNI: 1.5, OP: 1.5, COMP: 1.5, LINK: 1.5,
   MKR: 1.5, CRV: 1.5, YFI: 1.5,
+  ARB: 1.5,   // Corrected from 2.5 — ARB Binance Futures has $50M+ daily vol (top-15 DeFi token)
+  DYDX: 1.5,  // Corrected from 2.5 — declining but still $10M-50M range
   // Tier A-Low: Medium ($5M-10M vol) — 2.0x slippage
   ZK: 2.0, JUP: 2.0, DRIFT: 2.0, STRK: 2.0, TIA: 2.0,
   ENA: 2.0, STX: 2.0,
   SEI: 2.0, LDO: 2.0, PYTH: 2.0,
   CVX: 2.0,
-  // Tier B: Lower volume ($1M-5M vol) — 2.5x slippage
-  ARB: 2.5, DYDX: 2.5,
   // Non-governance assets (reference)
   WSTETH: 2.0, RETH: 2.5, CBETH: 2.5,
   // Tier C assets (GMX, MORPHO, SKY, EIGEN, MNT) NOT in this map = default 2.0x

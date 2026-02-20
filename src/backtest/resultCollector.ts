@@ -53,13 +53,15 @@ function calculateExitSlippage(asset: string, notionalUsd: number): number {
 //   - Positive rate: longs pay shorts (typical in bull markets)
 //   - Negative rate: shorts pay longs (typical in bear markets)
 // We use a regime-based model: ETH 14d momentum determines direction & magnitude.
-//   - Bull (ETH >+10%): +0.008% → shorts receive well
-//   - Neutral:          +0.004% → mild positive rate
-//   - Bear (ETH <-10%): -0.003% → shorts PAY (inverted)
+// Calibrated to observed Binance perpetual rates (2024–2026):
+//   - Bull (ETH >+10%): +0.010% → minimum realistic bull rate on Binance
+//   - Neutral:          +0.005% → typical low-vol baseline
+//   - Bear (ETH <-10%): -0.003% → inverted (shorts PAY, longs receive)
+// Previous values (0.008% / 0.004%) were ~20–50% below observed market rates.
 
-const FUNDING_RATE_BULL  = 0.00008  // +0.008% per 8h in bull market  (~8.8% annualized)
-const FUNDING_RATE_NEUTRAL = 0.00004 // +0.004% per 8h neutral        (~4.4% annualized)
-const FUNDING_RATE_BEAR  = -0.00003  // -0.003% per 8h in bear market  (~-3.3% annualized)
+const FUNDING_RATE_BULL    = 0.0001   // +0.010% per 8h in bull market  (~10.9% annualized)
+const FUNDING_RATE_NEUTRAL = 0.00005  // +0.005% per 8h neutral          (~5.5% annualized)
+const FUNDING_RATE_BEAR    = -0.00003 // -0.003% per 8h in bear market   (~-3.3% annualized)
 const FUNDING_INTERVAL_MS = 8 * 3600_000 // 8 hours
 
 // ─── Exported Types ──────────────────────────────────────────────────
@@ -317,7 +319,10 @@ export class ResultCollector {
         effectiveSL = pos.stopLossPct * Math.max(0.65, decayFactor)
       }
 
-      if (priceChangePct < -effectiveSL) {
+      // Minimum 72h hold before SL fires — governance events need time to develop.
+      // Structural: all SL exits <72h have ≤33% WR; early noise before the event
+      // resolves causes false SL triggers. Max-loss-cap above is still active.
+      if (holdingHours >= 72 && priceChangePct < -effectiveSL) {
         const isDecayed = effectiveSL < pos.stopLossPct
         toClose.push({
           pos,

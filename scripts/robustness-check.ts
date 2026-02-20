@@ -129,7 +129,7 @@ function runTest(from: string, to: string, portfolio = 100000): TestResult | nul
 const OPTIMAL = {
   maxSizePct: 12,
   aggTP: 0.36, modTP: 0.26, consTP: 0.20,
-  maxHoldingHours: 576,
+  maxHoldingHours: 720,
   shortScalePower: 0.58,
   cooldownDays: 3,
   shortMaxRiskPct: 12,
@@ -153,19 +153,19 @@ async function main() {
   console.log('═'.repeat(120) + '\n')
 
   const walkForward = [
-    { name: 'FULL PERIOD (reference)',    from: '2025-01-01', to: '2026-02-16' },
+    { name: 'FULL PERIOD (reference)',    from: '2025-01-01', to: '2026-02-20' },
     { name: 'H1: Jan-Jun 2025 only',     from: '2025-01-01', to: '2025-07-01' },
     { name: 'H2: Jul-Dec 2025 only',     from: '2025-07-01', to: '2026-01-01' },
-    { name: 'H2+: Jul 2025-Feb 2026',    from: '2025-07-01', to: '2026-02-16' },
+    { name: 'H2+: Jul 2025-Feb 2026',    from: '2025-07-01', to: '2026-02-20' },
     { name: 'Q1: Jan-Mar 2025',           from: '2025-01-01', to: '2025-04-01' },
     { name: 'Q2: Apr-Jun 2025',           from: '2025-04-01', to: '2025-07-01' },
     { name: 'Q3: Jul-Sep 2025',           from: '2025-07-01', to: '2025-10-01' },
     { name: 'Q4: Oct-Dec 2025',           from: '2025-10-01', to: '2026-01-01' },
-    { name: 'Q5: Jan-Feb 2026',           from: '2026-01-01', to: '2026-02-16' },
-    { name: 'TRAIN: Jan-Aug → TEST: Sep-Feb', from: '2025-09-01', to: '2026-02-16' },
-    { name: 'TRAIN: Jan-Jun → TEST: Jul-Feb', from: '2025-07-01', to: '2026-02-16' },
-    { name: 'Last 6m: Sep 2025-Feb 2026',  from: '2025-09-01', to: '2026-02-16' },
-    { name: 'Last 3m: Dec 2025-Feb 2026',  from: '2025-12-01', to: '2026-02-16' },
+    { name: 'Q5: Jan-Feb 2026',           from: '2026-01-01', to: '2026-02-20' },
+    { name: 'TRAIN: Jan-Aug → TEST: Sep-Feb', from: '2025-09-01', to: '2026-02-20' },
+    { name: 'TRAIN: Jan-Jun → TEST: Jul-Feb', from: '2025-07-01', to: '2026-02-20' },
+    { name: 'Last 6m: Sep 2025-Feb 2026',  from: '2025-09-01', to: '2026-02-20' },
+    { name: 'Last 3m: Dec 2025-Feb 2026',  from: '2025-12-01', to: '2026-02-20' },
   ]
 
   const wfResults: any[] = []
@@ -243,7 +243,7 @@ async function main() {
       restore()
       const params: Params = { [pd.key]: val }
       apply(params)
-      const r = runTest('2025-01-01', '2026-02-16')
+      const r = runTest('2025-01-01', '2026-02-20')
 
       if (r) {
         sensitivityResults.push({
@@ -306,7 +306,7 @@ async function main() {
 
   restore()
   // Run a fresh backtest to get actual trades
-  runTest('2025-01-01', '2026-02-16')
+  runTest('2025-01-01', '2026-02-20')
   const trades = JSON.parse(fs.readFileSync('./data/backtest-trades.json', 'utf8'))
   const pnls = trades.map((t: any) => t.pnl)
   const actualPnl = pnls.reduce((a: number, b: number) => a + b, 0)
