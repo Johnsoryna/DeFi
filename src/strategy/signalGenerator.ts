@@ -180,18 +180,13 @@ const STRATEGY_MATRIX: DynamicStrategy[] = [
             rationale: `E-Mode change may improve capital efficiency for ${asset}`,
           })
         } else {
-          // Generic technical parameter → trade the governance token
-          const govToken = getGovTokenForAsset(asset, impact.affectedProtocols)
-          if (govToken) {
-            signals.push({
-              asset: govToken,
-              direction: isDecrease ? 'short' : 'long',
-              protocol: 'binance',
-              sizePct: 2,
-              urgency: 'low',
-              rationale: `Technical parameter ${isDecrease ? 'decrease' : 'increase'} on ${asset} — ${isDecrease ? 'bearish' : 'bullish'} for ${govToken}`,
-            })
-          }
+          // Generic technical parameter — no tradeable signal.
+          // Empirical: 7 NLP-classified tech-param trades (42.9% WR, -$12,405 total).
+          // These are routine "Risk Stewards" cap/rate tweaks (e.g. Chaos Labs ARFC posts)
+          // classified as technical_parameter with technicalCategory='other' by the NLP.
+          // The market ignores routine maintenance → no reliable directional alpha.
+          // Specific decoded categories (LTV, supply_cap, reserve_freeze) remain handled above.
+          log.debug({ asset, category: cat, isDecrease }, 'Generic technical parameter (NLP): no category-specific alpha, skipping')
         }
       }
       return signals
@@ -262,6 +257,16 @@ const STRATEGY_MATRIX: DynamicStrategy[] = [
         if (STABLES.has(asset.toUpperCase())) {
           // Stablecoin deprecation/freeze → short the governance token (stablecoin itself won't move)
           // Keep SAME conviction as direct shorts — wider SL (aggressive) lets trades survive volatility
+          //
+          // ─── On-chain stage guard ───────────────────────────────────────
+          // Stablecoin risk events (USDC/USDT freeze, deprecation) at on-chain vote stage are
+          // already market-priced. By voting time the community has fully discussed the risk,
+          // alpha is exhausted. Forum/snapshot stage carries the true governance alpha.
+          // Empirical: ARB onchain_vote stablecoin short -$4,988 at conf 0.790 (highest loser).
+          if (analysis.stage === 'onchain_vote') {
+            log.debug({ asset, stage: analysis.stage }, 'Stablecoin risk: on-chain vote stage — market priced in, skipping')
+            continue
+          }
           const govToken = getGovTokenForAsset(asset, impact.affectedProtocols)
           if (govToken) {
             signals.push({
