@@ -49,8 +49,11 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   // Non-governance assets (reference)
   WSTETH: 2.0, RETH: 2.5, CBETH: 2.5,
   // Tier C assets (GMX, MORPHO, SKY, EIGEN) NOT in this map = default 2.0x
-  // ─── Gruppe C (Feb 2026) ────────────────────────────────────────
-  '1INCH': 2.0,   // $5M-15M vol tier
+  // ─── Gruppe C+D (Feb 2026) ──────────────────────────────────────
+  '1INCH': 2.0,
+  SNX: 1.5,       // $30M-80M vol
+  PENDLE: 1.5,    // $15M-40M vol
+  GRT: 2.0,       // $10M-25M vol
   // ─── Removed ────────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest
   // BAL: REMOVED — no Binance USDT perp (delisted)

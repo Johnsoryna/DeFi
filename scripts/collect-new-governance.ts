@@ -2,6 +2,7 @@
  * Collect historical Snapshot proposals + forum posts for new protocols.
  * Updated 2026-02-15: Added Tier A governance tokens from dYdX v4 research.
  * Updated 2026-02-20: Added Gruppe B candidates (PENDLE, FXS, BAL).
+ * Updated 2026-02-22: Added SNX forum (research.synthetix.io), GRT (thegraph), pendle-politics.eth, graphprotocol.eth.
  */
 import Database from 'better-sqlite3'
 import { collectForumPosts, collectSnapshots } from '../src/backtest/dataCollector.js'
@@ -37,6 +38,11 @@ async function main() {
     venus: 'https://community.venus.io',
     // Rocket Pool: ETH liquid staking, protocol fee and parameter governance
     rocketpool: 'https://dao.rocketpool.net',
+    // ─── Feb 2026 v2 ────────────────────────────────────────────────────
+    // SNX: Perp DEX risk params (OI caps, market deprecation) — forum is key source
+    synthetix: 'https://research.synthetix.io',
+    // The Graph: Indexer slashing, query fees, protocol economics
+    thegraph: 'https://forum.thegraph.com',
   }
   const forumCount = await collectForumPosts(db, newForums, FROM, TO)
   console.log(`Collected ${forumCount} new forum posts`)
@@ -50,6 +56,9 @@ async function main() {
     // New candidates
     'venus-xvs.eth',         // Venus Protocol governance
     'rocketpool-dao.eth',    // Rocket Pool DAO
+    // Feb 2026 v2
+    'pendle-politics.eth',   // Pendle governance (yield pool risk params)
+    'graphprotocol.eth',     // The Graph governance
   ]
   const snapCount = await collectSnapshots(db, gruppeB_spaces, FROM, TO)
   console.log(`Collected ${snapCount} new Snapshot proposals for Gruppe B`)

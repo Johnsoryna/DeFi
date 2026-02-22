@@ -32,9 +32,11 @@ const SPACE_TO_PROTOCOL: Record<string, GovernanceProtocol> = {
   'starknet.eth': 'starknet',
   'ens.eth': 'ens',
   'morpho.eth': 'morpho',
-  // Gruppe B (Feb 2026)
+  // Feb 2026 v2: SNX perp DEX — wired, 0 trades but correct for future OI-cap events
+  'snxgov.eth': 'synthetix',
+  // ─── Removed ────────────────────────────────────────────────────────
   // 'frax.eth': REMOVED — 0 trades in backtest
-  'balancer.eth': 'balancer',
+  // 'balancer.eth': REMOVED — no BALUSDT Binance perp (delisted), live execution would fail
 }
 
 // ─── GraphQL Query ──────────────────────────────────────────────────

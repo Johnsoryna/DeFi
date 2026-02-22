@@ -54,9 +54,11 @@ export type GovernanceProtocol =
   | '1inch'
   | 'yearn'
   | 'convex'
-  | 'balancer'  // BAL — pool governance, liquidity parameters (2 trades, net +$860)
+  // balancer: REMOVED — no Binance USDT perp for BAL
   // venus: TESTED — 0 trades. Asset listing proposals, max confidence 0.50 (below 0.55 threshold).
   // rocketpool: TESTED — 0 trades. Partnership/staking proposals, no risk-parameter alpha.
+  | 'pendle'        // PENDLE — yield tokenization protocol, yield pool risk params
+  | 'thegraph'      // GRT — indexer slashing, query fees, protocol economics
 
 // ─── Impact Categories ──────────────────────────────────────────────
 

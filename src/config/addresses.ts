@@ -139,9 +139,11 @@ export const SNAPSHOT_SPACES = [
   'starknet.eth',
   'ens.eth',
   'ethenagovernance.eth',
-  // ─── Gruppe B (Feb 2026) ─────────────────────────────────────────
+  // ─── Feb 2026 v2 ─────────────────────────────────────────────────
+  'snxgov.eth',             // SNX: Synthetix Perps governance — OI-cap events
+  // ─── Removed ──────────────────────────────────────────────────────
   // 'frax.eth': REMOVED — 0 trades in backtest
-  'balancer.eth',
+  // 'balancer.eth': REMOVED — no BALUSDT Binance perp (delisted)
 ] as const
 
 // ─── All Governance Token Addresses (for delegation tracking) ────────

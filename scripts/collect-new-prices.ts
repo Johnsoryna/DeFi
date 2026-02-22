@@ -36,6 +36,12 @@ const TOKENS: Array<{ symbol: string; coin: string }> = [
   { symbol: 'XVS', coin: 'coingecko:venus' },
   // Rocket Pool: ETH staking protocol token, RPLUSDT on Binance Futures
   { symbol: 'RPL', coin: 'coingecko:rocket-pool' },
+  // ─── Feb 2026 v2 ────────────────────────────────────────────────────────────
+  // The Graph: GRT indexer token, GRTUSDT on Binance Futures
+  { symbol: 'GRT', coin: 'coingecko:the-graph' },
+  // SNX already has 13,265 points, will be skipped
+  // PENDLE already has 5,995 points, check if needs extension
+  { symbol: 'PENDLE', coin: 'coingecko:pendle' },
 ]
 
 const FROM_TS = Math.floor(new Date('2025-02-01T00:00:00Z').getTime() / 1000)

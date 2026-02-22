@@ -454,7 +454,7 @@ const PROTOCOL_GOV_TOKEN: Record<string, string> = {
   lido: 'LDO',
   arbitrum: 'ARB',
   curve: 'CRV',
-  // synthetix: REMOVED — snxgov.eth Snapshot noise; 50% WR, -$2,212 backtest. No forum source.
+  synthetix: 'SNX',   // C-ratio, OI-cap, market deprecation — re-enabled with improved NLP (Feb 2026)
   convex: 'CVX',
   yearn: 'YFI',
   optimism: 'OP',
@@ -484,6 +484,9 @@ const PROTOCOL_GOV_TOKEN: Record<string, string> = {
   '1inch': '1INCH',   // Fusion protocol parameter governance, 226 forum + 19 snaps, 1INCHUSDT perp
   jito: 'JTO',        // Solana liquid staking fee governance, 44 forum posts, JTOUSDT perp
   pyth: 'PYTH',       // Oracle parameter governance, 113 forum posts, PYTHUSDT perp
+  // ─── Gruppe D: Yield/indexer governance (Feb 2026) ───────────────
+  pendle: 'PENDLE',   // Yield pool risk params, market expiry, PENDLEUSDT perp
+  thegraph: 'GRT',    // Indexer slashing, query fees, delegation params, GRTUSDT perp
   // ─── Removed protocols ───────────────────────────────────────────
   // frax: REMOVED — 0 trades in backtest (20 snaps + 25 forum posts, no risk-param alpha)
   // balancer: REMOVED — no Binance USDT perp for BAL (delisted); had 2 trades +$860 backtest only
@@ -529,6 +532,10 @@ const ASSET_PROTOCOL: Record<string, string> = {
   '1INCH': '1inch',
   JTO: 'jito',
   PYTH: 'pyth',
+  SNX: 'synthetix',
+  // ─── Gruppe D (Feb 2026) ─────────────────────────────────────
+  PENDLE: 'pendle',
+  GRT: 'thegraph',
   // ─── Removed ─────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest (no risk-param alpha in frax governance)
   // BAL: REMOVED — no Binance USDT perp (delisted)
@@ -560,7 +567,7 @@ const ESTABLISHED_PROTOCOLS = new Set([
   'dydx', 'ethena', 'eigenlayer', 'ens',
   // ─── Re-enabled with improved strategy (direction-asymmetric + short bias) ──
   'curve', 'convex', 'yearn',
-  // synthetix: REMOVED — snxgov.eth Snapshot proposals generate noise trades
+  'synthetix',  // Re-enabled with improved NLP — OI-cap/market deprecation signals
   // ─── New Protocols ─────────────────────────────────────────
   'gmx', 'jupiter', 'celestia', 'avalanche', 'polygon',
   'starknet', 'morpho', 'sui', 'sei',
@@ -570,6 +577,8 @@ const ESTABLISHED_PROTOCOLS = new Set([
   'drift', 'injective', 'cosmos',
   // ─── Gruppe C (Feb 2026) ─────────────────────────────────────
   '1inch', 'jito', 'pyth',
+  // ─── Gruppe D (Feb 2026) ─────────────────────────────────────
+  'pendle', 'thegraph',
   // ─── Removed ─────────────────────────────────────────────────
   // 'frax': REMOVED — 0 trades in backtest
   // 'balancer': REMOVED — no Binance USDT perp for BAL

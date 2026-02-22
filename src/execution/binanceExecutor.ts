@@ -72,8 +72,11 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   DRIFT: 'DRIFTUSDT',
   PYTH: 'PYTHUSDT',
   STX: 'STXUSDT',
-  // ─── Gruppe C (Feb 2026) ────────────────────────────────────────
+  // ─── Gruppe C+D (Feb 2026) ──────────────────────────────────────
   '1INCH': '1INCHUSDT',
+  SNX: 'SNXUSDT',
+  PENDLE: 'PENDLEUSDT',
+  GRT: 'GRTUSDT',
   // ─── Removed ────────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest
   // BAL: REMOVED — no Binance USDT perp (delisted)
@@ -100,8 +103,11 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   CVX: 2.0,
   SKY: 2.0, EIGEN: 2.0, GMX: 2.0, POL: 2.0,
   STRK: 2.0, ZK: 2.0, DRIFT: 2.0, AXL: 2.0,
-  // ─── Gruppe C (Feb 2026) ────────────────────────────────────────
+  // ─── Gruppe C+D (Feb 2026) ──────────────────────────────────────
   '1INCH': 2.0,   // $5M-15M vol tier
+  SNX: 1.5,       // $30M-80M vol — medium liquid derivatives token
+  PENDLE: 1.5,    // $15M-40M vol — yield tokenization
+  GRT: 2.0,       // $10M-25M vol — indexing protocol
   // ─── Removed ────────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest
   // BAL: REMOVED — no Binance USDT perp

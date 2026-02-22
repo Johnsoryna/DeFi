@@ -57,6 +57,10 @@ const SPACE_PROTOCOL: Record<string, GovernanceProtocol> = {
   'starknet.eth': 'starknet',
   'ens.eth': 'ens',
   'ethenagovernance.eth': 'ethena',
+  'snxgov.eth': 'synthetix',          // Re-enabled Feb 2026 — OI-cap/deprecation events
+  // ─── Gruppe D (Feb 2026) — will be added once forum data collected ──────────
+  // 'pendle-politics.eth': 'pendle',  // add after collecting pendle-politics.eth
+  // 'graphprotocol.eth': 'thegraph',  // add after collecting graphprotocol.eth
   // ─── Removed ─────────────────────────────────────────────────────────────
   // 'frax.eth': REMOVED — 0 trades in backtest
   // 'balancer.eth': REMOVED — no Binance USDT perp for BAL (had 2 trades +$860 backtest only)
@@ -97,6 +101,8 @@ const FORUM_PROTOCOL: Record<string, GovernanceProtocol> = {
   'https://forum.polygon.technology': 'polygon',
   'https://gov.yearn.fi': 'yearn',
   'https://gov.blur.foundation': 'blur',
+  // ─── Feb 2026 v2 ─────────────────────────────────────────────────────────
+  'https://forum.thegraph.com': 'thegraph',   // GRT: 154 forum posts, GRTUSDT perp
   // ─── Removed ─────────────────────────────────────────────────────────────
   // 'https://gov.frax.finance': REMOVED — 0 trades in backtest
   // 'https://forum.balancer.fi': REMOVED — no Binance USDT perp for BAL

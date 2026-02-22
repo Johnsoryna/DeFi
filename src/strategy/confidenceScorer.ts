@@ -445,7 +445,7 @@ export function getMinConfidence(stage: GovernanceStage): number {
   switch (stage) {
     case 'monitoring': return 0.60
     case 'discussion': return 0.50  // Forum posts: high bar for quality
-    case 'snapshot': return 0.55    // Snapshots: very high bar (often speculative)
+    case 'snapshot': return 0.55    // Snapshots: higher bar — empirically validated (0.50 adds noise trades)
     case 'onchain_vote': return 0.50
     case 'timelock': return 0.40
     case 'executed': return 0.30
