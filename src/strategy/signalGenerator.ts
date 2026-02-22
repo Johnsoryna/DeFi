@@ -471,7 +471,7 @@ const PROTOCOL_GOV_TOKEN: Record<string, string> = {
   starknet: 'STRK',
   morpho: 'MORPHO',
   sui: 'SUI',
-  mantle: 'MNT',
+  // mantle: REMOVED — no Binance USDT perp for MNT, 0 backtest trades (7 forum posts, L2 operational gov)
   sei: 'SEI',
   // ─── Forum-active L1/L2 protocols (245 / 183 posts in DB) ───────
   near: 'NEAR',
@@ -480,9 +480,13 @@ const PROTOCOL_GOV_TOKEN: Record<string, string> = {
   drift: 'DRIFT',      // Solana perp-DEX, DRIFTUSDT on Binance
   injective: 'INJ',   // DEX-parameter governance, INJUSDT on Binance
   cosmos: 'ATOM',     // L1 hub governance, ATOMUSDT on Binance
-  // ─── Gruppe B: Snapshot/forum data confirmed, wired (Feb 2026) ───
+  // ─── Gruppe C: Fusion/oracle/staking governance (Feb 2026) ───────
+  '1inch': '1INCH',   // Fusion protocol parameter governance, 226 forum + 19 snaps, 1INCHUSDT perp
+  jito: 'JTO',        // Solana liquid staking fee governance, 44 forum posts, JTOUSDT perp
+  pyth: 'PYTH',       // Oracle parameter governance, 113 forum posts, PYTHUSDT perp
+  // ─── Removed protocols ───────────────────────────────────────────
   // frax: REMOVED — 0 trades in backtest (20 snaps + 25 forum posts, no risk-param alpha)
-  balancer: 'BAL',    // Pool governance, 2 trades, net +$860 — BALUSDT on Binance
+  // balancer: REMOVED — no Binance USDT perp for BAL (delisted); had 2 trades +$860 backtest only
   // venus: REMOVED — 0 trades. Asset listing proposals max conf 0.50 (below 0.55 threshold).
   // rocketpool: REMOVED — 0 trades. Partnership/staking proposals, no risk-parameter alpha.
 }
@@ -513,7 +517,7 @@ const ASSET_PROTOCOL: Record<string, string> = {
   STRK: 'starknet',
   MORPHO: 'morpho',
   SUI: 'sui',
-  MNT: 'mantle',
+  // MNT: REMOVED — no Binance USDT perp, 0 backtest trades
   SEI: 'sei',
   NEAR: 'near',
   ZK: 'zksync',
@@ -521,9 +525,13 @@ const ASSET_PROTOCOL: Record<string, string> = {
   DRIFT: 'drift',
   INJ: 'injective',
   ATOM: 'cosmos',
-  // ─── Gruppe B (Feb 2026) ─────────────────────────────────────
+  // ─── Gruppe C (Feb 2026) ─────────────────────────────────────
+  '1INCH': '1inch',
+  JTO: 'jito',
+  PYTH: 'pyth',
+  // ─── Removed ─────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest (no risk-param alpha in frax governance)
-  BAL: 'balancer',
+  // BAL: REMOVED — no Binance USDT perp (delisted)
   // XVS/RPL: REMOVED — 0 trades in backtest (venus: asset listings; rocketpool: partnership gov)
 }
 
@@ -555,13 +563,16 @@ const ESTABLISHED_PROTOCOLS = new Set([
   // synthetix: REMOVED — snxgov.eth Snapshot proposals generate noise trades
   // ─── New Protocols ─────────────────────────────────────────
   'gmx', 'jupiter', 'celestia', 'avalanche', 'polygon',
-  'starknet', 'morpho', 'sui', 'mantle', 'sei',
+  'starknet', 'morpho', 'sui', 'sei',
+  // 'mantle': REMOVED — no Binance USDT perp for MNT
   'near', 'zksync',
   // ─── Gruppe A (Feb 2026) ─────────────────────────────────────
   'drift', 'injective', 'cosmos',
-  // ─── Gruppe B (Feb 2026) ─────────────────────────────────────
+  // ─── Gruppe C (Feb 2026) ─────────────────────────────────────
+  '1inch', 'jito', 'pyth',
+  // ─── Removed ─────────────────────────────────────────────────
   // 'frax': REMOVED — 0 trades in backtest
-  'balancer',
+  // 'balancer': REMOVED — no Binance USDT perp for BAL
   // 'venus', 'rocketpool': REMOVED — 0 trades in backtest
 ])
 

@@ -58,7 +58,7 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   POL: 'POLUSDT',
   STRK: 'STRKUSDT',
   SUI: 'SUIUSDT',
-  MNT: 'MNTUSDT',
+  // MNT: REMOVED — no Binance USDT perp (delisted)
   SEI: 'SEIUSDT',
   // Cosmos ecosystem
   ATOM: 'ATOMUSDT',
@@ -72,9 +72,12 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   DRIFT: 'DRIFTUSDT',
   PYTH: 'PYTHUSDT',
   STX: 'STXUSDT',
-  // ─── Gruppe B (Feb 2026) ────────────────────────────────────────
+  // ─── Gruppe C (Feb 2026) ────────────────────────────────────────
+  '1INCH': '1INCHUSDT',
+  // ─── Removed ────────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest
-  BAL: 'BALUSDT',
+  // BAL: REMOVED — no Binance USDT perp (delisted)
+  // MNT: REMOVED — no Binance USDT perp (delisted)
   // XVS: REMOVED — 0 trades in backtest
   // RPL: REMOVED — 0 trades in backtest
 }
@@ -96,12 +99,14 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   // Tier 4: Medium ($1M-10M vol) — 2.0x
   CVX: 2.0,
   SKY: 2.0, EIGEN: 2.0, GMX: 2.0, POL: 2.0,
-  MNT: 2.0, STRK: 2.0, ZK: 2.0, DRIFT: 2.0, AXL: 2.0,
-  // ─── Gruppe B (Feb 2026) ────────────────────────────────────────
+  STRK: 2.0, ZK: 2.0, DRIFT: 2.0, AXL: 2.0,
+  // ─── Gruppe C (Feb 2026) ────────────────────────────────────────
+  '1INCH': 2.0,   // $5M-15M vol tier
+  // ─── Removed ────────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest
-  BAL: 2.5,   // $2M-5M vol tier (lower volume)
-  // XVS: REMOVED — 0 trades in backtest
-  // RPL: REMOVED — 0 trades in backtest
+  // BAL: REMOVED — no Binance USDT perp
+  // MNT: REMOVED — no Binance USDT perp
+  // XVS/RPL: REMOVED — 0 trades in backtest
 }
 
 function resolveSymbol(asset: string): string | null {

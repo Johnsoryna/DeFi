@@ -57,9 +57,9 @@ const SPACE_PROTOCOL: Record<string, GovernanceProtocol> = {
   'starknet.eth': 'starknet',
   'ens.eth': 'ens',
   'ethenagovernance.eth': 'ethena',
-  // ─── Gruppe B (Feb 2026) ─────────────────────────────────────────────────
+  // ─── Removed ─────────────────────────────────────────────────────────────
   // 'frax.eth': REMOVED — 0 trades in backtest
-  'balancer.eth': 'balancer',
+  // 'balancer.eth': REMOVED — no Binance USDT perp for BAL (had 2 trades +$860 backtest only)
   // 'venus-xvs.eth': REMOVED — 0 trades (asset listing proposals, conf <0.55)
   // 'rocketpool-dao.eth': REMOVED — 0 trades (partnership proposals, no risk-param alpha)
 }
@@ -97,9 +97,9 @@ const FORUM_PROTOCOL: Record<string, GovernanceProtocol> = {
   'https://forum.polygon.technology': 'polygon',
   'https://gov.yearn.fi': 'yearn',
   'https://gov.blur.foundation': 'blur',
-  // ─── Gruppe B (Feb 2026) ─────────────────────────────────────────────────
+  // ─── Removed ─────────────────────────────────────────────────────────────
   // 'https://gov.frax.finance': REMOVED — 0 trades in backtest
-  'https://forum.balancer.fi': 'balancer',
+  // 'https://forum.balancer.fi': REMOVED — no Binance USDT perp for BAL
   // 'https://community.venus.io': REMOVED — 0 trades (asset listing proposals, conf <0.55)
   // 'https://dao.rocketpool.net': REMOVED — 0 trades (partnership proposals, no risk-param alpha)
 }
