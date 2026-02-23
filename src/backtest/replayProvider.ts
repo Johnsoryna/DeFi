@@ -61,10 +61,9 @@ const SPACE_PROTOCOL: Record<string, GovernanceProtocol> = {
   // ─── Euler Finance (Feb 2026) ────────────────────────────────────────────
   'eulerdao.eth': 'euler',            // Euler Finance — 0 trades (routine Gauntlet params, neutral sentiment)
   // ─── Not added (0 proposals or 0 trades) ─────────────────────────────────
+  // 'frax.eth': REMOVED — 0 trades (re-tested Feb 2026 with body analysis, still 0)
   // 'pendle-politics.eth': 0 proposals in DB — no Snapshot history for pendle-politics.eth
   // 'graphprotocol.eth': 0 trades (team updates/council meetings)
-  // ─── Removed ─────────────────────────────────────────────────────────────
-  // 'frax.eth': REMOVED — 0 trades in backtest
   // 'balancer.eth': REMOVED — no Binance USDT perp for BAL (had 2 trades +$860 backtest only)
   // 'venus-xvs.eth': REMOVED — 0 trades (asset listing proposals, conf <0.55)
   // 'rocketpool-dao.eth': REMOVED — 0 trades (partnership proposals, no risk-param alpha)
@@ -107,8 +106,7 @@ const FORUM_PROTOCOL: Record<string, GovernanceProtocol> = {
   'https://forum.thegraph.com': 'thegraph',   // GRT: 154 forum posts, GRTUSDT perp
   // ─── Euler Finance (Feb 2026) ─────────────────────────────────────────────
   'https://forum.euler.finance': 'euler',     // EUL: Supply caps, LLTV, risk params (Gauntlet)
-  // ─── Removed ─────────────────────────────────────────────────────────────
-  // 'https://gov.frax.finance': REMOVED — 0 trades in backtest
+  // 'https://gov.frax.finance': REMOVED — 0 trades (re-tested Feb 2026 with body analysis, still 0)
   // 'https://forum.balancer.fi': REMOVED — no Binance USDT perp for BAL
   // 'https://community.venus.io': REMOVED — 0 trades (asset listing proposals, conf <0.55)
   // 'https://dao.rocketpool.net': REMOVED — 0 trades (partnership proposals, no risk-param alpha)

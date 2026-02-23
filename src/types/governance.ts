@@ -60,6 +60,7 @@ export type GovernanceProtocol =
   | 'pendle'        // PENDLE — yield tokenization protocol, yield pool risk params
   | 'thegraph'      // GRT — indexer slashing, query fees, protocol economics
   | 'euler'         // EUL — Euler Finance, AAVE-like lending with monthly risk updates (Gauntlet)
+  // frax: REMOVED — 0 trades (re-tested Feb 2026 with body analysis, still 0; treasury governance)
 
 // ─── Impact Categories ──────────────────────────────────────────────
 

@@ -79,7 +79,7 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   GRT: 'GRTUSDT',
   EUL: 'EULUSDT',    // Euler Finance — EULUSDT active on Binance Futures
   // ─── Removed ────────────────────────────────────────────────────
-  // FXS: REMOVED — 0 trades in backtest
+  // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis — still 0)
   // BAL: REMOVED — no Binance USDT perp (delisted)
   // MNT: REMOVED — no Binance USDT perp (delisted)
   // XVS: REMOVED — 0 trades in backtest
@@ -111,7 +111,7 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   GRT: 2.0,       // $10M-25M vol — indexing protocol
   EUL: 2.5,       // ~$17M vol — smaller DeFi token, higher slippage
   // ─── Removed ────────────────────────────────────────────────────
-  // FXS: REMOVED — 0 trades in backtest
+  // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis — still 0)
   // BAL: REMOVED — no Binance USDT perp
   // MNT: REMOVED — no Binance USDT perp
   // XVS/RPL: REMOVED — 0 trades in backtest

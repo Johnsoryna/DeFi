@@ -324,6 +324,44 @@ const STRATEGY_MATRIX: DynamicStrategy[] = [
               urgency: 'high',
               rationale: `Risk mitigation: ${asset} may face reduced utility or exit pressure`,
             })
+
+            // ─── Hebel 4: Collateral-Issuer Cascade ───────────────────────
+            // When this collateral asset is degraded, the protocol that ISSUED it also suffers.
+            // e.g., AAVE freezes wstETH → short LDO (Lido sees reduced demand for their product)
+            const issuerToken = COLLATERAL_ISSUER_TOKEN[asset.toUpperCase()]
+            if (issuerToken && issuerToken !== asset && issuerToken !== PROTOCOL_GOV_TOKEN[analysis.protocol]) {
+              log.debug({ asset, issuerToken, protocol: analysis.protocol }, 'Hebel4: collateral-issuer cascade signal')
+              signals.push({
+                asset: issuerToken,
+                direction: 'short',
+                protocol: 'binance',
+                sizePct: 4,
+                urgency: 'medium',
+                rationale: `Collateral-issuer cascade: ${asset} degraded on ${analysis.protocol} — reduced demand bearish for ${issuerToken} (issuer)`,
+              })
+            }
+
+            // ─── Hebel 3: Protocol Cascade ────────────────────────────────
+            // When a major collateral is degraded, OTHER protocols holding it face the same risk.
+            // e.g., AAVE freezes WBTC → Compound/Maker also exposed → cascade short COMP + SKY
+            const cascadeProtos = CASCADE_COLLATERAL_PROTOCOLS[asset.toUpperCase()]
+            if (cascadeProtos) {
+              for (const cascadeProtocol of cascadeProtos) {
+                if (cascadeProtocol === analysis.protocol) continue  // already handled by primary signal
+                const cascadeToken = PROTOCOL_GOV_TOKEN[cascadeProtocol]
+                if (cascadeToken && cascadeToken !== asset) {
+                  log.debug({ asset, cascadeProtocol, cascadeToken }, 'Hebel3: protocol cascade signal')
+                  signals.push({
+                    asset: cascadeToken,
+                    direction: 'short',
+                    protocol: 'binance',
+                    sizePct: 3,
+                    urgency: 'medium',
+                    rationale: `Protocol cascade: ${analysis.protocol} degrading ${asset} — ${cascadeProtocol} holds same collateral, bearish for ${cascadeToken}`,
+                  })
+                }
+              }
+            }
           }
         }
       }
@@ -505,8 +543,7 @@ const PROTOCOL_GOV_TOKEN: Record<string, string> = {
   pendle: 'PENDLE',   // Yield pool risk params, market expiry, PENDLEUSDT perp
   thegraph: 'GRT',    // Indexer slashing, query fees, delegation params, GRTUSDT perp
   euler: 'EUL',       // Supply caps, LLTV changes, asset listings — monthly Gauntlet risk updates
-  // ─── Removed protocols ───────────────────────────────────────────
-  // frax: REMOVED — 0 trades in backtest (20 snaps + 25 forum posts, no risk-param alpha)
+  // frax: REMOVED — 0 trades (re-tested Feb 2026 with body analysis, still 0; treasury/strategy governance)
   // balancer: REMOVED — no Binance USDT perp for BAL (delisted); had 2 trades +$860 backtest only
   // venus: REMOVED — 0 trades. Asset listing proposals max conf 0.50 (below 0.55 threshold).
   // rocketpool: REMOVED — 0 trades. Partnership/staking proposals, no risk-parameter alpha.
@@ -556,10 +593,26 @@ const ASSET_PROTOCOL: Record<string, string> = {
   GRT: 'thegraph',
   EUL: 'euler',       // Euler Finance governance token
   // ─── Removed ─────────────────────────────────────────────────
-  // FXS: REMOVED — 0 trades in backtest (no risk-param alpha in frax governance)
+  // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis, still 0)
   // BAL: REMOVED — no Binance USDT perp (delisted)
   // XVS/RPL: REMOVED — 0 trades in backtest (venus: asset listings; rocketpool: partnership gov)
 }
+
+// ─── Hebel 4: Collateral-Issuer Token Map ────────────────────────────────────
+// When a protocol DEGRADES a collateral asset, the ISSUER of that asset is also harmed.
+// e.g., AAVE freezes wstETH → short LDO (Lido issues wstETH; less demand = bearish for LDO)
+// e.g., AAVE freezes USDe → short ENA (Ethena issues USDe; protocol risk = bearish for ENA)
+const COLLATERAL_ISSUER_TOKEN: Record<string, string> = {
+  WSTETH: 'LDO',   // Lido issues wstETH — AAVE/Compound degrading wstETH hurts Lido
+  STETH:  'LDO',   // Lido issues stETH
+  USDE:   'ENA',   // Ethena issues USDe — collateral freeze/degrade hits ENA token
+}
+
+// ─── Hebel 3: Protocol Cascade Map ───────────────────────────────────────────
+// TESTED (Feb 2026): WBTC→COMP cascade lost money — protocols have independent risk timelines.
+// AAVE freezing WBTC doesn't simultaneously create the same risk event for COMP governance.
+// Empty — cascade concept is theoretically sound but not supported by this dataset.
+const CASCADE_COLLATERAL_PROTOCOLS: Record<string, string[]> = {}
 
 // ─── Tradeable Asset Whitelist ────────────────────────────────────────
 // Only trade assets that belong to our curated protocol list.

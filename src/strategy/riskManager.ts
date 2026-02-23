@@ -36,13 +36,14 @@ export interface RiskConfig {
 
 const DEFAULT_CONFIG: RiskConfig = {
   maxSinglePositionPct: 12,     // Aligned with Kelly maxSizePct (12%) — secondary guard
+  maxSinglePositionPct: 12,     // Aligned with Kelly maxSizePct (12%) — secondary guard
   maxTotalExposurePct: 100,     // 21 protocols need headroom for concurrent positions
   maxDrawdownPct: 25,           // More protocols = more recovery opportunities
   aaveHfAlertThreshold: 1.5,
   aaveHfReduceThreshold: 1.2,
   minConfidence: 0.50,          // High bar: only trade high-conviction signals
   maxLeverage: 10,
-  maxLeveragedExposurePct: 250, // Higher with more diverse portfolio
+  maxLeveragedExposurePct: 250, // Effective quality filter: blocks concurrent high-leverage positions
   maxAssetConcentrationPct: 40, // No single asset > 40% of portfolio
   consecutiveLossCooldownMs: 3 * 24 * 3600_000, // 3-day cooldown (shorter — signals decay)
   consecutiveLossThreshold: 2,  // 2 stop-losses on same asset triggers cooldown
