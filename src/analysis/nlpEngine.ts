@@ -7,54 +7,11 @@
  *
  * Replaces the old pattern-matching classifier (snapshotClassifier.ts) with
  * a flexible system that can classify ALL proposal types, not just technical ones.
- *
- * Hebel 2: LLM cache overlay — proposals pre-classified by gemma2:2b (Ollama)
- * are stored in data/llm-cache.json and override keyword NLP when proposalId matches.
  */
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
 import { createLogger } from '../lib/logger.js'
 import type { ProposalType, PriceImpactExpectation } from '../types/governance.js'
 
 const log = createLogger('nlp-engine')
-
-// ─── LLM Cache (Hebel 2) ──────────────────────────────────────────────
-
-interface LLMCacheEntry {
-  type: string
-  bearish: boolean
-  confidence: number
-}
-
-let _llmCache: Record<string, LLMCacheEntry> | null = null
-
-function getLLMCache(): Record<string, LLMCacheEntry> {
-  if (_llmCache !== null) return _llmCache
-  try {
-    const __dirname = path.dirname(fileURLToPath(import.meta.url))
-    const cachePath = path.resolve(__dirname, '../../data/llm-cache.json')
-    if (fs.existsSync(cachePath)) {
-      _llmCache = JSON.parse(fs.readFileSync(cachePath, 'utf-8')) as Record<string, LLMCacheEntry>
-      log.debug({ entries: Object.keys(_llmCache).length }, 'LLM cache loaded')
-    } else {
-      _llmCache = {}
-    }
-  } catch {
-    _llmCache = {}
-  }
-  return _llmCache
-}
-
-// Protocols known to generate LLM false positives (gauge votes, treasury mgmt, etc.)
-// LLM cache override is SKIPPED for these — keyword NLP is more reliable.
-const SKIP_LLM_PROTOCOLS = new Set([
-  'convex',    // 563 cvx.eth gauge/ownership votes → LLM over-classifies as risk_mitigation
-  'balancer',  // BIP gauge proposals + no BAL Binance perp anyway
-  'cosmos',    // L1 operational governance
-  'injective', // DEX parameter governance — already wired, 0 alpha trades
-  'drift',     // Solana DEX governance — already wired, 0 alpha trades
-])
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -430,7 +387,6 @@ export function analyzeText(
   title: string,
   body?: string,
   protocol?: string,
-  proposalId?: string,
 ): NLPResult {
   const text = title // Title is the primary source for type classification
   // Use title + first 500 chars of body for sentiment analysis.
@@ -439,23 +395,7 @@ export function analyzeText(
   const sentimentText = body ? `${title} ${body.slice(0, 500)}` : title
 
   // 1. Classify proposal type
-  let { type, confidence: typeConfidence, keywords } = classifyProposalType(text)
-
-  // 1b. LLM cache overlay (Hebel 2): override keyword NLP when gemma2:2b classified this proposal.
-  // Skipped for noise protocols where LLM over-classifies gauge/treasury votes as risk_mitigation.
-  if (proposalId && (!protocol || !SKIP_LLM_PROTOCOLS.has(protocol))) {
-    const llmEntry = getLLMCache()[proposalId]
-    if (llmEntry && llmEntry.type === 'risk_mitigation' && llmEntry.confidence >= 0.70
-        && type !== 'risk_mitigation') {
-      log.debug(
-        { proposalId: proposalId.slice(0, 20), prevType: type, llmConf: llmEntry.confidence.toFixed(2) },
-        'LLM cache override: reclassified to risk_mitigation',
-      )
-      type = 'risk_mitigation'
-      typeConfidence = llmEntry.confidence
-      keywords = [...keywords, 'llm:risk_mitigation']
-    }
-  }
+  const { type, confidence: typeConfidence, keywords } = classifyProposalType(text)
 
   // 2. Extract assets (multi-pass)
   let extractedAssets = extractTokens(text)

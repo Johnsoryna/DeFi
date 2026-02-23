@@ -177,8 +177,8 @@ export function analyzeOnchainProposal(
 export function analyzeSnapshotProposal(
   snap: SnapshotProposalEvent,
 ): IntelligentAnalysis | null {
-  // 1. NLP analysis on title + body (pass snapshotId for LLM cache overlay — Hebel 2)
-  const nlp = analyzeText(snap.title, snap.body, snap.protocol, snap.snapshotId)
+  // 1. NLP analysis on title + body
+  const nlp = analyzeText(snap.title, snap.body, snap.protocol)
 
   // 2. Extract and resolve assets
   let assets = nlp.extractedAssets.map((a) => resolveAssetSymbol(a))
