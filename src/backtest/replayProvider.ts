@@ -58,9 +58,11 @@ const SPACE_PROTOCOL: Record<string, GovernanceProtocol> = {
   'ens.eth': 'ens',
   'ethenagovernance.eth': 'ethena',
   'snxgov.eth': 'synthetix',          // Re-enabled Feb 2026 — OI-cap/deprecation events
-  // ─── Gruppe D (Feb 2026) — will be added once forum data collected ──────────
-  // 'pendle-politics.eth': 'pendle',  // add after collecting pendle-politics.eth
-  // 'graphprotocol.eth': 'thegraph',  // add after collecting graphprotocol.eth
+  // ─── Euler Finance (Feb 2026) ────────────────────────────────────────────
+  'eulerdao.eth': 'euler',            // Euler Finance — 0 trades (routine Gauntlet params, neutral sentiment)
+  // ─── Not added (0 proposals or 0 trades) ─────────────────────────────────
+  // 'pendle-politics.eth': 0 proposals in DB — no Snapshot history for pendle-politics.eth
+  // 'graphprotocol.eth': 0 trades (team updates/council meetings)
   // ─── Removed ─────────────────────────────────────────────────────────────
   // 'frax.eth': REMOVED — 0 trades in backtest
   // 'balancer.eth': REMOVED — no Binance USDT perp for BAL (had 2 trades +$860 backtest only)
@@ -103,6 +105,8 @@ const FORUM_PROTOCOL: Record<string, GovernanceProtocol> = {
   'https://gov.blur.foundation': 'blur',
   // ─── Feb 2026 v2 ─────────────────────────────────────────────────────────
   'https://forum.thegraph.com': 'thegraph',   // GRT: 154 forum posts, GRTUSDT perp
+  // ─── Euler Finance (Feb 2026) ─────────────────────────────────────────────
+  'https://forum.euler.finance': 'euler',     // EUL: Supply caps, LLTV, risk params (Gauntlet)
   // ─── Removed ─────────────────────────────────────────────────────────────
   // 'https://gov.frax.finance': REMOVED — 0 trades in backtest
   // 'https://forum.balancer.fi': REMOVED — no Binance USDT perp for BAL

@@ -59,6 +59,7 @@ export type GovernanceProtocol =
   // rocketpool: TESTED — 0 trades. Partnership/staking proposals, no risk-parameter alpha.
   | 'pendle'        // PENDLE — yield tokenization protocol, yield pool risk params
   | 'thegraph'      // GRT — indexer slashing, query fees, protocol economics
+  | 'euler'         // EUL — Euler Finance, AAVE-like lending with monthly risk updates (Gauntlet)
 
 // ─── Impact Categories ──────────────────────────────────────────────
 

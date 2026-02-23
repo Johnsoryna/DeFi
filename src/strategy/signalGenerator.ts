@@ -267,6 +267,23 @@ const STRATEGY_MATRIX: DynamicStrategy[] = [
             log.debug({ asset, stage: analysis.stage }, 'Stablecoin risk: on-chain vote stage — market priced in, skipping')
             continue
           }
+
+          // ─── Side-chain stablecoin deprecation filter ───────────────────
+          // Routine stablecoin cleanup on L2/side-chain deployments does NOT move
+          // the mainnet governance token. These are operational housekeeping:
+          // removing old USDC bridge on Gnosis, deprecating sUSD on Optimism, etc.
+          // Empirical: 2 AAVE losses (-$20.7K) — "sUSD on Aave V3 Optimism" (-$10.4K)
+          // and "USDC (old) on Gnosis Chain Instance" (-$10.2K). L2 cleanup ≠ mainnet risk.
+          const SIDE_CHAIN_RE = /\b(Optimism|Gnosis|Polygon|BSC|zkSync|Scroll|Linea|Avalanche|Mantle|Celo|Metis|Mode|Plasma|Sonic|Fantom|Bnb|BNB)\b/i
+          if (/\bdeprecate?\b/i.test(analysis.title) && SIDE_CHAIN_RE.test(analysis.title)) {
+            log.debug(
+              { asset, title: analysis.title },
+              'Stablecoin side-chain deprecation: L2 cleanup — mainnet gov token price unaffected, skipping',
+            )
+            continue
+          }
+          // ─── end side-chain stablecoin deprecation filter ───────────────
+
           const govToken = getGovTokenForAsset(asset, impact.affectedProtocols)
           if (govToken) {
             signals.push({
@@ -487,6 +504,7 @@ const PROTOCOL_GOV_TOKEN: Record<string, string> = {
   // ─── Gruppe D: Yield/indexer governance (Feb 2026) ───────────────
   pendle: 'PENDLE',   // Yield pool risk params, market expiry, PENDLEUSDT perp
   thegraph: 'GRT',    // Indexer slashing, query fees, delegation params, GRTUSDT perp
+  euler: 'EUL',       // Supply caps, LLTV changes, asset listings — monthly Gauntlet risk updates
   // ─── Removed protocols ───────────────────────────────────────────
   // frax: REMOVED — 0 trades in backtest (20 snaps + 25 forum posts, no risk-param alpha)
   // balancer: REMOVED — no Binance USDT perp for BAL (delisted); had 2 trades +$860 backtest only
@@ -536,6 +554,7 @@ const ASSET_PROTOCOL: Record<string, string> = {
   // ─── Gruppe D (Feb 2026) ─────────────────────────────────────
   PENDLE: 'pendle',
   GRT: 'thegraph',
+  EUL: 'euler',       // Euler Finance governance token
   // ─── Removed ─────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest (no risk-param alpha in frax governance)
   // BAL: REMOVED — no Binance USDT perp (delisted)
@@ -579,6 +598,8 @@ const ESTABLISHED_PROTOCOLS = new Set([
   '1inch', 'jito', 'pyth',
   // ─── Gruppe D (Feb 2026) ─────────────────────────────────────
   'pendle', 'thegraph',
+  // ─── Euler Finance (Feb 2026) ────────────────────────────────
+  'euler',
   // ─── Removed ─────────────────────────────────────────────────
   // 'frax': REMOVED — 0 trades in backtest
   // 'balancer': REMOVED — no Binance USDT perp for BAL
@@ -702,6 +723,56 @@ function generateDynamicSignals(
 ): TradeSignal[] {
   const signals: TradeSignal[] = []
   const minConfidence = getMinConfidence(analysis.stage)
+
+  // ─── STABLECOIN SIDE-CHAIN DEPRECATION FILTER (proposal level) ──────────
+  // If this proposal is deprecating a stablecoin on an L2/side-chain, skip ALL
+  // signals for the entire proposal. The mainnet governance token (AAVE, COMP, etc.)
+  // does NOT move when an L2 deployment removes a stablecoin (routine housekeeping).
+  // This check must be at the proposal level because the NLP also extracts "AAVE"
+  // (protocol name) from the title as an "affected asset", bypassing the per-asset filter.
+  // Empirical: AAVE -$10.4K (sUSD/Optimism) and AAVE -$10.2K (USDC-old/Gnosis)
+  // both had stablecoins as the real subject despite AAVE appearing in the title.
+  {
+    const SIDE_CHAIN_PROPOSAL_RE = /\b(Optimism|Gnosis|Polygon|BSC|zkSync|Scroll|Linea|Avalanche|Mantle|Celo|Metis|Mode|Plasma|Sonic|Fantom|Bnb|BNB)\b/i
+    const hasStablecoinImpact = analysis.dynamicImpacts.some(imp =>
+      imp.affectedAssets.some(a => STABLECOINS.has(a.toUpperCase()))
+    )
+    const hasRiskMitigation = analysis.dynamicImpacts.some(imp => imp.type === 'risk_mitigation')
+    if (
+      hasStablecoinImpact &&
+      hasRiskMitigation &&
+      /\bdeprecate?\b/i.test(analysis.title) &&
+      SIDE_CHAIN_PROPOSAL_RE.test(analysis.title)
+    ) {
+      log.debug(
+        { title: analysis.title },
+        'Stablecoin side-chain deprecation (proposal-level): L2 cleanup — mainnet gov token price unaffected, skipping all signals',
+      )
+      return signals
+    }
+  }
+  // ─── end stablecoin side-chain deprecation filter ─────────────────────
+
+  // ─── VALIDATOR EXIT FILTER ────────────────────────────────────────────
+  // Individual validator company wind-downs/shutdowns ≠ protocol-level risk.
+  // A specific company (Pareto Labs, HashKey Cloud) exiting validation does NOT
+  // impair the overall protocol — it just changes validator composition.
+  // Only protocol-wide validator set changes (governance-voted "Reduce Validator Set to N")
+  // carry real governance alpha.
+  // Empirical: 2 DYDX losses (-$7.4K) from "Winding down Pareto Labs validator" and
+  // "HashKey Cloud Validator shutdown" — individual exits, not protocol risk.
+  if (
+    /\bvalidator\b/i.test(analysis.title) &&
+    /\b(wind(?:ing)?\s*down|shutdown|shut\s*down)\b/i.test(analysis.title) &&
+    !/\bvalidator\s+set\b/i.test(analysis.title)
+  ) {
+    log.debug(
+      { title: analysis.title },
+      'Validator exit filter: individual validator exit — no protocol-level alpha, skipping',
+    )
+    return signals
+  }
+  // ─── end validator exit filter ────────────────────────────────────────
 
   // DEDUP: Track which (asset, direction) combos we've already generated for THIS proposal
   // A single proposal should NOT generate multiple trades on the same asset

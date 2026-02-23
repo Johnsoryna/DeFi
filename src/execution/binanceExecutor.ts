@@ -77,6 +77,7 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   SNX: 'SNXUSDT',
   PENDLE: 'PENDLEUSDT',
   GRT: 'GRTUSDT',
+  EUL: 'EULUSDT',    // Euler Finance — EULUSDT active on Binance Futures
   // ─── Removed ────────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest
   // BAL: REMOVED — no Binance USDT perp (delisted)
@@ -108,6 +109,7 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   SNX: 1.5,       // $30M-80M vol — medium liquid derivatives token
   PENDLE: 1.5,    // $15M-40M vol — yield tokenization
   GRT: 2.0,       // $10M-25M vol — indexing protocol
+  EUL: 2.5,       // ~$17M vol — smaller DeFi token, higher slippage
   // ─── Removed ────────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest
   // BAL: REMOVED — no Binance USDT perp

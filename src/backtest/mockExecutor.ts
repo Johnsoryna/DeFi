@@ -54,6 +54,7 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   SNX: 1.5,       // $30M-80M vol
   PENDLE: 1.5,    // $15M-40M vol
   GRT: 2.0,       // $10M-25M vol
+  EUL: 2.5,       // ~$17M vol — smaller DeFi token
   // ─── Removed ────────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest
   // BAL: REMOVED — no Binance USDT perp (delisted)

@@ -42,6 +42,9 @@ const TOKENS: Array<{ symbol: string; coin: string }> = [
   // SNX already has 13,265 points, will be skipped
   // PENDLE already has 5,995 points, check if needs extension
   { symbol: 'PENDLE', coin: 'coingecko:pendle' },
+  // ─── Euler Finance (Feb 2026) ─────────────────────────────────────────────
+  // EUL: Euler Finance governance token, EULUSDT on Binance Futures (~$17M daily vol)
+  { symbol: 'EUL', coin: 'coingecko:euler' },
 ]
 
 const FROM_TS = Math.floor(new Date('2025-02-01T00:00:00Z').getTime() / 1000)

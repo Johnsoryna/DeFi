@@ -120,6 +120,8 @@ export const FORUMS = {
   // ─── Gruppe B (Feb 2026) ─────────────────────────────────────────
   // frax: REMOVED — 0 trades in backtest (no risk-param alpha)
   balancer: 'https://forum.balancer.fi' as const,
+  // ─── Euler Finance (Feb 2026) ────────────────────────────────────
+  euler: 'https://forum.euler.finance' as const,
 } as const
 
 // ─── Snapshot Spaces ─────────────────────────────────────────────────
@@ -144,6 +146,8 @@ export const SNAPSHOT_SPACES = [
   // ─── Removed ──────────────────────────────────────────────────────
   // 'frax.eth': REMOVED — 0 trades in backtest
   // 'balancer.eth': REMOVED — no BALUSDT Binance perp (delisted)
+  // 'pendle-politics.eth': 0 proposals in DB (pendle-politics.eth has no history), not added live
+  // 'eulerdao.eth': 0 trades in backtest (routine Gauntlet param updates, neutral sentiment) — kept in replayProvider for future
 ] as const
 
 // ─── All Governance Token Addresses (for delegation tracking) ────────

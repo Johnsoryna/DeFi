@@ -3,6 +3,7 @@
  * Updated 2026-02-15: Added Tier A governance tokens from dYdX v4 research.
  * Updated 2026-02-20: Added Gruppe B candidates (PENDLE, FXS, BAL).
  * Updated 2026-02-22: Added SNX forum (research.synthetix.io), GRT (thegraph), pendle-politics.eth, graphprotocol.eth.
+ * Updated 2026-02-22 v2: Added Euler Finance (eulerdao.eth + forum.euler.finance).
  */
 import Database from 'better-sqlite3'
 import { collectForumPosts, collectSnapshots } from '../src/backtest/dataCollector.js'
@@ -43,6 +44,9 @@ async function main() {
     synthetix: 'https://research.synthetix.io',
     // The Graph: Indexer slashing, query fees, protocol economics
     thegraph: 'https://forum.thegraph.com',
+    // ─── Euler Finance (Feb 2026) ────────────────────────────────────────
+    // AAVE-like lending with monthly Gauntlet risk updates (supply caps, LLTV)
+    euler: 'https://forum.euler.finance',
   }
   const forumCount = await collectForumPosts(db, newForums, FROM, TO)
   console.log(`Collected ${forumCount} new forum posts`)
@@ -59,6 +63,8 @@ async function main() {
     // Feb 2026 v2
     'pendle-politics.eth',   // Pendle governance (yield pool risk params)
     'graphprotocol.eth',     // The Graph governance
+    // ─── Euler Finance ───────────────────────────────────────────────
+    'eulerdao.eth',          // Euler Finance DAO (monthly Gauntlet risk updates)
   ]
   const snapCount = await collectSnapshots(db, gruppeB_spaces, FROM, TO)
   console.log(`Collected ${snapCount} new Snapshot proposals for Gruppe B`)
