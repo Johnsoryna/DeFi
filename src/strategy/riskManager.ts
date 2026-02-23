@@ -36,7 +36,6 @@ export interface RiskConfig {
 
 const DEFAULT_CONFIG: RiskConfig = {
   maxSinglePositionPct: 12,     // Aligned with Kelly maxSizePct (12%) — secondary guard
-  maxSinglePositionPct: 12,     // Aligned with Kelly maxSizePct (12%) — secondary guard
   maxTotalExposurePct: 100,     // 21 protocols need headroom for concurrent positions
   maxDrawdownPct: 25,           // More protocols = more recovery opportunities
   aaveHfAlertThreshold: 1.5,
