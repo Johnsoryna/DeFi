@@ -1083,7 +1083,7 @@ function generateDynamicSignals(
       // ─── end tiered confidence ───────────────────────────────────
 
       // ─── Kelly-based position sizing + leverage ──────────────
-      let kelly = calculateKellyPosition(confidence, spec.urgency, spec.asset, 'binance', spec.direction)
+      const kelly = calculateKellyPosition(confidence, spec.urgency, spec.asset, 'binance', spec.direction)
 
       const riskProfile = selectRiskProfile(spec.urgency, confidence, kelly.leverage, spec.direction)
 

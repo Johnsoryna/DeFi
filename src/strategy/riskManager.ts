@@ -135,7 +135,6 @@ export function isAssetInCooldown(asset: string, now: number, config: RiskConfig
 // ─── Global Loss Tracker ─────────────────────────────────────────────
 // Tracks global consecutive losses (across all assets) for post-loss size reduction.
 let globalConsecutiveLosses = 0
-let lastGlobalLossTimestamp = 0
 
 // ─── Monthly P&L Budget ─────────────────────────────────────────────
 // Tracks P&L per calendar month to implement monthly loss budgets.
@@ -146,7 +145,6 @@ const monthlyPnl = new Map<string, number>()
  */
 export function recordGlobalLoss(timestamp: number): void {
   globalConsecutiveLosses++
-  lastGlobalLossTimestamp = timestamp
 }
 
 /**
@@ -180,7 +178,6 @@ export function resetTrackedPositions(): void {
   trackedPositions.clear()
   assetLossTracker.clear()
   globalConsecutiveLosses = 0
-  lastGlobalLossTimestamp = 0
   monthlyPnl.clear()
 }
 
@@ -291,13 +288,13 @@ export class RiskManager {
     }
 
     // 5b. Consecutive loss cooldown: SOFT version
-    // Instead of blocking trades entirely, reduce position size by 50%.
+    // Instead of blocking trades entirely, reduce position size to 35% of original (65% reduction).
     // This preserves alpha capture while protecting against repeated losses.
     if (isAssetInCooldown(signal.asset, getClock().now(), this.config)) {
       const reducedSize = signal.sizePct * 0.35
       log.info(
         { signalId: signal.id, asset: signal.asset, originalSize: signal.sizePct.toFixed(2), reducedSize: reducedSize.toFixed(2) },
-        'Signal size halved: asset in cooldown after consecutive stop-losses',
+        'Signal size reduced to 35%: asset in cooldown after consecutive stop-losses',
       )
       signal = { ...signal, sizePct: reducedSize }
     }
