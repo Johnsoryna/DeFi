@@ -86,6 +86,26 @@ async function pollForum(forumConfig: ForumConfig): Promise<void> {
     const topics = await fetchLatestTopics(forumConfig.url)
     const lastSeenId = getForumCursor(forumConfig.url)
 
+    // isFirstRun: cursor is 0 (no cursor stored yet — new or recreated governance.db).
+    // On first run we only initialise the cursor — we do NOT emit historical topics
+    // (avoids replaying dozens of topics as "new" and potentially spamming trades).
+    const isFirstRun = lastSeenId === 0
+
+    // Always update cursor to the highest topic ID seen — do this BEFORE any early return
+    // so that the cursor is set even when we skip emission on first run.
+    if (topics.length > 0) {
+      const maxId = Math.max(...topics.map((t) => t.id))
+      if (maxId > lastSeenId) {
+        setForumCursor(forumConfig.url, maxId)
+      }
+    }
+
+    // On first run: cursor is now initialised — skip all emissions
+    if (isFirstRun) {
+      log.debug({ forum: forumConfig.label }, 'First run — cursor initialized, skipping historical topics')
+      return
+    }
+
     // Filter new topics since last seen
     const newTopics = topics.filter((t) => t.id > lastSeenId)
 
@@ -113,14 +133,6 @@ async function pollForum(forumConfig: ForumConfig): Promise<void> {
         { protocol: forumConfig.label, topicId: topic.id, title: topic.title },
         'New forum topic detected',
       )
-    }
-
-    // Update cursor to the max topic ID
-    if (topics.length > 0) {
-      const maxId = Math.max(...topics.map((t) => t.id))
-      if (maxId > lastSeenId) {
-        setForumCursor(forumConfig.url, maxId)
-      }
     }
   } catch (_error) {
     // Downgrade to warn for forums that are unreachable (e.g. Injective returns HTML)

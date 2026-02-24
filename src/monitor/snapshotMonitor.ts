@@ -161,6 +161,18 @@ async function pollOnce(): Promise<void> {
     for (const [space, latestTs] of latestPerSpace) {
       setSnapshotCursor(space, String(latestTs))
     }
+
+    // For known spaces that had NO active proposals in this poll (so latestPerSpace has no entry),
+    // still initialize their cursor to "now" if they have never been set.
+    // Without this, the first real proposal in such a space would be incorrectly treated as
+    // "first run" (isFirstRun=true) and silently skipped — causing missed alpha.
+    const nowSec = Math.floor(Date.now() / 1000)
+    for (const space of Object.keys(SPACE_TO_PROTOCOL)) {
+      if (getSnapshotCursor(space) === null) {
+        setSnapshotCursor(space, String(nowSec))
+        log.debug({ space }, 'No active proposals on first poll — cursor initialized to now')
+      }
+    }
   } catch (error) {
     log.error({ err: error }, 'Snapshot poll error')
   }
