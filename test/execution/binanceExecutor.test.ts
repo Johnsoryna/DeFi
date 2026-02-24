@@ -14,22 +14,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 // ─── Mock Binance client before importing executor ───────────────────
 const placedOrders: Array<Record<string, string | number | boolean>> = []
 
-vi.mock('../../src/clients/binance.js', () => ({
-  getMarkPrice: vi.fn().mockResolvedValue('100.00'),
-  getExchangeInfo: vi.fn().mockResolvedValue(new Map([
-    ['AAVEUSDT', { tickSize: '0.01', stepSize: '0.01', minNotional: '5' }],
-  ])),
-  setLeverage: vi.fn().mockResolvedValue(undefined),
-  setMarginType: vi.fn().mockResolvedValue(undefined),
-  placeOrder: vi.fn().mockImplementation(async (params) => {
-    placedOrders.push({ ...params })
-    return { orderId: 12345, symbol: params.symbol, status: 'NEW', avgPrice: '100.00', executedQty: '1.00' }
-  }),
-  cancelAllOpenOrders: vi.fn().mockResolvedValue(undefined),
-  roundStep: vi.fn().mockImplementation((v: number) => v.toFixed(2)),
-  roundTick: vi.fn().mockImplementation((v: number) => v.toFixed(2)),
-}))
-
 // ─── Mock config ─────────────────────────────────────────────────────
 vi.mock('../../src/config/index.js', () => ({
   config: {
@@ -56,6 +40,11 @@ vi.mock('../../src/clients/binance.js', async (importOriginal) => {
     placeOrder: vi.fn().mockImplementation(async (params: Record<string, string | number | boolean>) => {
       placedOrders.push({ ...params })
       return { orderId: 12345, symbol: params.symbol, status: 'NEW', avgPrice: '100.00', executedQty: String(params.quantity) }
+    }),
+    placeTrailingStopAlgo: vi.fn().mockImplementation(async (params: Record<string, string | number | boolean>) => {
+      // Store with type='TRAILING_STOP_MARKET' so existing assertions can find it
+      placedOrders.push({ type: 'TRAILING_STOP_MARKET', ...params })
+      return { algoId: 99999, symbol: params.symbol, status: 'NEW' }
     }),
     cancelAllOpenOrders: vi.fn().mockResolvedValue(undefined),
     roundStep: (_v: number, _step: string) => '1.00',

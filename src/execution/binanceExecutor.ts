@@ -385,10 +385,11 @@ async function placeProtectiveOrders(
     const activationPriceStr = binanceClient.roundTick(activationPrice, tickSize)
 
     try {
-      const result = await binanceClient.placeOrder({
+      // TRAILING_STOP_MARKET must use the Algo Trading API endpoint.
+      // The regular /fapi/v1/order endpoint rejects it with error -4120.
+      const result = await binanceClient.placeTrailingStopAlgo({
         symbol,
         side: closeSide,
-        type: 'TRAILING_STOP_MARKET',
         quantity,
         callbackRate,
         activationPrice: activationPriceStr,
@@ -396,12 +397,12 @@ async function placeProtectiveOrders(
       })
       log.info(
         {
-          symbol, orderId: result.orderId,
+          symbol, algoId: result.algoId,
           activationPrice: activationPriceStr,
           callbackRate: callbackRate.toFixed(1) + '%',
           backtestDistance: (signal.trailingStopDistance * 100).toFixed(1) + '%',
         },
-        'Trailing stop order placed',
+        'Trailing stop algo order placed',
       )
     } catch (err) {
       log.warn({ err, symbol }, 'Trailing stop placement failed — static stop-loss still active')

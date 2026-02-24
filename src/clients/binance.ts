@@ -268,6 +268,31 @@ export async function placeOrder(params: Record<string, string | number | boolea
 }
 
 /**
+ * Place a trailing stop market algo order.
+ * The regular /fapi/v1/order endpoint rejects TRAILING_STOP_MARKET with error -4120.
+ * Binance requires the Algo Trading API for trailing stops with activationPrice.
+ */
+export async function placeTrailingStopAlgo(params: {
+  symbol: string
+  side: 'BUY' | 'SELL'
+  quantity: string
+  callbackRate: number
+  activationPrice?: string
+  reduceOnly?: boolean
+}): Promise<{ algoId: number; symbol: string; status: string }> {
+  const body: Record<string, string | number | boolean> = {
+    symbol: params.symbol,
+    side: params.side,
+    quantity: params.quantity,
+    callbackRate: params.callbackRate,
+  }
+  if (params.activationPrice) body.activationPrice = params.activationPrice
+  if (params.reduceOnly) body.reduceOnly = true
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return fetchSigned<any>('POST', '/fapi/v1/order/algo/trailing-stop-market', body)
+}
+
+/**
  * Cancel an order.
  */
 export async function cancelOrder(symbol: string, orderId: number): Promise<void> {

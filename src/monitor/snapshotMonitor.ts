@@ -118,7 +118,11 @@ async function pollOnce(): Promise<void> {
     for (const proposal of proposals) {
       const space = proposal.space.id
       const lastSeenStr = getSnapshotCursor(space)
-      const lastSeenTs = lastSeenStr ? parseInt(lastSeenStr, 10) : 0
+      // isFirstRun: no cursor for this space yet (new or recreated governance.db).
+      // On first run we only initialise the cursor — we do NOT emit events for proposals
+      // that were already active before the bot started (avoids replay-triggered orders).
+      const isFirstRun = lastSeenStr === null
+      const lastSeenTs = isFirstRun ? 0 : parseInt(lastSeenStr, 10)
 
       // Track the highest created timestamp seen for this space
       const cur = latestPerSpace.get(space) ?? 0
@@ -126,8 +130,8 @@ async function pollOnce(): Promise<void> {
         latestPerSpace.set(space, proposal.created)
       }
 
-      // Only emit for proposals created after the last cursor (numeric timestamp comparison)
-      if (lastSeenTs > 0 && proposal.created <= lastSeenTs) continue
+      // Skip: first run (cursor initialisation only) or proposal not newer than cursor
+      if (isFirstRun || proposal.created <= lastSeenTs) continue
 
       const protocol = SPACE_TO_PROTOCOL[space]
       if (!protocol) continue
