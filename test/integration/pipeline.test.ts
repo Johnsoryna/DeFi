@@ -307,20 +307,23 @@ describe('Risk Manager — Position Sizing & Leverage', () => {
     const rm = new RiskManager()
     rm.trackPosition('proposal:1', 'pos-1', 'WETH', 100)
 
-    // Snapshot stage: reduce to 75%
+    // Snapshot stage: reduce to 75% of original
+    // (100-75)/100*100 = 25% of current position closed
     const r1 = rm.handleStageTransition('proposal:1', 'snapshot')
     expect(r1.length).toBe(1)
-    expect(r1[0].reduceByPct).toBe(25)
+    expect(r1[0].reduceByPct).toBeCloseTo(25, 1)
 
-    // Timelock stage: reduce to 25%
+    // Timelock stage: reduce from 75% to 25% of original
+    // (75-25)/75*100 = 66.67% of current (75%) position closed → leaves 25% of original
     const r2 = rm.handleStageTransition('proposal:1', 'timelock')
     expect(r2.length).toBe(1)
-    expect(r2[0].reduceByPct).toBe(50)
+    expect(r2[0].reduceByPct).toBeCloseTo(66.67, 1)
 
-    // Executed: exit fully
+    // Executed: exit fully from 25% of original
+    // (25-0)/25*100 = 100% of remaining position closed
     const r3 = rm.handleStageTransition('proposal:1', 'executed')
     expect(r3.length).toBe(1)
-    expect(r3[0].reduceByPct).toBe(25)
+    expect(r3[0].reduceByPct).toBeCloseTo(100, 1)
   })
 
   it('drawdown protection: rejects new signals during drawdown', () => {

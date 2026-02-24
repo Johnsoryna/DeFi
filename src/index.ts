@@ -179,7 +179,11 @@ function wireAnalysisPipeline(rm: RiskManager): void {
     // ─── STAGE-TRANSITION RE-ENTRY (Shorts Only) ─────────────────
     // Fires when a bearish on-chain proposal reaches timelock — adds conviction short.
     // proposalId format is consistent: "${protocol}:${proposalId}" in both directions.
-    if (newStage === 'timelock' && cachedAnalyses.has(proposalId)) {
+    // Guard: only re-enter if the protocol has on-chain trading enabled.
+    // cachedAnalyses is populated for ALL on-chain protocols (including record-only Ethereum chains),
+    // so we must explicitly check ONCHAIN_TRADE_ENABLED to avoid bypassing the trading disable.
+    const reentryProtocol = proposalId.split(':')[0]
+    if (newStage === 'timelock' && ONCHAIN_TRADE_ENABLED.has(reentryProtocol) && cachedAnalyses.has(proposalId)) {
       const originalAnalysis = cachedAnalyses.get(proposalId)!
       // Guard: don't re-enter if already in a position on this symbol
       const alreadyOpen = originalAnalysis.extractedAssets?.some(
@@ -353,9 +357,11 @@ async function main(): Promise<void> {
 
         // Cancel any remaining protective orders (SL / trailing-stop / TP)
         // on the closed symbol so they don't interfere with future positions.
+        // Also remove from governance stage-tracking to prevent stale reductions.
         if (prev.protocol === 'binance') {
           const symbol = prev.id.replace('binance:', '')
           positionHoldingMeta.delete(symbol)
+          riskManager.untrackPosition(prev.id)
           cancelPositionOrders(symbol).catch((err) =>
             log.warn({ err, symbol }, 'Order cleanup after position close failed'),
           )
@@ -389,11 +395,17 @@ async function main(): Promise<void> {
     const maxHoldingHours = result.metadata?.maxHoldingHours as number | undefined
     const proposalId = result.metadata?.proposalId as string | undefined
     const asset = result.metadata?.asset as string | undefined
-    if (!symbol || !maxHoldingHours) return
-    positionHoldingMeta.set(symbol, { entryTime: Date.now(), maxHoldingHours })
-    log.debug({ symbol, maxHoldingHours }, 'Position entry recorded — max-holding-time tracking active')
-    // Register with RiskManager so stage transitions (queued/executed/canceled) can reduce/close
-    // currentSizePct=100 means "full position open" on the 0-100 scale used by STAGE_LIMITS
+    if (!symbol) return
+
+    // Max-holding-time tracking — only when maxHoldingHours is set and non-zero
+    if (maxHoldingHours) {
+      positionHoldingMeta.set(symbol, { entryTime: Date.now(), maxHoldingHours })
+      log.debug({ symbol, maxHoldingHours }, 'Position entry recorded — max-holding-time tracking active')
+    }
+
+    // Governance stage-transition tracking — independent of maxHoldingHours.
+    // Register with RiskManager so stage transitions (queued/executed/canceled) can reduce/close.
+    // currentSizePct=100 means "full position open" on the 0-100 scale used by STAGE_LIMITS.
     if (proposalId && asset) {
       riskManager.trackPosition(proposalId, `binance:${symbol}`, asset, 100)
       log.debug({ proposalId, symbol }, 'Position tracked for stage-transition management')

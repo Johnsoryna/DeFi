@@ -360,7 +360,11 @@ export class RiskManager {
       tracked.currentStage = newStage
 
       if (stageConfig.maxPositionPct < tracked.currentSizePct) {
-        const reduceByPct = tracked.currentSizePct - stageConfig.maxPositionPct
+        // reduceByPct must be expressed as % of current position size (how reducePosition() uses it).
+        // Example: currentSizePct=25 → target=0 (executed/canceled) →
+        //   wrong: 25-0=25 → only closes 25% of remaining position (leaves 75% open!)
+        //   right: (25-0)/25*100=100 → closes 100% of remaining position ✅
+        const reduceByPct = (tracked.currentSizePct - stageConfig.maxPositionPct) / tracked.currentSizePct * 100
 
         actions.push({
           positionId: tracked.positionId,
@@ -374,7 +378,7 @@ export class RiskManager {
             proposalId,
             positionId: tracked.positionId,
             newStage,
-            reduceByPct,
+            reduceByPct: reduceByPct.toFixed(1) + '%',
             newSizePct: tracked.currentSizePct,
           },
           'Stage transition — reducing position',
@@ -397,6 +401,19 @@ export class RiskManager {
       originalSizePct: sizePct,
       currentSizePct: sizePct,
     })
+  }
+
+  /**
+   * Remove a closed position from governance tracking.
+   * Call when a position is detected as closed to prevent stale stage-transition reductions.
+   */
+  untrackPosition(positionId: string): void {
+    for (const key of trackedPositions.keys()) {
+      if (key.endsWith(`:${positionId}`)) {
+        trackedPositions.delete(key)
+        log.debug({ positionId }, 'Position untracked from governance stage management')
+      }
+    }
   }
 
   // ─── Health Factor Monitoring ─────────────────────────────────

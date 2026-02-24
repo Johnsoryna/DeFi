@@ -456,6 +456,18 @@ export async function reducePosition(
   const info = await getSymbolInfo(symbol)
   const quantity = binanceClient.roundStep(reduceSize, info.stepSize)
 
+  // Guard: rounding can produce 0 for very small positions — abort to avoid API error
+  if (parseFloat(quantity) <= 0) {
+    log.warn({ symbol, currentSize, reducePct, reduceSize, quantity }, 'Reduce order skipped: quantity rounds to 0')
+    return {
+      success: false,
+      signalId: `reduce-${symbol}`,
+      protocol: 'binance',
+      error: `Reduce qty rounds to 0 (size=${currentSize}, reducePct=${reducePct})`,
+      timestamp: Date.now(),
+    }
+  }
+
   log.info({ symbol, currentSize, reducePct, quantity }, 'Reducing Binance position')
 
   if (config.dryRun) {

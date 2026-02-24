@@ -74,7 +74,8 @@ describe('RiskManager', () => {
       rm.handleStageTransition('aave:10', 'snapshot') // 100 → 75
       const actions2 = rm.handleStageTransition('aave:10', 'onchain_vote') // 75 → 50
       expect(actions2).toHaveLength(1)
-      expect(actions2[0].reduceByPct).toBe(25) // 75 → 50
+      // (75-50)/75*100 = 33.33% of current position must be closed to reach 50% of original
+      expect(actions2[0].reduceByPct).toBeCloseTo(33.33, 1) // 75 → 50
     })
 
     it('fully exits on executed stage', () => {
