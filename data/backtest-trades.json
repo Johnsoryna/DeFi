@@ -1,7 +1,7 @@
 [
   {
     "signal": {
-      "id": "34699e9d-2412-4643-9d4d-d5836e415478",
+      "id": "5a2f98d6-bae4-4079-9dd8-18926c83cd0d",
       "asset": "COMP",
       "direction": "short",
       "sizePct": 12,
@@ -21,7 +21,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "34699e9d-2412-4643-9d4d-d5836e415478",
+      "signalId": "5a2f98d6-bae4-4079-9dd8-18926c83cd0d",
       "protocol": "binance",
       "orderId": "bt-1",
       "executedSize": "176.61242229522546",
@@ -50,7 +50,7 @@
   },
   {
     "signal": {
-      "id": "6589a576-c4f2-428e-bcbf-f3886c1cd1b8",
+      "id": "d7178652-8c79-4d54-afbe-40a1a24d00d0",
       "asset": "DYDX",
       "direction": "short",
       "sizePct": 12,
@@ -70,7 +70,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "6589a576-c4f2-428e-bcbf-f3886c1cd1b8",
+      "signalId": "d7178652-8c79-4d54-afbe-40a1a24d00d0",
       "protocol": "binance",
       "orderId": "bt-2",
       "executedSize": "11832.021316323557",
@@ -99,7 +99,7 @@
   },
   {
     "signal": {
-      "id": "502c6610-4ad3-4893-9e5c-6ebf61395537",
+      "id": "7a810844-1670-4947-99aa-8518a1c28625",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -119,7 +119,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "502c6610-4ad3-4893-9e5c-6ebf61395537",
+      "signalId": "7a810844-1670-4947-99aa-8518a1c28625",
       "protocol": "binance",
       "orderId": "bt-3",
       "executedSize": "325.73437341287433",
@@ -148,7 +148,7 @@
   },
   {
     "signal": {
-      "id": "f8adc06c-3d07-44f7-86f1-ba48a19ab1f4",
+      "id": "64408dec-1dc7-432d-9097-f35e74f573f3",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 11.76,
@@ -168,7 +168,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "f8adc06c-3d07-44f7-86f1-ba48a19ab1f4",
+      "signalId": "64408dec-1dc7-432d-9097-f35e74f573f3",
       "protocol": "binance",
       "orderId": "bt-4",
       "executedSize": "371.4845492057115",
@@ -197,7 +197,7 @@
   },
   {
     "signal": {
-      "id": "18a29d0d-859b-45e5-93a2-6e8f9a608737",
+      "id": "60f33140-e0ad-4599-88ce-01b7e9abccc1",
       "asset": "CRV",
       "direction": "short",
       "sizePct": 12,
@@ -217,7 +217,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "18a29d0d-859b-45e5-93a2-6e8f9a608737",
+      "signalId": "60f33140-e0ad-4599-88ce-01b7e9abccc1",
       "protocol": "binance",
       "orderId": "bt-5",
       "executedSize": "47896.73379685498",
@@ -246,7 +246,7 @@
   },
   {
     "signal": {
-      "id": "dd22490e-2dea-40e1-8455-53c2296e85fc",
+      "id": "ad4aa15e-280d-48af-b650-edb65705b55a",
       "asset": "CRV",
       "direction": "short",
       "sizePct": 12,
@@ -266,7 +266,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "dd22490e-2dea-40e1-8455-53c2296e85fc",
+      "signalId": "ad4aa15e-280d-48af-b650-edb65705b55a",
       "protocol": "binance",
       "orderId": "bt-6",
       "executedSize": "19631.91876207372",
@@ -295,7 +295,7 @@
   },
   {
     "signal": {
-      "id": "03ec12ee-4957-419f-bf92-a6a1ac098cae",
+      "id": "ddbe6765-202b-4a5d-9fe9-859d845a99c9",
       "asset": "DYDX",
       "direction": "short",
       "sizePct": 12,
@@ -315,7 +315,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "03ec12ee-4957-419f-bf92-a6a1ac098cae",
+      "signalId": "ddbe6765-202b-4a5d-9fe9-859d845a99c9",
       "protocol": "binance",
       "orderId": "bt-7",
       "executedSize": "47731.896842201066",
@@ -344,7 +344,7 @@
   },
   {
     "signal": {
-      "id": "717a6430-b206-4ca2-bbd4-2723d32a98bd",
+      "id": "9a62ff22-a757-43d1-be67-e9a64ea04388",
       "asset": "ARB",
       "direction": "short",
       "sizePct": 11.76,
@@ -364,7 +364,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "717a6430-b206-4ca2-bbd4-2723d32a98bd",
+      "signalId": "9a62ff22-a757-43d1-be67-e9a64ea04388",
       "protocol": "binance",
       "orderId": "bt-8",
       "executedSize": "250853.4032867178",
@@ -393,7 +393,7 @@
   },
   {
     "signal": {
-      "id": "f4f353a9-9f2b-4c54-825c-8bcbdc8e66b2",
+      "id": "f2e97d34-44ee-4814-b7db-47415578eb0e",
       "asset": "LDO",
       "direction": "short",
       "sizePct": 12,
@@ -413,7 +413,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "f4f353a9-9f2b-4c54-825c-8bcbdc8e66b2",
+      "signalId": "f2e97d34-44ee-4814-b7db-47415578eb0e",
       "protocol": "binance",
       "orderId": "bt-9",
       "executedSize": "25816.46175135991",
@@ -442,7 +442,7 @@
   },
   {
     "signal": {
-      "id": "b634b3ee-2074-47dc-9a8a-2601f262a5fc",
+      "id": "f638b98c-bd2b-4ad8-a5ba-d87c08a516ec",
       "asset": "ARB",
       "direction": "short",
       "sizePct": 12,
@@ -462,7 +462,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "b634b3ee-2074-47dc-9a8a-2601f262a5fc",
+      "signalId": "f638b98c-bd2b-4ad8-a5ba-d87c08a516ec",
       "protocol": "binance",
       "orderId": "bt-10",
       "executedSize": "358059.234580454",
@@ -491,7 +491,7 @@
   },
   {
     "signal": {
-      "id": "e87fcff0-664b-4167-9c0d-16708833204e",
+      "id": "c0d3f822-5110-4970-a5be-c908b2001cc6",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -511,7 +511,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "e87fcff0-664b-4167-9c0d-16708833204e",
+      "signalId": "c0d3f822-5110-4970-a5be-c908b2001cc6",
       "protocol": "binance",
       "orderId": "bt-11",
       "executedSize": "168.7496996812161",
@@ -540,7 +540,7 @@
   },
   {
     "signal": {
-      "id": "5d611895-37c7-4ff9-9bce-9fc63d253f26",
+      "id": "7d2499ce-9dc7-41b1-aaf8-ddc6884c043e",
       "asset": "EIGEN",
       "direction": "short",
       "sizePct": 12,
@@ -560,7 +560,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "5d611895-37c7-4ff9-9bce-9fc63d253f26",
+      "signalId": "7d2499ce-9dc7-41b1-aaf8-ddc6884c043e",
       "protocol": "binance",
       "orderId": "bt-12",
       "executedSize": "9828.813377036186",
@@ -589,7 +589,7 @@
   },
   {
     "signal": {
-      "id": "a25fa0db-59eb-4980-a163-25e8fb329fc6",
+      "id": "c824c96f-2dc2-4cfd-a131-2b58da600d01",
       "asset": "ARB",
       "direction": "short",
       "sizePct": 12,
@@ -609,7 +609,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "a25fa0db-59eb-4980-a163-25e8fb329fc6",
+      "signalId": "c824c96f-2dc2-4cfd-a131-2b58da600d01",
       "protocol": "binance",
       "orderId": "bt-13",
       "executedSize": "144112.10114814213",
@@ -638,14 +638,14 @@
   },
   {
     "signal": {
-      "id": "4b08704b-a63c-4101-bd19-424cd0244acf",
+      "id": "1679db34-05cf-44ad-bb9c-25472b822743",
       "asset": "INJ",
       "direction": "long",
       "sizePct": 12,
       "protocol": "binance",
       "confidence": 0.6024999999999999,
       "rationale": "Protocol deployment expands ecosystem reach — bullish for INJ",
-      "proposalId": "546",
+      "proposalId": "injective:546",
       "governanceStage": "onchain_vote",
       "timestamp": 1754935944566,
       "urgency": "medium",
@@ -658,7 +658,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "4b08704b-a63c-4101-bd19-424cd0244acf",
+      "signalId": "1679db34-05cf-44ad-bb9c-25472b822743",
       "protocol": "binance",
       "orderId": "bt-14",
       "executedSize": "2478.6264207086633",
@@ -687,7 +687,7 @@
   },
   {
     "signal": {
-      "id": "98f1ba1b-028e-4e97-8219-6476182fa39d",
+      "id": "d2ea6e58-afc6-4040-bafe-66a2a1c855a8",
       "asset": "COMP",
       "direction": "short",
       "sizePct": 12,
@@ -707,7 +707,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "98f1ba1b-028e-4e97-8219-6476182fa39d",
+      "signalId": "d2ea6e58-afc6-4040-bafe-66a2a1c855a8",
       "protocol": "binance",
       "orderId": "bt-15",
       "executedSize": "1292.1750541537251",
@@ -736,14 +736,14 @@
   },
   {
     "signal": {
-      "id": "1c9cc674-e57d-4875-926b-34042c767dbc",
+      "id": "f753badd-7e97-44d0-9152-9201d2bf243c",
       "asset": "ARB",
       "direction": "short",
       "sizePct": 10.53,
       "protocol": "binance",
       "confidence": 0.7899999999999999,
       "rationale": "Risk mitigation: arbitrum delisting/restricting WETH — bearish for ARB (reduced trading activity)",
-      "proposalId": "51852039695020109312343918128899814224888993575448130385109956762385891284115",
+      "proposalId": "arbitrum:51852039695020109312343918128899814224888993575448130385109956762385891284115",
       "governanceStage": "onchain_vote",
       "timestamp": 1755551976000,
       "urgency": "medium",
@@ -756,7 +756,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "1c9cc674-e57d-4875-926b-34042c767dbc",
+      "signalId": "f753badd-7e97-44d0-9152-9201d2bf243c",
       "protocol": "binance",
       "orderId": "bt-16",
       "executedSize": "62719.0551205305",
@@ -785,7 +785,7 @@
   },
   {
     "signal": {
-      "id": "9bfad0b4-2af7-4982-b96c-3cd34f5c3c94",
+      "id": "67a49b7a-4903-447b-b237-c60712bda543",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -805,7 +805,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "9bfad0b4-2af7-4982-b96c-3cd34f5c3c94",
+      "signalId": "67a49b7a-4903-447b-b237-c60712bda543",
       "protocol": "binance",
       "orderId": "bt-17",
       "executedSize": "355.9022961201465",
@@ -834,7 +834,7 @@
   },
   {
     "signal": {
-      "id": "73c2b84f-054e-40d2-814d-06ae224b829e",
+      "id": "bbdba78e-d237-4958-8314-98c95d99a019",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -854,7 +854,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "73c2b84f-054e-40d2-814d-06ae224b829e",
+      "signalId": "bbdba78e-d237-4958-8314-98c95d99a019",
       "protocol": "binance",
       "orderId": "bt-18",
       "executedSize": "415.0287151366678",
@@ -883,7 +883,7 @@
   },
   {
     "signal": {
-      "id": "cd70f235-7523-4fd2-b5d0-d9dd09db7ef3",
+      "id": "362fd328-35a3-4846-9bc1-a8814612306e",
       "asset": "DYDX",
       "direction": "short",
       "sizePct": 12,
@@ -903,7 +903,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "cd70f235-7523-4fd2-b5d0-d9dd09db7ef3",
+      "signalId": "362fd328-35a3-4846-9bc1-a8814612306e",
       "protocol": "binance",
       "orderId": "bt-19",
       "executedSize": "71926.21676099997",
@@ -932,7 +932,7 @@
   },
   {
     "signal": {
-      "id": "963c3511-8583-4b56-9f6d-9a4aa720502a",
+      "id": "ddba55bb-d135-4ebe-a89b-638fd03f68b8",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -952,7 +952,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "963c3511-8583-4b56-9f6d-9a4aa720502a",
+      "signalId": "ddba55bb-d135-4ebe-a89b-638fd03f68b8",
       "protocol": "binance",
       "orderId": "bt-20",
       "executedSize": "571.8246648593795",
@@ -981,7 +981,7 @@
   },
   {
     "signal": {
-      "id": "df6f1be4-2d7e-4e1d-bbb0-1b30e727894d",
+      "id": "d7ea6f17-0946-41b0-9c1c-236ebf647cc2",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -1001,7 +1001,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "df6f1be4-2d7e-4e1d-bbb0-1b30e727894d",
+      "signalId": "d7ea6f17-0946-41b0-9c1c-236ebf647cc2",
       "protocol": "binance",
       "orderId": "bt-21",
       "executedSize": "497.15371313157567",
@@ -1030,7 +1030,7 @@
   },
   {
     "signal": {
-      "id": "59086f8a-13bb-4140-8241-92bff72cab44",
+      "id": "16dd6b07-7748-4aa5-9749-93ee7423962d",
       "asset": "ARB",
       "direction": "short",
       "sizePct": 12,
@@ -1050,7 +1050,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "59086f8a-13bb-4140-8241-92bff72cab44",
+      "signalId": "16dd6b07-7748-4aa5-9749-93ee7423962d",
       "protocol": "binance",
       "orderId": "bt-22",
       "executedSize": "73724.52776268388",
@@ -1079,7 +1079,7 @@
   },
   {
     "signal": {
-      "id": "0627cddc-7c15-41e0-806b-37a7a0c81c99",
+      "id": "013b2d02-eb37-48ca-ba47-f7ffe80590e9",
       "asset": "DYDX",
       "direction": "short",
       "sizePct": 12,
@@ -1099,7 +1099,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "0627cddc-7c15-41e0-806b-37a7a0c81c99",
+      "signalId": "013b2d02-eb37-48ca-ba47-f7ffe80590e9",
       "protocol": "binance",
       "orderId": "bt-23",
       "executedSize": "71096.83407352511",
@@ -1128,7 +1128,7 @@
   },
   {
     "signal": {
-      "id": "401057d6-f687-4ab4-9373-a1d3afeafb60",
+      "id": "eae4912d-aa6c-4e18-b6e3-55c278fb6c57",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -1148,7 +1148,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "401057d6-f687-4ab4-9373-a1d3afeafb60",
+      "signalId": "eae4912d-aa6c-4e18-b6e3-55c278fb6c57",
       "protocol": "binance",
       "orderId": "bt-24",
       "executedSize": "762.1766787250101",
@@ -1177,7 +1177,7 @@
   },
   {
     "signal": {
-      "id": "f851b0fd-0422-4e5d-bf87-51b084b6cb68",
+      "id": "738ab3aa-30d3-41a5-9d7b-02f4deb7fb62",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -1197,7 +1197,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "f851b0fd-0422-4e5d-bf87-51b084b6cb68",
+      "signalId": "738ab3aa-30d3-41a5-9d7b-02f4deb7fb62",
       "protocol": "binance",
       "orderId": "bt-25",
       "executedSize": "937.6349002143035",
@@ -1226,7 +1226,7 @@
   },
   {
     "signal": {
-      "id": "3e085a05-8f88-47fe-89fe-ea00fc6a5a16",
+      "id": "72b45e7a-35e5-407c-b292-b552c48d836e",
       "asset": "WSTETH",
       "direction": "short",
       "sizePct": 12,
@@ -1246,7 +1246,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "3e085a05-8f88-47fe-89fe-ea00fc6a5a16",
+      "signalId": "72b45e7a-35e5-407c-b292-b552c48d836e",
       "protocol": "binance",
       "orderId": "bt-26",
       "executedSize": "15.556700326881284",
@@ -1275,7 +1275,7 @@
   },
   {
     "signal": {
-      "id": "14cb0e78-e98f-4517-bce0-5e64593ba352",
+      "id": "422467ff-e047-4e7f-bc7c-bc3341a48056",
       "asset": "LDO",
       "direction": "short",
       "sizePct": 12,
@@ -1295,7 +1295,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "14cb0e78-e98f-4517-bce0-5e64593ba352",
+      "signalId": "422467ff-e047-4e7f-bc7c-bc3341a48056",
       "protocol": "binance",
       "orderId": "bt-27",
       "executedSize": "121212.69298844472",
@@ -1324,7 +1324,7 @@
   },
   {
     "signal": {
-      "id": "91cfe87f-f022-4dab-85d7-392be3818d79",
+      "id": "723d2590-849e-4302-8537-f3cb316ccd13",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -1344,7 +1344,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "91cfe87f-f022-4dab-85d7-392be3818d79",
+      "signalId": "723d2590-849e-4302-8537-f3cb316ccd13",
       "protocol": "binance",
       "orderId": "bt-28",
       "executedSize": "1573.6283493659373",
@@ -1373,7 +1373,7 @@
   },
   {
     "signal": {
-      "id": "11c0dafd-51cc-4517-b2f4-0213cf04e1fe",
+      "id": "e0cdddb9-6076-41c4-9c69-f54913a6b0d0",
       "asset": "LDO",
       "direction": "short",
       "sizePct": 12,
@@ -1393,7 +1393,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "11c0dafd-51cc-4517-b2f4-0213cf04e1fe",
+      "signalId": "e0cdddb9-6076-41c4-9c69-f54913a6b0d0",
       "protocol": "binance",
       "orderId": "bt-29",
       "executedSize": "158747.41674059056",
@@ -1422,7 +1422,7 @@
   },
   {
     "signal": {
-      "id": "66965c1a-f153-46da-8b07-be5971d1a1c8",
+      "id": "2b2d004e-baa7-4dde-842b-d62acc32b366",
       "asset": "CRV",
       "direction": "short",
       "sizePct": 12,
@@ -1442,7 +1442,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "66965c1a-f153-46da-8b07-be5971d1a1c8",
+      "signalId": "2b2d004e-baa7-4dde-842b-d62acc32b366",
       "protocol": "binance",
       "orderId": "bt-30",
       "executedSize": "161562.45967487755",
@@ -1471,7 +1471,7 @@
   },
   {
     "signal": {
-      "id": "7b492a99-19e2-43f1-ab2f-635bd95ae278",
+      "id": "5b3eb13d-5ff1-4f20-9ed7-d703bcc1ca32",
       "asset": "AAVE",
       "direction": "short",
       "sizePct": 12,
@@ -1491,7 +1491,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "7b492a99-19e2-43f1-ab2f-635bd95ae278",
+      "signalId": "5b3eb13d-5ff1-4f20-9ed7-d703bcc1ca32",
       "protocol": "binance",
       "orderId": "bt-31",
       "executedSize": "1070.1709259397894",
@@ -1520,7 +1520,7 @@
   },
   {
     "signal": {
-      "id": "0306aab1-d4b8-4e9b-ab73-ccf9946e6361",
+      "id": "d1536400-438a-4bab-9484-96fe533cc95c",
       "asset": "GMX",
       "direction": "short",
       "sizePct": 12,
@@ -1540,7 +1540,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "0306aab1-d4b8-4e9b-ab73-ccf9946e6361",
+      "signalId": "d1536400-438a-4bab-9484-96fe533cc95c",
       "protocol": "binance",
       "orderId": "bt-32",
       "executedSize": "9473.965696489084",
@@ -1569,7 +1569,7 @@
   },
   {
     "signal": {
-      "id": "1d6e8aa2-3086-4b59-b4b5-be8161b47841",
+      "id": "9bfdf392-2f8c-4c98-aa9b-7ec1665be12b",
       "asset": "ARB",
       "direction": "short",
       "sizePct": 12,
@@ -1589,7 +1589,7 @@
     },
     "execution": {
       "success": true,
-      "signalId": "1d6e8aa2-3086-4b59-b4b5-be8161b47841",
+      "signalId": "9bfdf392-2f8c-4c98-aa9b-7ec1665be12b",
       "protocol": "binance",
       "orderId": "bt-33",
       "executedSize": "1164180.7123750704",
