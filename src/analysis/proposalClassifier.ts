@@ -239,7 +239,12 @@ function extractParameterValues(
 
   switch (category) {
     case 'ltv_change': {
-      const proposed = params.param1 ?? params.ltv
+      // Compound updateAssetBorrowCollateralFactor(comet, asset, factor):
+      //   param0=comet, param1=asset (address), param2=factor (the actual LTV value)
+      // Aave configureReserveAsCollateral(asset, ltv, liqThreshold, liqBonus):
+      //   param0=asset, param1=ltv (the actual LTV value)
+      // Use param2 first (Compound), fall back to param1 (Aave), then named field.
+      const proposed = params.param2 ?? params.param1 ?? params.ltv
       if (proposed !== undefined) {
         return { proposed: String(proposed) }
       }

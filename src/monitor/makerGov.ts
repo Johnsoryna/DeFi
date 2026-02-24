@@ -61,9 +61,11 @@ const SELECTOR_TO_NAME: Record<string, string> = {
 }
 
 function selectorFromTopic(topic0: string): string | undefined {
-  // topic0 is the selector left-padded to 32 bytes
-  const selector = topic0.slice(0, 10).toLowerCase()
-  return selector
+  // DSNote encodes the function selector right-aligned (left-padded with zeros) in topic0.
+  // The selector occupies the last 4 bytes (= last 8 hex chars) of the 32-byte topic.
+  // slice(0, 10) would give the leading zeros — slice(-8) gives the actual selector bytes.
+  if (!topic0 || topic0.length < 10) return undefined
+  return ('0x' + topic0.slice(-8)).toLowerCase()
 }
 
 // ─── Event Processing ───────────────────────────────────────────────

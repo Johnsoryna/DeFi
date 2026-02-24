@@ -562,7 +562,7 @@ async function maxHoldingTimeMonitor(): Promise<void> {
           `Max-Holding-Time Exit: ${symbol}`,
           `Held ${holdingHours.toFixed(0)}h / max ${meta.maxHoldingHours}h — closing at market.`,
         )
-        await reducePosition(symbol, pos.size, 100)
+        await reduceAndRearm(symbol, pos.size, 100)
         positionHoldingMeta.delete(symbol)
         log.info({ symbol }, 'Max-holding-time close executed')
       } catch (err) {
