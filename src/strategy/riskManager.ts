@@ -185,6 +185,7 @@ export class RiskManager {
   private config: RiskConfig
   private currentPositions: Position[] = []
   private portfolioValue: number = 0
+  private peakEquity: number = 0
 
   constructor(riskConfig?: Partial<RiskConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...riskConfig }
@@ -192,10 +193,14 @@ export class RiskManager {
 
   /**
    * Update current portfolio state.
+   * Tracks peak equity for High-Water-Mark drawdown calculation.
    */
   updatePortfolio(positions: Position[], portfolioValue: number): void {
     this.currentPositions = positions
     this.portfolioValue = portfolioValue
+    if (portfolioValue > 0) {
+      this.peakEquity = Math.max(this.peakEquity, portfolioValue)
+    }
   }
 
   // ─── Signal Validation ──────────────────────────────────────────
@@ -503,14 +508,12 @@ export class RiskManager {
   }
 
   private isDrawdownExceeded(): boolean {
-    // Include BOTH unrealized AND realized losses for accurate drawdown.
-    // Without realized losses, closed losers are "forgotten" and drawdown resets to 0.
-    const totalPnl = this.currentPositions.reduce((sum, p) => {
-      return sum + safeParseFloat(p.unrealizedPnl) + safeParseFloat(p.realizedPnl)
-    }, 0)
-
-    if (this.portfolioValue <= 0) return false
-    const drawdownPct = Math.abs(Math.min(0, totalPnl)) / this.portfolioValue * 100
+    // Equity-based High-Water-Mark drawdown.
+    // portfolioValue = totalMarginBalance from Binance (includes unrealized + realized PnL).
+    // This is correct: realizedPnl in open-position snapshots is always 0 on Binance,
+    // so summing position fields would silently ignore closed losers.
+    if (this.peakEquity <= 0 || this.portfolioValue <= 0) return false
+    const drawdownPct = (this.peakEquity - this.portfolioValue) / this.peakEquity * 100
     return drawdownPct > this.config.maxDrawdownPct
   }
 }

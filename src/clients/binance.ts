@@ -292,6 +292,38 @@ export async function placeTrailingStopAlgo(params: {
   return fetchSigned<any>('POST', '/fapi/v1/order/algo/trailing-stop-market', body)
 }
 
+// ─── Income History ──────────────────────────────────────────────────
+
+export interface IncomeRecord {
+  symbol: string
+  incomeType: string
+  income: string
+  asset: string
+  time: number
+  tranId: string
+  tradeId: string
+}
+
+/**
+ * Fetch realized income for a symbol (REALIZED_PNL, FUNDING_FEE, COMMISSION).
+ * Used to compute actual trade PnL at close time, since open-position snapshots
+ * always show realizedPnl=0 on Binance.
+ */
+export async function getIncome(params: {
+  symbol: string
+  startTime: number
+  endTime?: number
+  limit?: number
+}): Promise<IncomeRecord[]> {
+  const p: Record<string, string | number> = {
+    symbol: params.symbol,
+    startTime: params.startTime,
+    limit: params.limit ?? 1000,
+  }
+  if (params.endTime) p.endTime = params.endTime
+  return fetchSigned<IncomeRecord[]>('GET', '/fapi/v1/income', p)
+}
+
 /**
  * Cancel an order.
  */

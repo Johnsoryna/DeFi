@@ -328,7 +328,8 @@ describe('Risk Manager — Position Sizing & Leverage', () => {
 
   it('drawdown protection: rejects new signals during drawdown', () => {
     const rm = new RiskManager({ maxDrawdownPct: 10 })
-    // Unrealized loss of -15000 on 100k portfolio = 15% drawdown > 10% threshold
+    // Equity-based HWM drawdown: peak=100k, current=85k → 15% drawdown > 10% threshold
+    rm.updatePortfolio([], 100_000) // Establish peak equity
     rm.updatePortfolio([
       {
         id: 'pos-1', protocol: 'dydx', type: 'perp', asset: 'WETH',
@@ -336,7 +337,7 @@ describe('Risk Manager — Position Sizing & Leverage', () => {
         unrealizedPnl: '-15000', realizedPnl: '0', accruedYield: '0',
         lastUpdated: new Date().toISOString(),
       },
-    ], 100_000)
+    ], 85_000) // Equity dropped to 85k (−15%)
 
     const signal: TradeSignal = {
       id: 'test-dd',

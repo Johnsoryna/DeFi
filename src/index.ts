@@ -68,6 +68,10 @@ let previousPositions: Position[] = []
 // Populated on execution:result; cleaned up on position close or expiry.
 const positionHoldingMeta = new Map<string, { entryTime: number; maxHoldingHours: number }>()
 
+// Position open-time tracking: Binance symbol → epoch ms when first seen open.
+// Used to query income history at close time (realizedPnl on open-position snapshots is always 0).
+const positionOpenTimeMs = new Map<string, number>()
+
 // Cached live portfolio equity (mirrors backtest's collector.getPortfolioValue())
 let cachedLiveEquity = 0
 let liveEquityCacheTs = 0
@@ -100,8 +104,10 @@ function wireAnalysisPipeline(rm: RiskManager): void {
 
   // ── governance:proposal → Intelligence Engine → analysis:proposal ──
   // IDENTICAL to backtest wireAnalysisPipeline lines 213-245
+  // Only list protocols for which an on-chain Ethereum monitor is running.
+  // cosmos/injective are Cosmos-SDK chains — no EVM monitor → removed to avoid dead flags.
   const ONCHAIN_TRADE_ENABLED = new Set([
-    'cosmos', 'injective', 'arbitrum',
+    'arbitrum',
   ])
 
   eventBus.on('governance:proposal', (event: GovernanceEvent) => {
@@ -170,9 +176,18 @@ function wireAnalysisPipeline(rm: RiskManager): void {
       const symbol = reduction.positionId.replace('binance:', '')
       const pos = currentPositions.find(p => p.id === reduction.positionId)
       if (pos && parseFloat(pos.size) !== 0) {
-        reducePosition(symbol, pos.size, reduction.reduceByPct).catch((err) =>
-          log.error({ err, symbol, reduceByPct: reduction.reduceByPct }, 'Stage-based position reduction failed'),
-        )
+        reducePosition(symbol, pos.size, reduction.reduceByPct)
+          .then(() => {
+            // Cancel stale protective orders (SL/TP/trailing-stop were sized for the old position).
+            // ReduceOnly orders stay valid per Binance rules, but the sizes are now stale — cancel
+            // to prevent over-close on subsequent stage transitions or manual fills.
+            cancelPositionOrders(symbol).catch((err) =>
+              log.warn({ err, symbol }, 'Order cancel after stage reduction failed'),
+            )
+          })
+          .catch((err) =>
+            log.error({ err, symbol, reduceByPct: reduction.reduceByPct }, 'Stage-based position reduction failed'),
+          )
       }
     }
 
@@ -322,44 +337,93 @@ async function main(): Promise<void> {
   eventBus.on('position:update', (update) => {
     const newPositions = update.positions
 
+    // ─── Position Open-Time Tracking ───────────────────────────────
+    // Record when a position first appears so we can query income history at close.
+    const previousIds = new Set(previousPositions.map((p: Position) => p.id))
+    for (const pos of newPositions) {
+      if (!previousIds.has(pos.id) && pos.protocol === 'binance') {
+        const symbol = pos.id.replace('binance:', '')
+        if (!positionOpenTimeMs.has(symbol)) {
+          positionOpenTimeMs.set(symbol, Date.now() - 60_000) // 1-min buffer before open
+        }
+      }
+    }
+
     // ─── Position Close Detection ──────────────────────────────────
     // Detect positions that disappeared (closed on exchange via SL/TP/manual)
     // and record win/loss — mirrors backtest ResultCollector.closeTrade()
     const currentIds = new Set(newPositions.map((p: Position) => p.id))
     for (const prev of previousPositions) {
       if (!currentIds.has(prev.id)) {
-        const realizedPnl = parseFloat(prev.realizedPnl || '0')
-        const unrealizedPnl = parseFloat(prev.unrealizedPnl || '0')
-        const pnl = realizedPnl !== 0 ? realizedPnl : unrealizedPnl
         const now = Date.now()
 
-        // Record for adaptive Kelly (matches backtest: recordTradeOutcome first)
-        const margin = Math.abs(parseFloat(prev.size || '0')) * parseFloat(prev.entryPrice || '0')
-        if (margin > 0) {
-          recordTradeOutcome(pnl, margin)
+        // Determine PnL: prefer income history (accurate) over stale position fields.
+        // realizedPnl on Binance open-position snapshots is always 0; unrealizedPnl
+        // may be stale from the last poll and can carry the wrong sign at close time.
+        const symbol = prev.protocol === 'binance' ? prev.id.replace('binance:', '') : null
+        const openTime = symbol ? (positionOpenTimeMs.get(symbol) ?? now - 24 * 3600_000) : null
+
+        let pnl: number = parseFloat(prev.unrealizedPnl || '0')
+
+        if (symbol && openTime && config.binanceApiKey && config.binanceApiSecret) {
+          // Async: fetch income history and re-record with accurate PnL
+          const recordFromIncome = async () => {
+            try {
+              const { getIncome } = await import('./clients/binance.js')
+              const records = await getIncome({ symbol: symbol!, startTime: openTime })
+              const incomePnl = records
+                .filter(r => ['REALIZED_PNL', 'FUNDING_FEE', 'COMMISSION'].includes(r.incomeType))
+                .reduce((sum, r) => sum + parseFloat(r.income), 0)
+              if (records.length > 0) {
+                const margin = Math.abs(parseFloat(prev.size || '0')) * parseFloat(prev.entryPrice || '0')
+                if (margin > 0) recordTradeOutcome(incomePnl, margin)
+                if (incomePnl < 0) { recordStopLoss(prev.asset, now); recordGlobalLoss(now) }
+                else if (incomePnl > 0) recordWin(prev.asset)
+                recordMonthlyPnl(now, incomePnl)
+                log.info(
+                  { id: prev.id, asset: prev.asset, pnl: incomePnl.toFixed(2), records: records.length },
+                  'Position closure recorded (income history)',
+                )
+              } else {
+                // No income records: fall back to snapshot PnL already recorded above
+                log.debug({ symbol }, 'No income records found — fallback PnL already recorded')
+              }
+            } catch (err) {
+              log.warn({ err, symbol }, 'Income history fetch failed — fallback PnL already recorded')
+            }
+          }
+
+          // Record synchronously with snapshot PnL as fallback, then re-record from income async
+          const margin = Math.abs(parseFloat(prev.size || '0')) * parseFloat(prev.entryPrice || '0')
+          if (margin > 0) recordTradeOutcome(pnl, margin)
+          if (pnl < 0) { recordStopLoss(prev.asset, now); recordGlobalLoss(now) }
+          else if (pnl > 0) recordWin(prev.asset)
+          recordMonthlyPnl(now, pnl)
+          log.info(
+            { id: prev.id, asset: prev.asset, pnl: pnl.toFixed(2), protocol: prev.protocol },
+            'Position closure detected (snapshot PnL — income fetch in progress)',
+          )
+          recordFromIncome()
+        } else {
+          // No API keys or non-Binance: use snapshot fields as-is
+          const realizedPnl = parseFloat(prev.realizedPnl || '0')
+          if (realizedPnl !== 0) pnl = realizedPnl
+          const margin = Math.abs(parseFloat(prev.size || '0')) * parseFloat(prev.entryPrice || '0')
+          if (margin > 0) recordTradeOutcome(pnl, margin)
+          if (pnl < 0) { recordStopLoss(prev.asset, now); recordGlobalLoss(now) }
+          else if (pnl > 0) recordWin(prev.asset)
+          recordMonthlyPnl(now, pnl)
+          log.info(
+            { id: prev.id, asset: prev.asset, pnl: pnl.toFixed(2), protocol: prev.protocol },
+            'Position closure detected and recorded',
+          )
         }
-
-        // Record win/loss for consecutive loss cooldown
-        if (pnl < 0) {
-          recordStopLoss(prev.asset, now)
-          recordGlobalLoss(now)
-        } else if (pnl > 0) {
-          recordWin(prev.asset)
-        }
-
-        // Record P&L for monthly loss budget
-        recordMonthlyPnl(now, pnl)
-
-        log.info(
-          { id: prev.id, asset: prev.asset, pnl: pnl.toFixed(2), protocol: prev.protocol },
-          'Position closure detected and recorded',
-        )
 
         // Cancel any remaining protective orders (SL / trailing-stop / TP)
         // on the closed symbol so they don't interfere with future positions.
         // Also remove from governance stage-tracking to prevent stale reductions.
-        if (prev.protocol === 'binance') {
-          const symbol = prev.id.replace('binance:', '')
+        if (prev.protocol === 'binance' && symbol) {
+          positionOpenTimeMs.delete(symbol)
           positionHoldingMeta.delete(symbol)
           riskManager.untrackPosition(prev.id)
           cancelPositionOrders(symbol).catch((err) =>
