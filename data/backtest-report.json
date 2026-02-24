@@ -88,7 +88,7 @@
       "worstPnl": 21179.57
     },
     {
-      "proposalId": "snap-0x0c5427caf1",
+      "proposalId": "snapshot:aave:0x0c5427caf17d21b321a3b62362d085e580446b136b0eccf7f4dc377856025486",
       "signalCount": 1,
       "totalPnl": 21040.6,
       "bestPnl": 21040.6,
@@ -102,14 +102,14 @@
       "worstPnl": 7212.84
     },
     {
-      "proposalId": "snap-0xe1f53fe174",
+      "proposalId": "snapshot:aave:0xe1f53fe1748e6b31068eca832a07e5be5765ca3bf4ec1c900a13d78f29ed1d51",
       "signalCount": 1,
       "totalPnl": 15113.48,
       "bestPnl": 15113.48,
       "worstPnl": 15113.48
     },
     {
-      "proposalId": "snap-0x1de2707ab4",
+      "proposalId": "snapshot:arbitrum:0x1de2707ab4cf792721544a8f82eee98535c16ce437ba2ac95a78c85c20b6d8b0",
       "signalCount": 1,
       "totalPnl": 14675.62,
       "bestPnl": 14675.62,
@@ -158,7 +158,7 @@
       "worstPnl": 6318.04
     },
     {
-      "proposalId": "snap-0xd5a66f7845",
+      "proposalId": "snapshot:arbitrum:0xd5a66f784523841511f7ffec4171b9c14404fdbf7c205086312084d19c95c193",
       "signalCount": 1,
       "totalPnl": 6147.56,
       "bestPnl": 6147.56,
@@ -235,7 +235,7 @@
       "worstPnl": 943.19
     },
     {
-      "proposalId": "snap-0xdc208507ca",
+      "proposalId": "snapshot:lido:0xdc208507ca0f659c7f9e38056288aedb7610816ea4020ca751c3422434780de8",
       "signalCount": 1,
       "totalPnl": -2091.72,
       "bestPnl": -2091.72,
@@ -256,7 +256,7 @@
       "worstPnl": -5542.24
     },
     {
-      "proposalId": "snap-0x4d9eb143c4",
+      "proposalId": "snapshot:aave:0x4d9eb143c46a637dbf98d63ad00a6e53739a9b6affc0eed7d3cd35680500afaa",
       "signalCount": 1,
       "totalPnl": -10676.14,
       "bestPnl": -10676.14,
