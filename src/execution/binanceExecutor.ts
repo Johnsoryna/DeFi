@@ -27,6 +27,17 @@ const TRAILING_STOP_MAX_CALLBACK_RATE = 5.0 // 5% max per Binance Futures limits
 
 const log = createLogger('binance-executor')
 
+// ─── Protection State (for re-arming after stage reductions) ────────
+
+interface ProtectionState {
+  signal: TradeSignal   // SL/TP/trailing params from original signal
+  entryPrice: number    // actual fill price at entry (used for SL/TP level calculation)
+  tickSize: string      // for price rounding
+  stepSize: string      // for quantity rounding
+}
+
+const protectionState = new Map<string, ProtectionState>()
+
 // ─── Market → Binance Symbol Mapping ────────────────────────────────
 
 const ASSET_TO_SYMBOL: Record<string, string> = {
@@ -307,9 +318,12 @@ export async function executeBinanceSignal(signal: TradeSignal): Promise<Executi
       quantity,
     })
 
-    // Place protective orders after entry — use actual fill price (avgPrice) for accurate SL/TP levels
+    // Place protective orders after entry — use actual fill price + actual executed qty
     const fillPrice = parseFloat(result.avgPrice) || price
-    await placeProtectiveOrders(symbol, signal, fillPrice, quantity, info.tickSize)
+    const actualQty = result.executedQty || quantity
+    await placeProtectiveOrders(symbol, signal, fillPrice, actualQty, info.tickSize)
+    // Store protection state for re-arming after stage-based partial reductions
+    protectionState.set(symbol, { signal, entryPrice: fillPrice, tickSize: info.tickSize, stepSize: info.stepSize })
 
     return {
       success: true,
@@ -350,7 +364,8 @@ async function placeProtectiveOrders(
 ): Promise<void> {
   const closeSide = signal.direction === 'long' ? 'SELL' : 'BUY'
 
-  // Stop-Loss (STOP_MARKET) — hard floor protection against immediate adverse moves
+  // Stop-Loss (STOP_MARKET via Algo API) — hard floor protection against immediate adverse moves
+  // Since 2025-12-09, STOP_MARKET on /fapi/v1/order is rejected (-4120). Use /fapi/v1/algoOrder.
   if (signal.stopLossPct && signal.stopLossPct > 0) {
     const slPrice = signal.direction === 'long'
       ? entryPrice * (1 - signal.stopLossPct)
@@ -358,15 +373,15 @@ async function placeProtectiveOrders(
     const stopPrice = binanceClient.roundTick(slPrice, tickSize)
 
     try {
-      const result = await binanceClient.placeOrder({
+      const result = await binanceClient.placeConditionalAlgo({
         symbol,
         side: closeSide,
-        type: 'STOP_MARKET',
         quantity,
         stopPrice,
         reduceOnly: true,
+        _purpose: 'STOP_MARKET',
       })
-      log.info({ symbol, stopPrice, orderId: result.orderId }, 'Stop-loss order placed')
+      log.info({ symbol, stopPrice, algoId: result.algoId }, 'Stop-loss algo order placed')
     } catch (err) {
       log.error({ err, symbol }, 'CRITICAL: Stop-loss placement FAILED — position is UNPROTECTED')
     }
@@ -409,7 +424,8 @@ async function placeProtectiveOrders(
     }
   }
 
-  // Take-Profit (TAKE_PROFIT_MARKET)
+  // Take-Profit (TAKE_PROFIT_MARKET via Algo API)
+  // Since 2025-12-09, TAKE_PROFIT_MARKET on /fapi/v1/order is rejected (-4120). Use /fapi/v1/algoOrder.
   if (signal.takeProfitPct && signal.takeProfitPct > 0) {
     const tpPrice = signal.direction === 'long'
       ? entryPrice * (1 + signal.takeProfitPct)
@@ -417,15 +433,15 @@ async function placeProtectiveOrders(
     const stopPrice = binanceClient.roundTick(tpPrice, tickSize)
 
     try {
-      const result = await binanceClient.placeOrder({
+      const result = await binanceClient.placeConditionalAlgo({
         symbol,
         side: closeSide,
-        type: 'TAKE_PROFIT_MARKET',
         quantity,
         stopPrice,
         reduceOnly: true,
+        _purpose: 'TAKE_PROFIT_MARKET',
       })
-      log.info({ symbol, stopPrice, orderId: result.orderId }, 'Take-profit order placed')
+      log.info({ symbol, stopPrice, algoId: result.algoId }, 'Take-profit algo order placed')
     } catch (err) {
       log.warn({ err, symbol }, 'Take-profit placement failed')
     }
@@ -433,11 +449,56 @@ async function placeProtectiveOrders(
 }
 
 /**
- * Cancel all open orders for a symbol.
- * Call this after position closure to clean up any remaining protective orders.
+ * Cancel all open orders for a symbol — both regular and conditional algo orders.
+ * Call this after position closure or stage-based reduction.
  */
 export async function cancelPositionOrders(symbol: string): Promise<void> {
-  await binanceClient.cancelAllOpenOrders(symbol)
+  await Promise.all([
+    binanceClient.cancelAllOpenOrders(symbol),
+    binanceClient.cancelAlgoOrdersForSymbol(symbol),
+  ])
+}
+
+/**
+ * Reduce a position by reducePct%, cancel stale protective orders, then re-arm
+ * protection (SL/trailing/TP) sized to the remaining position.
+ * Use this in place of bare reducePosition() + cancelPositionOrders() to avoid
+ * leaving the remaining position unprotected after a partial stage reduction.
+ */
+export async function reduceAndRearm(
+  symbol: string,
+  currentSize: string,
+  reducePct: number,
+): Promise<ExecutionResult> {
+  const result = await reducePosition(symbol, currentSize, reducePct)
+  if (!result.success) return result
+
+  // Cancel protective orders that were sized for the old (larger) position
+  await cancelPositionOrders(symbol)
+
+  // Re-arm protection for the remaining position (skip if fully closed)
+  if (reducePct < 100) {
+    const state = protectionState.get(symbol)
+    if (state) {
+      const remainingAbs = Math.abs(parseFloat(currentSize)) * (1 - reducePct / 100)
+      const remainingQty = binanceClient.roundStep(remainingAbs, state.stepSize)
+      if (parseFloat(remainingQty) > 0) {
+        await placeProtectiveOrders(symbol, state.signal, state.entryPrice, remainingQty, state.tickSize)
+        log.info({ symbol, remainingQty, reducePct }, 'Protective orders re-armed after stage reduction')
+      }
+    } else {
+      log.warn({ symbol }, 'No protection state found — remaining position is unprotected after stage reduction')
+    }
+  }
+
+  return result
+}
+
+/**
+ * Clear stored protection state for a symbol (call on position close).
+ */
+export function clearProtectionState(symbol: string): void {
+  protectionState.delete(symbol)
 }
 
 /**

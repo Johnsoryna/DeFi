@@ -46,7 +46,13 @@ vi.mock('../../src/clients/binance.js', async (importOriginal) => {
       placedOrders.push({ type: 'TRAILING_STOP_MARKET', ...params })
       return { algoId: 99999, symbol: params.symbol, status: 'NEW' }
     }),
+    placeConditionalAlgo: vi.fn().mockImplementation(async (params: Record<string, string | number | boolean>) => {
+      // _purpose carries the logical type (STOP_MARKET / TAKE_PROFIT_MARKET) for test assertions
+      placedOrders.push({ type: params._purpose ?? 'CONDITIONAL', ...params })
+      return { algoId: 88888, symbol: params.symbol, status: 'NEW' }
+    }),
     cancelAllOpenOrders: vi.fn().mockResolvedValue(undefined),
+    cancelAlgoOrdersForSymbol: vi.fn().mockResolvedValue(undefined),
     roundStep: (_v: number, _step: string) => '1.00',
     roundTick: (v: number, _tick: string) => v.toFixed(2),
     ensureOneWayMode: vi.fn().mockResolvedValue(undefined),

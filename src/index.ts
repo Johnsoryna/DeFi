@@ -47,7 +47,7 @@ import { getLivePriceService, startLivePriceHistory } from './processing/livePri
 
 // Layer 4 — Execution
 import { wireTradeExecutor } from './execution/tradeExecutor.js'
-import { cancelPositionOrders, reducePosition } from './execution/binanceExecutor.js'
+import { cancelPositionOrders, reduceAndRearm, clearProtectionState } from './execution/binanceExecutor.js'
 import { startAlertService, sendAlert } from './execution/alertService.js'
 
 import type { ProposalCreatedEvent, GovernanceEvent, SnapshotProposalEvent, DecodedAction, ForumPostEvent, GovernanceStage, IntelligentAnalysis } from './types/governance.js'
@@ -176,18 +176,23 @@ function wireAnalysisPipeline(rm: RiskManager): void {
       const symbol = reduction.positionId.replace('binance:', '')
       const pos = currentPositions.find(p => p.id === reduction.positionId)
       if (pos && parseFloat(pos.size) !== 0) {
-        reducePosition(symbol, pos.size, reduction.reduceByPct)
-          .then(() => {
-            // Cancel stale protective orders (SL/TP/trailing-stop were sized for the old position).
-            // ReduceOnly orders stay valid per Binance rules, but the sizes are now stale — cancel
-            // to prevent over-close on subsequent stage transitions or manual fills.
-            cancelPositionOrders(symbol).catch((err) =>
-              log.warn({ err, symbol }, 'Order cancel after stage reduction failed'),
-            )
+        // reduceAndRearm: reduce position, cancel stale orders, re-arm protection for remaining size
+        reduceAndRearm(symbol, pos.size, reduction.reduceByPct).catch((err) =>
+          log.error({ err, symbol, reduceByPct: reduction.reduceByPct }, 'Stage-based position reduction failed'),
+        )
+      } else if (!pos && config.binanceApiKey && config.binanceApiSecret) {
+        // Race condition: stage event arrived before positionTracker updated currentPositions.
+        // Query Binance directly so the reduction is not silently skipped.
+        import('./clients/binance.js')
+          .then((b) => b.getPositions())
+          .then((livePositions) => {
+            const livePos = livePositions.find((p) => p.id === reduction.positionId)
+            if (livePos && parseFloat(livePos.size) !== 0) {
+              return reduceAndRearm(symbol, livePos.size, reduction.reduceByPct)
+            }
+            log.debug({ symbol, proposalId }, 'Stage reduction: position already closed on exchange')
           })
-          .catch((err) =>
-            log.error({ err, symbol, reduceByPct: reduction.reduceByPct }, 'Stage-based position reduction failed'),
-          )
+          .catch((err) => log.warn({ err, symbol }, 'Stage reduction: live position lookup failed'))
       }
     }
 
@@ -337,14 +342,15 @@ async function main(): Promise<void> {
   eventBus.on('position:update', (update) => {
     const newPositions = update.positions
 
-    // ─── Position Open-Time Tracking ───────────────────────────────
-    // Record when a position first appears so we can query income history at close.
+    // ─── Position Open-Time Tracking (fallback) ────────────────────
+    // execution:result already sets positionOpenTimeMs with a precise timestamp.
+    // This fallback handles external positions (manual trades, positions open at bot start).
     const previousIds = new Set(previousPositions.map((p: Position) => p.id))
     for (const pos of newPositions) {
       if (!previousIds.has(pos.id) && pos.protocol === 'binance') {
         const symbol = pos.id.replace('binance:', '')
         if (!positionOpenTimeMs.has(symbol)) {
-          positionOpenTimeMs.set(symbol, Date.now() - 60_000) // 1-min buffer before open
+          positionOpenTimeMs.set(symbol, Date.now() - 60_000) // 1-min buffer — may miss prior income
         }
       }
     }
@@ -425,6 +431,7 @@ async function main(): Promise<void> {
         if (prev.protocol === 'binance' && symbol) {
           positionOpenTimeMs.delete(symbol)
           positionHoldingMeta.delete(symbol)
+          clearProtectionState(symbol)
           riskManager.untrackPosition(prev.id)
           cancelPositionOrders(symbol).catch((err) =>
             log.warn({ err, symbol }, 'Order cleanup after position close failed'),
@@ -474,6 +481,10 @@ async function main(): Promise<void> {
       riskManager.trackPosition(proposalId, `binance:${symbol}`, asset, 100)
       log.debug({ proposalId, symbol }, 'Position tracked for stage-transition management')
     }
+
+    // Record precise open time for income-history PnL lookup at close.
+    // result.timestamp is set at order submission — more accurate than position-update poll time.
+    positionOpenTimeMs.set(symbol, result.timestamp)
   })
 
   // 9. Start alert service (operational — not in backtest but doesn't affect trading logic)

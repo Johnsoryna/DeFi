@@ -268,6 +268,60 @@ export async function placeOrder(params: Record<string, string | number | boolea
 }
 
 /**
+ * Place a conditional (stop-market / take-profit-market) algo order.
+ * Since 2025-12-09, STOP_MARKET and TAKE_PROFIT_MARKET on /fapi/v1/order are rejected with -4120.
+ * These order types must now go through POST /fapi/v1/algoOrder with algoType=CONDITIONAL.
+ * _purpose is a client-side label (STOP_MARKET / TAKE_PROFIT_MARKET) for logging — NOT sent to Binance.
+ */
+export async function placeConditionalAlgo(params: {
+  symbol: string
+  side: 'BUY' | 'SELL'
+  quantity: string
+  stopPrice: string
+  reduceOnly?: boolean
+  workingType?: 'MARK_PRICE' | 'CONTRACT_PRICE'
+  _purpose?: string
+}): Promise<{ algoId: number; symbol: string; status: string }> {
+  const body: Record<string, string | number | boolean> = {
+    symbol: params.symbol,
+    side: params.side,
+    algoType: 'CONDITIONAL',
+    quantity: params.quantity,
+    stopPrice: params.stopPrice,
+  }
+  if (params.reduceOnly) body.reduceOnly = true
+  if (params.workingType) body.workingType = params.workingType
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return fetchSigned<any>('POST', '/fapi/v1/algoOrder', body)
+}
+
+/**
+ * Cancel all open conditional/algo orders for a symbol.
+ * Queries GET /fapi/v1/algo/orders/open and cancels each matching the symbol.
+ * Must be called alongside cancelAllOpenOrders() for complete order cleanup.
+ */
+export async function cancelAlgoOrdersForSymbol(symbol: string): Promise<void> {
+  try {
+    const data = await fetchSigned<{ total: number; orders: Array<{ algoId: number; symbol: string }> }>(
+      'GET', '/fapi/v1/algo/orders/open', {},
+    )
+    const toCancel = (data.orders ?? []).filter((o) => o.symbol === symbol)
+    await Promise.all(
+      toCancel.map((o) =>
+        fetchSigned('DELETE', '/fapi/v1/algoOrder', { algoId: o.algoId }).catch((err) =>
+          log.debug({ err, algoId: o.algoId }, 'Failed to cancel single algo order'),
+        ),
+      ),
+    )
+    if (toCancel.length > 0) {
+      log.debug({ symbol, cancelled: toCancel.length }, 'Conditional algo orders cancelled')
+    }
+  } catch (err) {
+    log.warn({ err, symbol }, 'Failed to list/cancel algo open orders')
+  }
+}
+
+/**
  * Place a trailing stop market algo order.
  * The regular /fapi/v1/order endpoint rejects TRAILING_STOP_MARKET with error -4120.
  * Binance requires the Algo Trading API for trailing stops with activationPrice.
