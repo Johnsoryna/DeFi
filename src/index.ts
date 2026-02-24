@@ -233,7 +233,7 @@ function wireAnalysisPipeline(rm: RiskManager): void {
       recordSnapshot(snap, analysis ?? undefined)
       if (!analysis) return
 
-      const snapCacheKey = `snapshot:${snap.protocol}:${snap.snapshotId?.slice(0, 12) ?? 'unknown'}`
+      const snapCacheKey = `snapshot:${snap.protocol}:${snap.snapshotId ?? 'unknown'}`
       cachedAnalyses.set(snapCacheKey, analysis)
 
       eventBus.emit('analysis:proposal', analysis)

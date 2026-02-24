@@ -23,6 +23,7 @@ import type {
   VoteCastEvent,
   ProposalQueuedEvent,
   ProposalExecutedEvent,
+  ProposalCanceledEvent,
 } from '../types/governance.js'
 
 const log = createLogger('governor-bravo')
@@ -126,6 +127,22 @@ function parseProposalExecuted(
   }
 }
 
+function parseProposalCanceled(
+  eventLog: Log,
+  args: DecodedArgs,
+  protocol: GovernanceProtocol,
+): ProposalCanceledEvent {
+  return {
+    type: 'proposal_canceled',
+    protocol,
+    blockNumber: eventLog.blockNumber!,
+    transactionHash: eventLog.transactionHash!,
+    logIndex: eventLog.logIndex!,
+    removed: eventLog.removed ?? false,
+    proposalId: args.id,
+  }
+}
+
 // ─── Log Processing ─────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -169,6 +186,10 @@ function processGovernanceLog(eventLog: any, protocol: GovernanceProtocol): void
     case 'ProposalExecuted':
       govEvent = parseProposalExecuted(eventLog, eventLog.args, protocol)
       eventBus.emit('governance:executed', govEvent)
+      break
+    case 'ProposalCanceled':
+      govEvent = parseProposalCanceled(eventLog, eventLog.args, protocol)
+      eventBus.emit('governance:canceled', govEvent)
       break
     default:
       log.debug({ eventName }, 'Unhandled Governor Bravo event')
@@ -219,7 +240,7 @@ async function backfill(gov: GovernorBravoConfig): Promise<void> {
 function subscribe(gov: GovernorBravoConfig): void {
   const client = getReadClient()
 
-  const eventNames = ['ProposalCreated', 'VoteCast', 'ProposalQueued', 'ProposalExecuted'] as const
+  const eventNames = ['ProposalCreated', 'VoteCast', 'ProposalQueued', 'ProposalExecuted', 'ProposalCanceled'] as const
 
   for (const eventName of eventNames) {
     const unwatch = client.watchContractEvent({

@@ -22,6 +22,7 @@ import type {
   ProposalCreatedEvent,
   ProposalQueuedEvent,
   ProposalExecutedEvent,
+  ProposalCanceledEvent,
   VoteCastEvent,
 } from '../types/governance.js'
 
@@ -103,6 +104,19 @@ function processGovernanceCoreLog(eventLog: any): void {
         proposalId: args.proposalId,
       }
       eventBus.emit('governance:executed', event)
+      break
+    }
+    case 'ProposalCanceled': {
+      const event: ProposalCanceledEvent = {
+        type: 'proposal_canceled',
+        protocol: 'aave',
+        blockNumber: BigInt(blockNumber),
+        transactionHash: txHash,
+        logIndex,
+        removed: false,
+        proposalId: args.proposalId,
+      }
+      eventBus.emit('governance:canceled', event)
       break
     }
     case 'VotingActivated': {
@@ -200,7 +214,7 @@ async function backfillContract(
 function subscribeGovernanceCore(): void {
   const client = getReadClient()
 
-  for (const eventName of ['ProposalCreated', 'VotingActivated', 'ProposalQueued', 'ProposalExecuted'] as const) {
+  for (const eventName of ['ProposalCreated', 'VotingActivated', 'ProposalQueued', 'ProposalExecuted', 'ProposalCanceled'] as const) {
     const unwatch = client.watchContractEvent({
       address: GOVERNANCE_CORE,
       abi: aaveGovernanceCoreAbi,

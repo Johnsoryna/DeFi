@@ -210,7 +210,7 @@ export function analyzeSnapshotProposal(
   const legacyImpacts = synthesizeLegacyImpacts(nlp, assets)
 
   const analysis: IntelligentAnalysis = {
-    proposalId: `snap-${snap.snapshotId?.slice(0, 12) ?? 'unknown'}`,
+    proposalId: `snapshot:${snap.protocol}:${snap.snapshotId ?? 'unknown'}`,
     protocol: snap.protocol,
     stage: 'snapshot',
     title: snap.title,
