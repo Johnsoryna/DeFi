@@ -228,14 +228,17 @@ export async function executeBinanceSignal(signal: TradeSignal): Promise<Executi
     // 5. Round to step size
     const quantity = binanceClient.roundStep(rawSize, info.stepSize)
 
-    // 6. Check minimum notional (5 USDT)
+    // 6. Check quantity > 0 and actual post-rounding notional >= minimum (5 USDT)
+    // Must check AFTER rounding: roundStep can return "0" for very small sizes.
+    const qtyNum = parseFloat(quantity)
     const minNotional = parseFloat(info.minNotional)
-    if (notionalAllocation < minNotional) {
+    const actualNotional = qtyNum * price
+    if (qtyNum <= 0 || actualNotional < minNotional) {
       return {
         success: false,
         signalId: signal.id,
         protocol: 'binance',
-        error: `Order notional $${notionalAllocation.toFixed(2)} below minimum $${minNotional}`,
+        error: `Order size invalid after rounding: qty=${quantity}, notional=$${actualNotional.toFixed(2)}, min=$${minNotional}`,
         timestamp: Date.now(),
       }
     }
@@ -302,8 +305,9 @@ export async function executeBinanceSignal(signal: TradeSignal): Promise<Executi
       quantity,
     })
 
-    // Place protective orders after entry
-    await placeProtectiveOrders(symbol, signal, price, quantity, info.tickSize)
+    // Place protective orders after entry — use actual fill price (avgPrice) for accurate SL/TP levels
+    const fillPrice = parseFloat(result.avgPrice) || price
+    await placeProtectiveOrders(symbol, signal, fillPrice, quantity, info.tickSize)
 
     return {
       success: true,

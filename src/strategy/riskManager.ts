@@ -214,10 +214,8 @@ export class RiskManager {
       return null
     }
 
-    // 2. Single position size limit (leverage-aware: effective exposure = sizePct * leverage)
-    const effectiveSize = signal.sizePct * (signal.leverage ?? 1)
-    if (effectiveSize > this.config.maxSinglePositionPct * (signal.leverage ?? 1)) {
-      // Cap the base sizePct so that leveraged exposure stays within limits
+    // 2. Single position size limit — cap base sizePct (leverage is applied on top separately)
+    if (signal.sizePct > this.config.maxSinglePositionPct) {
       const cappedSize = this.config.maxSinglePositionPct
       log.warn(
         { signalId: signal.id, sizePct: signal.sizePct, leverage: signal.leverage ?? 1, max: this.config.maxSinglePositionPct },

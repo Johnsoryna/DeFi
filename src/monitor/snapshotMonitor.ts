@@ -53,6 +53,7 @@ const PROPOSALS_QUERY = `
       title
       body
       choices
+      created
       start
       end
       snapshot
@@ -70,6 +71,7 @@ interface SnapshotProposal {
   title: string
   body: string
   choices: string[]
+  created: number
   start: number
   end: number
   snapshot: string
@@ -110,21 +112,22 @@ async function pollOnce(): Promise<void> {
   try {
     const proposals = await fetchActiveProposals()
 
-    // Track the latest proposal ID per space to update cursor once at the end
-    const latestPerSpace = new Map<string, string>()
+    // Track the latest created timestamp per space (numeric — reliable ordering unlike 0x IDs)
+    const latestPerSpace = new Map<string, number>()
 
     for (const proposal of proposals) {
       const space = proposal.space.id
-      const lastSeen = getSnapshotCursor(space)
+      const lastSeenStr = getSnapshotCursor(space)
+      const lastSeenTs = lastSeenStr ? parseInt(lastSeenStr, 10) : 0
 
-      // Track the latest proposal ID for this space
-      if (!latestPerSpace.has(space) || proposal.id > (latestPerSpace.get(space) ?? '')) {
-        latestPerSpace.set(space, proposal.id)
+      // Track the highest created timestamp seen for this space
+      const cur = latestPerSpace.get(space) ?? 0
+      if (proposal.created > cur) {
+        latestPerSpace.set(space, proposal.created)
       }
 
-      // Only emit for new proposals not previously seen
-      // Check if proposal ID is newer than last seen (string comparison works for Snapshot IDs)
-      if (lastSeen && proposal.id <= lastSeen) continue
+      // Only emit for proposals created after the last cursor (numeric timestamp comparison)
+      if (lastSeenTs > 0 && proposal.created <= lastSeenTs) continue
 
       const protocol = SPACE_TO_PROTOCOL[space]
       if (!protocol) continue
@@ -150,9 +153,9 @@ async function pollOnce(): Promise<void> {
       log.info({ space, title: proposal.title, snapshotId: proposal.id }, 'New Snapshot proposal detected')
     }
 
-    // Update cursors to the latest seen ID per space
-    for (const [space, latestId] of latestPerSpace) {
-      setSnapshotCursor(space, latestId)
+    // Update cursors to the latest created timestamp seen per space
+    for (const [space, latestTs] of latestPerSpace) {
+      setSnapshotCursor(space, String(latestTs))
     }
   } catch (error) {
     log.error({ err: error }, 'Snapshot poll error')

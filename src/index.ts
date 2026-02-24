@@ -379,12 +379,6 @@ async function main(): Promise<void> {
     log.debug({ symbol, maxHoldingHours }, 'Position entry recorded — max-holding-time tracking active')
   })
 
-  // 8b. Max-holding-time monitor loop — mirrors backtest's resultCollector.closeTrade()
-  // 'max-holding-time' exit. Checks every 30 min; closes positions held beyond maxHoldingHours.
-  maxHoldingTimeMonitor().catch((err) => {
-    log.error({ err }, 'Max-holding-time monitor crashed')
-  })
-
   // 9. Start alert service (operational — not in backtest but doesn't affect trading logic)
   startAlertService()
 
@@ -401,8 +395,12 @@ async function main(): Promise<void> {
   // 12. Start position tracker (live equivalent of backtest's ResultCollector)
   startPositionTracker()
 
-  // 13. Keep alive
+  // 13. Keep alive + max-holding-time monitor
+  // IMPORTANT: running = true must be set before starting loops that use `while (running)`
   running = true
+  maxHoldingTimeMonitor().catch((err) => {
+    log.error({ err }, 'Max-holding-time monitor crashed')
+  })
   keepAliveLoop().catch((err) => {
     log.fatal({ err }, 'Keep-alive loop crashed')
     shutdown('keepalive_crash').catch(() => process.exit(1))
