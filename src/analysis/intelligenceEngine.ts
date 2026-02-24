@@ -134,7 +134,7 @@ export function analyzeOnchainProposal(
     : nlp.proposalType
 
   const analysis: IntelligentAnalysis = {
-    proposalId: proposal.proposalId.toString(),
+    proposalId: `${proposal.protocol}:${proposal.proposalId.toString()}`,
     protocol: proposal.protocol,
     stage: 'onchain_vote',
     title: proposal.description.slice(0, 200),

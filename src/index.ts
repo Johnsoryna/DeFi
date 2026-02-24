@@ -92,11 +92,7 @@ async function getLivePortfolioValue(): Promise<number> {
 // no alerts inside handlers, no spell fetching from chain.
 
 function wireAnalysisPipeline(rm: RiskManager): void {
-  // Track proposal stages for risk manager transitions
-  const proposalStages = new Map<string, GovernanceStage>()
-
   // Cache proposal analyses for re-entry on stage transitions.
-  // (Matches backtest: only snapshot analyses are cached — on-chain are NOT cached)
   const cachedAnalyses = new Map<string, IntelligentAnalysis>()
 
   // Reset correlator state (matches backtest)
@@ -121,7 +117,10 @@ function wireAnalysisPipeline(rm: RiskManager): void {
         if (parsed.length > 0) spellActions = parsed
       }
       const analysis = analyzeOnchainProposal(proposal, spellActions)
-      const _stageKey = `${proposal.protocol}:${proposal.proposalId}`
+      // Cache on-chain analysis for stage-transition re-entry and reduction
+      // Key matches stage-transition handler: "${protocol}:${proposalId}"
+      // (analysis.proposalId now uses this format after intelligenceEngine fix)
+      cachedAnalyses.set(analysis.proposalId, analysis)
       recordOnchain(proposal, analysis)
 
       // Trade Cosmos SDK + Tally L2 chains, record-only for Ethereum chains
@@ -160,29 +159,42 @@ function wireAnalysisPipeline(rm: RiskManager): void {
     }
 
     if (!proposalId || !newStage) return
-    proposalStages.set(proposalId, newStage)
 
     const reductions = rm.handleStageTransition(proposalId, newStage)
     for (const reduction of reductions) {
       log.info(
         { positionId: reduction.positionId, reduceByPct: reduction.reduceByPct, stage: newStage },
-        'Stage transition — reducing position',
+        'Stage transition — executing position reduction',
       )
+      // positionId format: "binance:SYMBOL" — derive symbol and execute reduce
+      const symbol = reduction.positionId.replace('binance:', '')
+      const pos = currentPositions.find(p => p.id === reduction.positionId)
+      if (pos && parseFloat(pos.size) !== 0) {
+        reducePosition(symbol, pos.size, reduction.reduceByPct).catch((err) =>
+          log.error({ err, symbol, reduceByPct: reduction.reduceByPct }, 'Stage-based position reduction failed'),
+        )
+      }
     }
 
     // ─── STAGE-TRANSITION RE-ENTRY (Shorts Only) ─────────────────
+    // Fires when a bearish on-chain proposal reaches timelock — adds conviction short.
+    // proposalId format is consistent: "${protocol}:${proposalId}" in both directions.
     if (newStage === 'timelock' && cachedAnalyses.has(proposalId)) {
       const originalAnalysis = cachedAnalyses.get(proposalId)!
+      // Guard: don't re-enter if already in a position on this symbol
+      const alreadyOpen = originalAnalysis.extractedAssets?.some(
+        asset => currentPositions.some(p => p.asset === asset)
+      )
       const hasBearishImpact = originalAnalysis.dynamicImpacts?.some(
         i => i.type === 'risk_mitigation' ||
              (i.type === 'technical_parameter' && i.expectedPriceImpact === 'negative') ||
              (i.type === 'economic_policy' && i.expectedPriceImpact === 'negative')
       )
-      if (hasBearishImpact) {
+      if (hasBearishImpact && !alreadyOpen) {
         const reentryAnalysis: IntelligentAnalysis = {
           ...originalAnalysis,
           stage: newStage,
-          proposalId: `${originalAnalysis.proposalId}-reentry`,
+          // Keep original proposalId (no -reentry suffix) so executed/canceled events can still find it
           confidenceScore: 0.85,
           timestamp: Date.now(),
         }
@@ -367,16 +379,25 @@ async function main(): Promise<void> {
   // (live equivalent of backtest step 8: mockExecutor.wire())
   wireTradeExecutor()
 
-  // 8a. Track execution results for max-holding-time monitoring.
-  // When a trade executes (dry-run or live), record the entry time and maxHoldingHours
-  // keyed by Binance symbol so the holding-time loop can close expired positions.
+  // 8a. Track execution results for max-holding-time + stage-transition management.
+  // When a trade executes (dry-run or live):
+  //   - record entry time for max-holding-time exit
+  //   - register position in RiskManager so stage transitions can trigger reductions
   eventBus.on('execution:result', (result: ExecutionResult) => {
     if (!result.success) return
     const symbol = result.metadata?.symbol as string | undefined
     const maxHoldingHours = result.metadata?.maxHoldingHours as number | undefined
+    const proposalId = result.metadata?.proposalId as string | undefined
+    const asset = result.metadata?.asset as string | undefined
     if (!symbol || !maxHoldingHours) return
     positionHoldingMeta.set(symbol, { entryTime: Date.now(), maxHoldingHours })
     log.debug({ symbol, maxHoldingHours }, 'Position entry recorded — max-holding-time tracking active')
+    // Register with RiskManager so stage transitions (queued/executed/canceled) can reduce/close
+    // currentSizePct=100 means "full position open" on the 0-100 scale used by STAGE_LIMITS
+    if (proposalId && asset) {
+      riskManager.trackPosition(proposalId, `binance:${symbol}`, asset, 100)
+      log.debug({ proposalId, symbol }, 'Position tracked for stage-transition management')
+    }
   })
 
   // 9. Start alert service (operational — not in backtest but doesn't affect trading logic)

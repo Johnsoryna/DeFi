@@ -287,6 +287,8 @@ export async function executeBinanceSignal(signal: TradeSignal): Promise<Executi
           dryRun: true, slippagePct, basePrice: price,
           symbol,
           maxHoldingHours: signal.maxHoldingHours ?? 0,
+          proposalId: signal.proposalId,
+          asset: signal.asset,
         },
       }
     }
@@ -321,6 +323,8 @@ export async function executeBinanceSignal(signal: TradeSignal): Promise<Executi
         dryRun: false, slippagePct, basePrice: price,
         symbol,
         maxHoldingHours: signal.maxHoldingHours ?? 0,
+        proposalId: signal.proposalId,
+        asset: signal.asset,
       },
     }
   } catch (err) {
