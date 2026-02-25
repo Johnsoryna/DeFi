@@ -47,8 +47,7 @@ vi.mock('../../src/clients/binance.js', async (importOriginal) => {
       return { algoId: 99999, symbol: params.symbol, status: 'NEW' }
     }),
     placeConditionalAlgo: vi.fn().mockImplementation(async (params: Record<string, string | number | boolean>) => {
-      // _purpose carries the logical type (STOP_MARKET / TAKE_PROFIT_MARKET) for test assertions
-      placedOrders.push({ type: params._purpose ?? 'CONDITIONAL', ...params })
+      placedOrders.push({ ...params })
       return { algoId: 88888, symbol: params.symbol, status: 'NEW' }
     }),
     cancelAllOpenOrders: vi.fn().mockResolvedValue(undefined),
@@ -148,18 +147,18 @@ describe('BinanceExecutor — Trailing Stop & Order Parity', () => {
       expect(trailOrder?.callbackRate).toBe(4.0)
     })
 
-    it('STOP_MARKET stopPrice = entry × (1 + stopLossPct) for short', async () => {
-      // entry=100, stopLossPct=0.12 → stopPrice=112.00
+    it('STOP_MARKET triggerPrice = entry × (1 + stopLossPct) for short', async () => {
+      // entry=100, stopLossPct=0.12 → triggerPrice=112.00
       await executeBinanceSignal(makeShortSignal())
       const slOrder = placedOrders.find((o) => o.type === 'STOP_MARKET')
-      expect(parseFloat(String(slOrder?.stopPrice))).toBeCloseTo(112.0, 1)
+      expect(parseFloat(String(slOrder?.triggerPrice))).toBeCloseTo(112.0, 1)
     })
 
-    it('TAKE_PROFIT_MARKET stopPrice = entry × (1 − takeProfitPct) for short', async () => {
-      // entry=100, takeProfitPct=0.36 → stopPrice=64.00
+    it('TAKE_PROFIT_MARKET triggerPrice = entry × (1 − takeProfitPct) for short', async () => {
+      // entry=100, takeProfitPct=0.36 → triggerPrice=64.00
       await executeBinanceSignal(makeShortSignal())
       const tpOrder = placedOrders.find((o) => o.type === 'TAKE_PROFIT_MARKET')
-      expect(parseFloat(String(tpOrder?.stopPrice))).toBeCloseTo(64.0, 1)
+      expect(parseFloat(String(tpOrder?.triggerPrice))).toBeCloseTo(64.0, 1)
     })
   })
 

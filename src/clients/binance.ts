@@ -42,6 +42,25 @@ async function fetchPublic<T>(path: string): Promise<T> {
   )
 }
 
+/**
+ * Fetch USER_STREAM endpoint (API key header only, no HMAC signature).
+ * Binance USER_STREAM security type requires X-MBX-APIKEY but NOT a signature.
+ */
+async function fetchUserStream<T>(
+  method: 'POST' | 'PUT' | 'DELETE',
+  path: string,
+): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers: authHeaders(),
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`Binance API ${res.status}: ${method} ${path} — ${body}`)
+  }
+  return (await res.json()) as T
+}
+
 /** Fetch signed endpoint (requires API key + HMAC signature) */
 async function fetchSigned<T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
@@ -271,25 +290,26 @@ export async function placeOrder(params: Record<string, string | number | boolea
  * Place a conditional (stop-market / take-profit-market) algo order.
  * Since 2025-12-09, STOP_MARKET and TAKE_PROFIT_MARKET on /fapi/v1/order are rejected with -4120.
  * These order types must now go through POST /fapi/v1/algoOrder with algoType=CONDITIONAL.
- * _purpose is a client-side label (STOP_MARKET / TAKE_PROFIT_MARKET) for logging — NOT sent to Binance.
+ * Binance requires: algoType, type (STOP_MARKET|TAKE_PROFIT_MARKET), triggerPrice.
  */
 export async function placeConditionalAlgo(params: {
   symbol: string
   side: 'BUY' | 'SELL'
   quantity: string
-  stopPrice: string
+  type: 'STOP_MARKET' | 'TAKE_PROFIT_MARKET'
+  triggerPrice: string
   reduceOnly?: boolean
   workingType?: 'MARK_PRICE' | 'CONTRACT_PRICE'
-  _purpose?: string
 }): Promise<{ algoId: number; symbol: string; status: string }> {
   const body: Record<string, string | number | boolean> = {
     symbol: params.symbol,
     side: params.side,
     algoType: 'CONDITIONAL',
+    type: params.type,
     quantity: params.quantity,
-    stopPrice: params.stopPrice,
+    triggerPrice: params.triggerPrice,
   }
-  if (params.reduceOnly) body.reduceOnly = true
+  if (params.reduceOnly) body.reduceOnly = 'true'
   if (params.workingType) body.workingType = params.workingType
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return fetchSigned<any>('POST', '/fapi/v1/algoOrder', body)
@@ -297,13 +317,13 @@ export async function placeConditionalAlgo(params: {
 
 /**
  * Cancel all open conditional/algo orders for a symbol.
- * Queries GET /fapi/v1/algo/orders/open and cancels each matching the symbol.
+ * Queries GET /fapi/v1/openAlgoOrders and cancels each matching the symbol.
  * Must be called alongside cancelAllOpenOrders() for complete order cleanup.
  */
 export async function cancelAlgoOrdersForSymbol(symbol: string): Promise<void> {
   try {
     const data = await fetchSigned<{ total: number; orders: Array<{ algoId: number; symbol: string }> }>(
-      'GET', '/fapi/v1/algo/orders/open', {},
+      'GET', '/fapi/v1/openAlgoOrders', {},
     )
     const toCancel = (data.orders ?? []).filter((o) => o.symbol === symbol)
     await Promise.all(
@@ -324,7 +344,7 @@ export async function cancelAlgoOrdersForSymbol(symbol: string): Promise<void> {
 /**
  * Place a trailing stop market algo order.
  * The regular /fapi/v1/order endpoint rejects TRAILING_STOP_MARKET with error -4120.
- * Binance requires the Algo Trading API for trailing stops with activationPrice.
+ * Since 2025-12-09, all trailing stops go through POST /fapi/v1/algoOrder.
  */
 export async function placeTrailingStopAlgo(params: {
   symbol: string
@@ -337,13 +357,14 @@ export async function placeTrailingStopAlgo(params: {
   const body: Record<string, string | number | boolean> = {
     symbol: params.symbol,
     side: params.side,
+    algoType: 'TRAILING_STOP_MARKET',
     quantity: params.quantity,
     callbackRate: params.callbackRate,
   }
   if (params.activationPrice) body.activationPrice = params.activationPrice
-  if (params.reduceOnly) body.reduceOnly = true
+  if (params.reduceOnly) body.reduceOnly = 'true'
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return fetchSigned<any>('POST', '/fapi/v1/order/algo/trailing-stop-market', body)
+  return fetchSigned<any>('POST', '/fapi/v1/algoOrder', body)
 }
 
 // ─── Income History ──────────────────────────────────────────────────
@@ -412,14 +433,15 @@ let listenKeyTimer: ReturnType<typeof setInterval> | null = null
  * Must be kept alive every 30 minutes via PUT.
  */
 export async function createListenKey(): Promise<string> {
-  const data = await fetchSigned<{ listenKey: string }>('POST', '/fapi/v1/listenKey')
+  // USER_STREAM security type: API key header only, no HMAC signature
+  const data = await fetchUserStream<{ listenKey: string }>('POST', '/fapi/v1/listenKey')
   listenKey = data.listenKey
 
   // Auto-keepalive every 25 minutes
   if (listenKeyTimer) clearInterval(listenKeyTimer)
   listenKeyTimer = setInterval(async () => {
     try {
-      await fetchSigned('PUT', '/fapi/v1/listenKey')
+      await fetchUserStream('PUT', '/fapi/v1/listenKey')
       log.debug('Listen key keepalive sent')
     } catch (err) {
       log.warn({ err }, 'Listen key keepalive failed')

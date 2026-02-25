@@ -40,7 +40,7 @@ import { startPriceMonitor, stopPriceMonitor } from './processing/priceMonitor.j
 
 // Layer 3 — Strategy (same wiring as backtest)
 import { wireSignalGenerator } from './strategy/signalGenerator.js'
-import { RiskManager, wireRiskManager, recordStopLoss, recordWin, recordGlobalLoss, recordMonthlyPnl } from './strategy/riskManager.js'
+import { RiskManager, wireRiskManager, recordStopLoss, recordWin, recordGlobalLoss, recordMonthlyPnl, resetGlobalLosses } from './strategy/riskManager.js'
 import { setPriceService } from './strategy/priceService.js'
 import { resetTrailingStats, recordTradeOutcome } from './strategy/confidenceScorer.js'
 import { getLivePriceService, startLivePriceHistory } from './processing/livePriceService.js'
@@ -186,9 +186,9 @@ function wireAnalysisPipeline(rm: RiskManager): void {
         import('./clients/binance.js')
           .then((b) => b.getPositions())
           .then((livePositions) => {
-            const livePos = livePositions.find((p) => p.id === reduction.positionId)
-            if (livePos && parseFloat(livePos.size) !== 0) {
-              return reduceAndRearm(symbol, livePos.size, reduction.reduceByPct)
+            const livePos = livePositions.find((p) => p.symbol === symbol)
+            if (livePos && parseFloat(livePos.positionAmt) !== 0) {
+              return reduceAndRearm(symbol, livePos.positionAmt, reduction.reduceByPct)
             }
             log.debug({ symbol, proposalId }, 'Stage reduction: position already closed on exchange')
           })
@@ -372,8 +372,11 @@ async function main(): Promise<void> {
         let pnl: number = parseFloat(prev.unrealizedPnl || '0')
 
         if (symbol && openTime && config.binanceApiKey && config.binanceApiSecret) {
-          // Async: fetch income history and re-record with accurate PnL
-          const recordFromIncome = async () => {
+          // Fetch income history async — record ONCE with accurate PnL.
+          // Do NOT record synchronously first: that would cause double-counting
+          // because recordFromIncome also calls record* when income records exist.
+          void (async () => {
+            let pnlToRecord = pnl // snapshot PnL as fallback
             try {
               const { getIncome } = await import('./clients/binance.js')
               const records = await getIncome({ symbol: symbol!, startTime: openTime })
@@ -381,35 +384,23 @@ async function main(): Promise<void> {
                 .filter(r => ['REALIZED_PNL', 'FUNDING_FEE', 'COMMISSION'].includes(r.incomeType))
                 .reduce((sum, r) => sum + parseFloat(r.income), 0)
               if (records.length > 0) {
-                const margin = Math.abs(parseFloat(prev.size || '0')) * parseFloat(prev.entryPrice || '0')
-                if (margin > 0) recordTradeOutcome(incomePnl, margin)
-                if (incomePnl < 0) { recordStopLoss(prev.asset, now); recordGlobalLoss(now) }
-                else if (incomePnl > 0) recordWin(prev.asset)
-                recordMonthlyPnl(now, incomePnl)
+                pnlToRecord = incomePnl
                 log.info(
                   { id: prev.id, asset: prev.asset, pnl: incomePnl.toFixed(2), records: records.length },
                   'Position closure recorded (income history)',
                 )
               } else {
-                // No income records: fall back to snapshot PnL already recorded above
-                log.debug({ symbol }, 'No income records found — fallback PnL already recorded')
+                log.debug({ symbol }, 'No income records — recording snapshot PnL')
               }
             } catch (err) {
-              log.warn({ err, symbol }, 'Income history fetch failed — fallback PnL already recorded')
+              log.warn({ err, symbol }, 'Income history fetch failed — recording snapshot PnL')
             }
-          }
-
-          // Record synchronously with snapshot PnL as fallback, then re-record from income async
-          const margin = Math.abs(parseFloat(prev.size || '0')) * parseFloat(prev.entryPrice || '0')
-          if (margin > 0) recordTradeOutcome(pnl, margin)
-          if (pnl < 0) { recordStopLoss(prev.asset, now); recordGlobalLoss(now) }
-          else if (pnl > 0) recordWin(prev.asset)
-          recordMonthlyPnl(now, pnl)
-          log.info(
-            { id: prev.id, asset: prev.asset, pnl: pnl.toFixed(2), protocol: prev.protocol },
-            'Position closure detected (snapshot PnL — income fetch in progress)',
-          )
-          recordFromIncome()
+            const margin = Math.abs(parseFloat(prev.size || '0')) * parseFloat(prev.entryPrice || '0')
+            if (margin > 0) recordTradeOutcome(pnlToRecord, margin)
+            if (pnlToRecord < 0) { recordStopLoss(prev.asset, now); recordGlobalLoss(now) }
+            else if (pnlToRecord > 0) { recordWin(prev.asset); resetGlobalLosses() }
+            recordMonthlyPnl(now, pnlToRecord)
+          })()
         } else {
           // No API keys or non-Binance: use snapshot fields as-is
           const realizedPnl = parseFloat(prev.realizedPnl || '0')
@@ -417,7 +408,7 @@ async function main(): Promise<void> {
           const margin = Math.abs(parseFloat(prev.size || '0')) * parseFloat(prev.entryPrice || '0')
           if (margin > 0) recordTradeOutcome(pnl, margin)
           if (pnl < 0) { recordStopLoss(prev.asset, now); recordGlobalLoss(now) }
-          else if (pnl > 0) recordWin(prev.asset)
+          else if (pnl > 0) { recordWin(prev.asset); resetGlobalLosses() }
           recordMonthlyPnl(now, pnl)
           log.info(
             { id: prev.id, asset: prev.asset, pnl: pnl.toFixed(2), protocol: prev.protocol },

@@ -391,18 +391,18 @@ async function placeProtectiveOrders(
     const slPrice = signal.direction === 'long'
       ? entryPrice * (1 - signal.stopLossPct)
       : entryPrice * (1 + signal.stopLossPct)
-    const stopPrice = binanceClient.roundTick(slPrice, tickSize)
+    const triggerPrice = binanceClient.roundTick(slPrice, tickSize)
 
     try {
       const result = await binanceClient.placeConditionalAlgo({
         symbol,
         side: closeSide,
         quantity,
-        stopPrice,
+        type: 'STOP_MARKET',
+        triggerPrice,
         reduceOnly: true,
-        _purpose: 'STOP_MARKET',
       })
-      log.info({ symbol, stopPrice, algoId: result.algoId }, 'Stop-loss algo order placed')
+      log.info({ symbol, triggerPrice, algoId: result.algoId }, 'Stop-loss algo order placed')
     } catch (err) {
       log.error({ err, symbol }, 'CRITICAL: Stop-loss placement FAILED — position is UNPROTECTED')
     }
@@ -451,18 +451,18 @@ async function placeProtectiveOrders(
     const tpPrice = signal.direction === 'long'
       ? entryPrice * (1 + signal.takeProfitPct)
       : entryPrice * (1 - signal.takeProfitPct)
-    const stopPrice = binanceClient.roundTick(tpPrice, tickSize)
+    const triggerPrice = binanceClient.roundTick(tpPrice, tickSize)
 
     try {
       const result = await binanceClient.placeConditionalAlgo({
         symbol,
         side: closeSide,
         quantity,
-        stopPrice,
+        type: 'TAKE_PROFIT_MARKET',
+        triggerPrice,
         reduceOnly: true,
-        _purpose: 'TAKE_PROFIT_MARKET',
       })
-      log.info({ symbol, stopPrice, algoId: result.algoId }, 'Take-profit algo order placed')
+      log.info({ symbol, triggerPrice, algoId: result.algoId }, 'Take-profit algo order placed')
     } catch (err) {
       log.warn({ err, symbol }, 'Take-profit placement failed')
     }
