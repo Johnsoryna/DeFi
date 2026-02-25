@@ -51,7 +51,7 @@ function handleBinanceMarkPriceUpdate(data: unknown): void {
 
       // Strip 'USDT' suffix to get base asset symbol
       if (!symbol.endsWith('USDT')) continue
-      const asset = symbol.replace('USDT', '').toUpperCase()
+      const asset = symbol.slice(0, -4).toUpperCase()
 
       const prev = prices.get(asset)
 

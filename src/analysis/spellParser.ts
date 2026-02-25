@@ -34,6 +34,25 @@ const DSSEXECLIB_CATEGORIES: Record<string, ImpactCategory> = {
 // ─── Source Fetching ────────────────────────────────────────────────
 
 /**
+ * Unwrap Etherscan multi-file JSON response.
+ * Etherscan wraps multi-file verified contracts in double-brace JSON-in-JSON: {{...}}
+ * Concatenates all source files so the parser can scan across all contracts.
+ */
+function unwrapEtherscanSource(raw: string): string {
+  if (!raw) return raw
+  const inner = raw.startsWith('{{') ? raw.slice(1, -1) : raw
+  if (inner.startsWith('{')) {
+    try {
+      const json = JSON.parse(inner) as { sources?: Record<string, { content: string }> }
+      if (json.sources) {
+        return Object.values(json.sources).map(f => f.content).join('\n')
+      }
+    } catch { /* not multi-file JSON — use as-is */ }
+  }
+  return raw
+}
+
+/**
  * Fetch verified contract source from Etherscan.
  */
 async function fetchEtherscanSource(address: string): Promise<string | null> {
@@ -60,7 +79,7 @@ async function fetchEtherscanSource(address: string): Promise<string | null> {
         return null
       }
 
-      return data.result[0].SourceCode
+      return unwrapEtherscanSource(data.result[0].SourceCode)
     },
     `etherscan-source-${address}`,
     // Etherscan free tier: 3 calls/sec (reduced from 5 as of Feb 2026)

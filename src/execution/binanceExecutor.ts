@@ -20,6 +20,8 @@
 import * as binanceClient from '../clients/binance.js'
 import { createLogger } from '../lib/logger.js'
 import { config } from '../config/index.js'
+import { withRetry } from '../lib/retry.js'
+import { sendAlert } from './alertService.js'
 import type { BinanceOrderParams, ExecutionResult, TradeSignal } from '../types/trading.js'
 
 // Binance Futures max callbackRate for TRAILING_STOP_MARKET orders
@@ -37,6 +39,19 @@ interface ProtectionState {
 }
 
 const protectionState = new Map<string, ProtectionState>()
+
+// ─── Per-Symbol Mutex ────────────────────────────────────────────────
+// Promise-chain mutex prevents double-reduce / double-cancel race conditions
+// when two events fire for the same symbol concurrently.
+
+const symbolLocks = new Map<string, Promise<void>>()
+
+function withSymbolLock<T>(symbol: string, fn: () => Promise<T>): Promise<T> {
+  const prev = symbolLocks.get(symbol) ?? Promise.resolve()
+  const next = prev.then(fn)
+  symbolLocks.set(symbol, next.then(() => {}, () => {}))
+  return next
+}
 
 // ─── Market → Binance Symbol Mapping ────────────────────────────────
 
@@ -187,6 +202,12 @@ async function getSymbolInfo(symbol: string): Promise<{ tickSize: string; stepSi
         stepSize: market.stepSize,
         minNotional: market.minNotional,
       })
+    }
+    // Startup tradability gate: warn if any configured symbols are missing
+    for (const bSymbol of Object.values(ASSET_TO_SYMBOL)) {
+      if (!symbolInfoCache.has(bSymbol)) {
+        log.warn({ symbol: bSymbol }, 'Symbol not found in Binance exchange info — trades for this asset will fail')
+      }
     }
   }
   return symbolInfoCache.get(symbol) ?? { tickSize: '0.01', stepSize: '0.001', minNotional: '5' }
@@ -465,33 +486,46 @@ export async function cancelPositionOrders(symbol: string): Promise<void> {
  * Use this in place of bare reducePosition() + cancelPositionOrders() to avoid
  * leaving the remaining position unprotected after a partial stage reduction.
  */
-export async function reduceAndRearm(
+export function reduceAndRearm(
   symbol: string,
   currentSize: string,
   reducePct: number,
 ): Promise<ExecutionResult> {
-  const result = await reducePosition(symbol, currentSize, reducePct)
-  if (!result.success) return result
+  return withSymbolLock(symbol, async () => {
+    const result = await reducePosition(symbol, currentSize, reducePct)
+    if (!result.success) return result
 
-  // Cancel protective orders that were sized for the old (larger) position
-  await cancelPositionOrders(symbol)
+    // Cancel protective orders that were sized for the old (larger) position
+    await cancelPositionOrders(symbol)
 
-  // Re-arm protection for the remaining position (skip if fully closed)
-  if (reducePct < 100) {
-    const state = protectionState.get(symbol)
-    if (state) {
-      const remainingAbs = Math.abs(parseFloat(currentSize)) * (1 - reducePct / 100)
-      const remainingQty = binanceClient.roundStep(remainingAbs, state.stepSize)
-      if (parseFloat(remainingQty) > 0) {
-        await placeProtectiveOrders(symbol, state.signal, state.entryPrice, remainingQty, state.tickSize)
-        log.info({ symbol, remainingQty, reducePct }, 'Protective orders re-armed after stage reduction')
+    // Re-arm protection for the remaining position (skip if fully closed)
+    if (reducePct < 100) {
+      const state = protectionState.get(symbol)
+      if (state) {
+        const remainingAbs = Math.abs(parseFloat(currentSize)) * (1 - reducePct / 100)
+        const remainingQty = binanceClient.roundStep(remainingAbs, state.stepSize)
+        if (parseFloat(remainingQty) > 0) {
+          try {
+            await withRetry(
+              () => placeProtectiveOrders(symbol, state.signal, state.entryPrice, remainingQty, state.tickSize),
+              `rearm-${symbol}`,
+              { maxRetries: 3, baseDelayMs: 500 },
+            )
+            log.info({ symbol, remainingQty, reducePct }, 'Protective orders re-armed after stage reduction')
+          } catch (rearmErr) {
+            log.error({ rearmErr, symbol }, 'CRITICAL: rearm failed — position unprotected after stage reduction')
+            sendAlert('system_error', 'critical', 'Position Unprotected',
+              `Failed to re-arm protection for ${symbol} after stage reduction. Manual intervention required.`
+            ).catch(() => {})
+          }
+        }
+      } else {
+        log.warn({ symbol }, 'No protection state found — remaining position is unprotected after stage reduction')
       }
-    } else {
-      log.warn({ symbol }, 'No protection state found — remaining position is unprotected after stage reduction')
     }
-  }
 
-  return result
+    return result
+  })
 }
 
 /**

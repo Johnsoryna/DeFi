@@ -14,7 +14,7 @@ const log = createLogger('forum')
 
 let running = false
 
-// â”€â”€â”€ Forum Configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Forum Configuration ─────────────────────────────────────────────
 
 interface ForumConfig {
   url: string
@@ -44,7 +44,7 @@ const FORUM_CONFIGS: ForumConfig[] = [
   // Injective removed: 0 posts in backtest DB, forum API not public
 ]
 
-// â”€â”€â”€ Discourse API Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Discourse API Types ─────────────────────────────────────────────
 
 interface DiscourseTopic {
   id: number
@@ -63,7 +63,7 @@ interface DiscourseLatestResponse {
   }
 }
 
-// â”€â”€â”€ Polling Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Polling Logic ───────────────────────────────────────────────────
 
 async function fetchLatestTopics(forumUrl: string): Promise<DiscourseTopic[]> {
   const response = await withRetry(
@@ -152,7 +152,7 @@ async function pollLoop(): Promise<void> {
   }
 }
 
-// â”€â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Public API ──────────────────────────────────────────────────────
 
 export async function startForumMonitor(): Promise<void> {
   running = true

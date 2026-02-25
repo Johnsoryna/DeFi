@@ -16,7 +16,7 @@ import { aavePoolConfiguratorAbi } from '../config/abis/aavePoolConfigurator.js'
 import { compoundConfiguratorAbi } from '../config/abis/compoundComet.js'
 import { createLogger } from '../lib/logger.js'
 import { config } from '../config/index.js'
-import { withRetry } from '../lib/retry.js'
+import { fetchAndParseSpell } from './spellParser.js'
 import type { DecodedAction, ProposalCreatedEvent } from '../types/governance.js'
 
 const log = createLogger('proposal-decoder')
@@ -195,7 +195,7 @@ export function decodeAavePayload(
 
 /**
  * Fetch and parse MakerDAO executive spell source code.
- * Spells have an execute() function that calls DssExecLib helpers.
+ * Delegates to spellParser which handles multi-file Etherscan responses.
  */
 export async function decodeMakerSpell(spellAddress: string): Promise<DecodedAction[]> {
   if (!config.etherscanApiKey) {
@@ -204,92 +204,11 @@ export async function decodeMakerSpell(spellAddress: string): Promise<DecodedAct
   }
 
   try {
-    const source = await fetchContractSource(spellAddress)
-    if (!source) return []
-
-    return parseDssExecLibCalls(source, spellAddress)
+    return await fetchAndParseSpell(spellAddress)
   } catch (err) {
     log.error({ err, spellAddress }, 'Failed to decode Maker spell')
     return []
   }
-}
-
-async function fetchContractSource(address: string): Promise<string | null> {
-  return withRetry(
-    async () => {
-      const url = `https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${config.etherscanApiKey}`
-      const res = await fetch(url)
-      if (!res.ok) throw new Error(`Etherscan ${res.status}`)
-      const data = (await res.json()) as { result: Array<{ SourceCode: string }> }
-      if (!data.result?.[0]?.SourceCode) return null
-      return data.result[0].SourceCode
-    },
-    `etherscan-source-${address}`,
-    // Etherscan free tier: 3 calls/sec (reduced from 5 as of Feb 2026)
-    { maxRetries: 2, baseDelayMs: 400 },
-  )
-}
-
-/**
- * Parse DssExecLib function calls from spell source code.
- * Extracts calls like setIlkDebtCeiling, setIlkStabilityFee, setDSR, etc.
- */
-function parseDssExecLibCalls(source: string, spellAddress: string): DecodedAction[] {
-  const actions: DecodedAction[] = []
-
-  // Match DssExecLib function calls
-  const dssExecLibPattern = /DssExecLib\.(\w+)\(([^)]*)\)/g
-  let match
-
-  while ((match = dssExecLibPattern.exec(source)) !== null) {
-    const funcName = match[1]
-    const argsStr = match[2]
-
-    // Parse argument values (simplified — handles common literal patterns)
-    const argValues = argsStr
-      .split(',')
-      .map((a) => a.trim())
-      .filter(Boolean)
-
-    const params: Record<string, unknown> = {
-      functionName: funcName,
-      rawArgs: argValues,
-    }
-
-    // Map known DssExecLib functions to their parameter names
-    switch (funcName) {
-      case 'setIlkDebtCeiling':
-        params.ilk = argValues[0]
-        params.debtCeiling = argValues[1]
-        break
-      case 'setIlkStabilityFee':
-        params.ilk = argValues[0]
-        params.stabilityFee = argValues[1]
-        break
-      case 'setIlkLiquidationRatio':
-        params.ilk = argValues[0]
-        params.liquidationRatio = argValues[1]
-        break
-      case 'setDSR':
-        params.dsr = argValues[0]
-        break
-      case 'setIlkAutoLineParameters':
-        params.ilk = argValues[0]
-        params.maxLine = argValues[1]
-        params.gap = argValues[2]
-        params.ttl = argValues[3]
-        break
-    }
-
-    actions.push({
-      target: spellAddress,
-      signature: `DssExecLib.${funcName}(${argsStr})`,
-      params,
-      value: 0n,
-    })
-  }
-
-  return actions
 }
 
 // ─── Helper: Try Decode with Known ABIs ─────────────────────────────
