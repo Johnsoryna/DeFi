@@ -4,6 +4,8 @@ data/*.db
 data/*.db-wal
 data/*.db-shm
 .env
+.env.*
+.claude/
 *.log
 .DS_Store
 Thumbs.db
@@ -13,3 +15,4 @@ data/_bt-out.txt
 data/robustness-output.txt
 deploy.zip
 dist-deploy.zip
+*.tar.gz

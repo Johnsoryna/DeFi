@@ -1,6 +1,6 @@
 # DeFi Governance Alpha Bot
 
-A governance-event-driven trading system that monitors proposals across **Compound**, **Uniswap**, **Aave**, and **MakerDAO/Sky**, analyzes their on-chain impact, generates trading signals, and executes via **dYdX v4 perps**, **Pendle yield trades**, and **DEX swaps** — all protected from MEV.
+A governance-event-driven trading system that monitors proposals across **Compound**, **Uniswap**, **Aave**, and **MakerDAO/Sky**, analyzes their on-chain impact, generates trading signals, and executes via **Binance USDT-M perpetuals**.
 
 Built exclusively on **free-tier data sources**.
 
@@ -18,7 +18,7 @@ Monitoring → Analysis → Signal Generation → Risk Management → Execution 
 | 1 | Data Sources | RPC client, governance monitors, API clients |
 | 2 | Processing | Proposal decoder/classifier, dependency graph, position tracker, price monitor |
 | 3 | Decision | Signal generator (rule engine), risk manager (stop-loss state machine) |
-| 4 | Execution | dYdX executor, Pendle executor, DEX executor, flash loans, alerts |
+| 4 | Execution | Binance executor, protective order management, alerts |
 | 5 | Orchestration | Main event loop, health checks, graceful shutdown |
 
 ## Quick Start
@@ -56,12 +56,9 @@ docker-compose up --build
 
 Off-chain: **Snapshot** (GraphQL polling), **Discourse forums** (Aave, Compound, MakerDAO).
 
-## Execution Venues
+## Execution Venue
 
-- **dYdX v4**: Perpetual futures (AAVE-USD, UNI-USD, COMP-USD, MKR-USD)
-- **Pendle**: Yield token trading (PT/YT swaps via API)
-- **CowSwap**: MEV-protected spot swaps (free, no API key)
-- **Balancer V2**: Zero-fee flash loans for atomic arbitrage
+- **Binance Futures (USDT-M)**: leveraged perp execution with market entry + protective orders (stop-loss, trailing stop, take-profit)
 
 ## Security Notes
 

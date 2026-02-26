@@ -53,6 +53,33 @@ describe('RiskManager', () => {
       const result = rm.validateSignal(signal)
       expect(result).toBeNull()
     })
+
+    it('does not double-count leverage on existing open positions', () => {
+      const rm = new RiskManager({ maxLeveragedExposurePct: 120 })
+      const positions: Position[] = [
+        {
+          id: 'binance:ETHUSDT',
+          protocol: 'binance',
+          type: 'perp',
+          asset: 'ETH',
+          size: '1',
+          entryPrice: '5000',
+          currentPrice: '5000',
+          unrealizedPnl: '0',
+          realizedPnl: '0',
+          accruedYield: '0',
+          leverage: 10,
+          lastUpdated: new Date().toISOString(),
+        },
+      ]
+      rm.updatePortfolio(positions, 10_000) // Existing gross notional exposure = 50%
+
+      const signal = makeSignal({ sizePct: 10, leverage: 5 }) // New leveraged exposure = 50%
+      const result = rm.validateSignal(signal)
+
+      // 50% existing + 50% new = 100% <= 120% cap, so signal must pass.
+      expect(result).not.toBeNull()
+    })
   })
 
   describe('handleStageTransition', () => {

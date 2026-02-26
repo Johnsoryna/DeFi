@@ -33,6 +33,7 @@ import type {
 import type { TradeSignal } from '../src/types/trading.js'
 
 const log = createLogger('e2e-test')
+const settle = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 // ─── Test Results ─────────────────────────────────────────────────
 
@@ -86,7 +87,7 @@ async function testOnChainMonitors(): Promise<void> {
     const { getReadClient } = await import('../src/clients/rpc.js')
     const client = getReadClient()
     const logs = await client.getLogs({
-      address: GOVERNANCE.makerDSChief as `0x${string}`,
+      address: GOVERNANCE.makerNewChief as `0x${string}`,
       fromBlock: await client.getBlockNumber() - 100n,
       toBlock: 'latest',
     })
@@ -448,11 +449,15 @@ async function main(): Promise<void> {
   console.log(`║  TOTAL: ${results.length} tests | ${passed} PASSED | ${failed} FAILED${' '.repeat(Math.max(0, 24 - String(results.length).length - String(passed).length - String(failed).length))}║`)
   console.log('╚══════════════════════════════════════════════════════════════╝')
 
+  // Allow async execution/alert handlers to finish before tearing down the store.
+  // Without this drain window, late DB writes from in-flight handlers can hit a closed store.
+  await settle(7000)
+
   // Cleanup
   eventBus.removeAllListeners()
   closeStore()
   
-  if (failed > 0) process.exit(1)
+  process.exit(failed > 0 ? 1 : 0)
 }
 
 main().catch(err => {

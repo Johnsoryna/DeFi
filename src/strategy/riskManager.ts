@@ -143,7 +143,7 @@ const monthlyPnl = new Map<string, number>()
 /**
  * Record a global loss event (any asset). Used for post-loss size reduction.
  */
-export function recordGlobalLoss(timestamp: number): void {
+export function recordGlobalLoss(_timestamp: number): void {
   globalConsecutiveLosses++
 }
 
@@ -496,13 +496,14 @@ export class RiskManager {
 
   private calculateLeveragedExposurePct(): number {
     if (this.portfolioValue <= 0) return 0
-    // Sum the leveraged (notional) exposure from all positions
+    // Sum gross notional exposure from all open positions.
+    // `size * price` is already notional for exchange positions (e.g. Binance futures).
+    // Multiplying that value by `leverage` again would double-count leverage.
     let totalLeveragedValue = 0
     for (const pos of this.currentPositions) {
-      const absSize = Math.abs(parseFloat(pos.size))
-      const price = parseFloat(pos.currentPrice) || parseFloat(pos.entryPrice)
-      const posLeverage = pos.leverage ?? 1
-      totalLeveragedValue += absSize * price * posLeverage
+      const absSize = Math.abs(safeParseFloat(pos.size))
+      const price = safeParseFloat(pos.currentPrice) || safeParseFloat(pos.entryPrice)
+      totalLeveragedValue += absSize * price
     }
     return (totalLeveragedValue / this.portfolioValue) * 100
   }

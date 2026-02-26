@@ -41,10 +41,13 @@ const SPACE_TO_PROTOCOL: Record<string, GovernanceProtocol> = {
 
 // ─── GraphQL Query ──────────────────────────────────────────────────
 
+const PAGE_SIZE = 100
+
 const PROPOSALS_QUERY = `
-  query ActiveProposals($spaces: [String!]!) {
+  query ActiveProposals($spaces: [String!]!, $skip: Int!) {
     proposals(
-      first: 20,
+      first: 100,
+      skip: $skip,
       where: { space_in: $spaces, state: "active" },
       orderBy: "created",
       orderDirection: desc
@@ -84,15 +87,15 @@ interface SnapshotProposal {
 
 // ─── Polling Logic ──────────────────────────────────────────────────
 
-async function fetchActiveProposals(): Promise<SnapshotProposal[]> {
-  const response = await withRetry(
+async function fetchActiveProposalPage(skip: number): Promise<SnapshotProposal[]> {
+  return withRetry(
     async () => {
       const res = await fetch(APIS.snapshotGraphql, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: PROPOSALS_QUERY,
-          variables: { spaces: [...SNAPSHOT_SPACES] },
+          variables: { spaces: [...SNAPSHOT_SPACES], skip },
         }),
       })
 
@@ -101,11 +104,30 @@ async function fetchActiveProposals(): Promise<SnapshotProposal[]> {
       const data = (await res.json()) as { data: { proposals: SnapshotProposal[] } }
       return data.data.proposals
     },
-    'snapshot-fetch',
+    `snapshot-fetch-page-${skip}`,
     { maxRetries: 2, baseDelayMs: 5000 },
   )
+}
 
-  return response
+async function fetchActiveProposals(): Promise<SnapshotProposal[]> {
+  const all: SnapshotProposal[] = []
+  const seen = new Set<string>()
+  const MAX_PAGES = 20
+
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const skip = page * PAGE_SIZE
+    const batch = await fetchActiveProposalPage(skip)
+
+    for (const proposal of batch) {
+      if (seen.has(proposal.id)) continue
+      seen.add(proposal.id)
+      all.push(proposal)
+    }
+
+    if (batch.length < PAGE_SIZE) break
+  }
+
+  return all
 }
 
 async function pollOnce(): Promise<void> {

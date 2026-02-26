@@ -34,6 +34,28 @@ export default [
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', 'contracts/**', 'data/**'],
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+      },
+    },
+    rules: {
+      // Standalone node scripts rely on node globals.
+      'no-undef': 'off',
+    },
+  },
+  {
+    files: ['scripts/**/*.ts'],
+    rules: {
+      // Operational scripts are intentionally pragmatic and not part of runtime path.
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'prefer-const': 'off',
+    },
+  },
+  {
+    ignores: ['dist/**', 'node_modules/**', 'contracts/**', 'data/**', 'scripts/tmp-*'],
   },
 ]

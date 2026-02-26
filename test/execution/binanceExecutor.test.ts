@@ -27,7 +27,7 @@ vi.mock('../../src/config/index.js', () => ({
 }))
 
 vi.mock('../../src/clients/binance.js', async (importOriginal) => {
-  const original = await importOriginal<typeof import('../../src/clients/binance.js')>()
+  const original = await importOriginal()
   return {
     ...original,
     getMarkPrice: vi.fn().mockResolvedValue('100.00'),

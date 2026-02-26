@@ -101,30 +101,32 @@ describe('generateSignals', () => {
     expect(signals.some(s => s.direction === 'short')).toBe(true)
   })
 
-  it('scales confidence by governance stage', () => {
+  it('stage gating: discussion may be filtered while timelock emits signal', () => {
     const discussionAnalysis = makeAnalysis({
       stage: 'discussion',
-      impacts: [{ category: 'borrow_cap_change', asset: 'WETH', severity: 'medium' }],
+      confidenceScore: 0.9,
+      impacts: [{ category: 'liquidation_threshold_change', asset: 'WETH', currentValue: '90', proposedValue: '85', severity: 'high' }],
     })
 
     const timelockAnalysis = makeAnalysis({
       stage: 'timelock',
-      impacts: [{ category: 'borrow_cap_change', asset: 'WETH', severity: 'medium' }],
+      confidenceScore: 0.9,
+      impacts: [{ category: 'liquidation_threshold_change', asset: 'WETH', currentValue: '90', proposedValue: '85', severity: 'high' }],
     })
 
     const discussionSignals = generateSignals(discussionAnalysis, [])
     const timelockSignals = generateSignals(timelockAnalysis, [])
 
-    // Timelock signals should have higher confidence
-    if (discussionSignals.length > 0 && timelockSignals.length > 0) {
-      expect(timelockSignals[0].confidence).toBeGreaterThan(discussionSignals[0].confidence)
-    }
+    expect(timelockSignals.length).toBeGreaterThan(0)
+    // Current strategy intentionally filters this impact at discussion stage.
+    expect(discussionSignals.length).toBe(0)
   })
 
   it('skips duplicate positions', () => {
     const analysis = makeAnalysis({
       stage: 'timelock',
-      impacts: [{ category: 'supply_cap_change', asset: 'WETH', severity: 'medium' }],
+      confidenceScore: 0.9,
+      impacts: [{ category: 'liquidation_threshold_change', asset: 'WETH', currentValue: '90', proposedValue: '85', severity: 'high' }],
     })
 
     const existingPosition: Position = {
@@ -140,6 +142,9 @@ describe('generateSignals', () => {
       accruedYield: '0',
       lastUpdated: new Date().toISOString(),
     }
+
+    const baselineSignals = generateSignals(analysis, [])
+    expect(baselineSignals.some(s => s.asset === 'WETH' && s.protocol === 'binance')).toBe(true)
 
     const signals = generateSignals(analysis, [existingPosition])
     // Should not generate a binance signal for WETH since position exists

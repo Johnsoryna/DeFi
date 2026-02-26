@@ -6,6 +6,8 @@ dotenv.config()
 const configSchema = z.object({
   // RPC
   alchemyApiKey: z.string().optional(),
+  alchemyRpcUrl: z.string().url().optional(),
+  alchemyWssUrl: z.string().startsWith('wss://').optional(),
   publicNodeHttp: z.string().url().default('https://ethereum-rpc.publicnode.com'),
   publicNodeWss: z.string().startsWith('wss://').default('wss://ethereum-rpc.publicnode.com'),
   cloudflareHttp: z.string().url().default('https://cloudflare-eth.com'),
@@ -44,6 +46,24 @@ const configSchema = z.object({
   pollingIntervalMs: z.coerce.number().int().positive().default(60_000),
   snapshotPollIntervalMs: z.coerce.number().int().positive().default(60_000),
   forumPollIntervalMs: z.coerce.number().int().positive().default(300_000),
+  onchainTradeEnabledProtocols: z.preprocess(
+    (v) => {
+      if (typeof v !== 'string' || v.trim() === '') return []
+      return v
+        .split(',')
+        .map((p) => p.trim().toLowerCase())
+        .filter(Boolean)
+    },
+    z.array(z.string()).default([]),
+  ),
+  enableWhaleTracker: z.preprocess(
+    (v) => v === 'true' ? true : v === 'false' ? false : v,
+    z.boolean().default(false),
+  ),
+  enableDependencyGraph: z.preprocess(
+    (v) => v === 'true' ? true : v === 'false' ? false : v,
+    z.boolean().default(false),
+  ),
   dbPath: z.string().default('./data/governance.db'),
 
   // ─── Safety: DRY_RUN mode ─────────────────────────────────────
@@ -63,6 +83,8 @@ export type AppConfig = z.infer<typeof configSchema>
 function loadConfig(): AppConfig {
   const raw = {
     alchemyApiKey: process.env.ALCHEMY_API_KEY || undefined,
+    alchemyRpcUrl: process.env.ALCHEMY_RPC_URL || undefined,
+    alchemyWssUrl: process.env.ALCHEMY_WSS_URL || undefined,
     publicNodeHttp: process.env.PUBLICNODE_HTTP,
     publicNodeWss: process.env.PUBLICNODE_WSS,
     cloudflareHttp: process.env.CLOUDFLARE_HTTP,
@@ -81,6 +103,9 @@ function loadConfig(): AppConfig {
     pollingIntervalMs: process.env.POLLING_INTERVAL_MS,
     snapshotPollIntervalMs: process.env.SNAPSHOT_POLL_INTERVAL_MS,
     forumPollIntervalMs: process.env.FORUM_POLL_INTERVAL_MS,
+    onchainTradeEnabledProtocols: process.env.ONCHAIN_TRADE_ENABLED_PROTOCOLS ?? '',
+    enableWhaleTracker: process.env.ENABLE_WHALE_TRACKER ?? 'false',
+    enableDependencyGraph: process.env.ENABLE_DEPENDENCY_GRAPH ?? 'false',
     dbPath: process.env.DB_PATH,
     dryRun: process.env.DRY_RUN ?? 'true',
     initialPortfolioUsd: process.env.INITIAL_PORTFOLIO_USD,
@@ -115,12 +140,14 @@ export function validateConfigForLiveTrading(): string[] {
 
 /** Build Alchemy HTTP URL if key is available */
 export function getAlchemyHttpUrl(): string | undefined {
+  if (config.alchemyRpcUrl) return config.alchemyRpcUrl
   if (!config.alchemyApiKey) return undefined
   return `https://eth-mainnet.g.alchemy.com/v2/${config.alchemyApiKey}`
 }
 
 /** Build Alchemy WSS URL if key is available */
 export function getAlchemyWssUrl(): string | undefined {
+  if (config.alchemyWssUrl) return config.alchemyWssUrl
   if (!config.alchemyApiKey) return undefined
   return `wss://eth-mainnet.g.alchemy.com/v2/${config.alchemyApiKey}`
 }

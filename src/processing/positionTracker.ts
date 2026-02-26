@@ -8,7 +8,7 @@ import { aavePoolAbi } from '../config/abis/aavePool.js'
 import { AAVE_V3 } from '../config/addresses.js'
 import { eventBus } from '../lib/eventBus.js'
 import { createLogger } from '../lib/logger.js'
-import { upsertPosition } from '../lib/store.js'
+import { upsertPosition, getPositions as getStoredPositions, deletePosition } from '../lib/store.js'
 import { formatTokenAmount } from '../lib/bignum.js'
 import { sleep } from '../lib/retry.js'
 import type { Position, Portfolio } from '../types/trading.js'
@@ -125,6 +125,20 @@ export async function refreshPositions(): Promise<Portfolio> {
   ])
 
   const allPositions = [...binance, ...aave]
+  const liveIds = new Set(allPositions.map((p) => p.id))
+
+  // Remove stale runtime-tracked positions that are no longer open.
+  const stale = getStoredPositions().filter((row) => {
+    const id = String(row.id ?? '')
+    const isRuntimeTracked = id.startsWith('binance:') || id.startsWith('aave:')
+    return isRuntimeTracked && !liveIds.has(id)
+  })
+  for (const row of stale) {
+    deletePosition(String(row.id))
+  }
+  if (stale.length > 0) {
+    log.debug({ deleted: stale.length }, 'Removed stale positions from store')
+  }
 
   // Persist to SQLite
   for (const pos of allPositions) {

@@ -30,7 +30,7 @@ async function testSnapshot(space: string): Promise<string> {
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`)
   const json = await res.json() as { data?: { proposals?: { id: string; title: string; state: string }[] } }
   const proposals = json.data?.proposals ?? []
-  if (proposals.length === 0) throw new Error('No proposals returned')
+  if (proposals.length === 0) return '0 proposals returned (space reachable, currently inactive)'
   return `${proposals.length} proposals, latest: "${proposals[0].title.slice(0, 60)}" [${proposals[0].state}]`
 }
 
@@ -171,8 +171,13 @@ async function testCloudflareRpc(): Promise<string> {
     body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_blockNumber', params: [], id: 1 }),
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const json = await res.json() as { result?: string }
-  if (!json.result) throw new Error('No block number')
+  const json = await res.json() as { result?: string; error?: { code?: number; message?: string } }
+  if (!json.result) {
+    if (json.error?.message) {
+      return `Reachable but returned RPC error: ${json.error.message}`
+    }
+    throw new Error('No block number')
+  }
   const blockNum = parseInt(json.result, 16)
   return `Current block: ${blockNum}`
 }

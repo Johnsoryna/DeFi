@@ -40,6 +40,11 @@ const GOVERNORS: GovernorBravoConfig[] = [
     protocol: 'compound',
     label: 'Compound',
   },
+  {
+    address: GOVERNANCE.uniswapGovernorBravo as `0x${string}`,
+    protocol: 'uniswap',
+    label: 'Uniswap',
+  },
 ]
 
 const unwatchers: WatchContractEventReturnType[] = []

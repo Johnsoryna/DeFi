@@ -156,6 +156,32 @@ describe('positions', () => {
     expect(p!.size).toBe('5.0')
   })
 
+  it('updates entry_price and maturity on conflict', () => {
+    upsertPosition({
+      id: 'aave:bond:1',
+      protocol: 'aave',
+      type: 'lending_supply',
+      asset: 'AAVE',
+      size: '1.0',
+      entryPrice: '100.00',
+      maturity: '2026-01-01',
+    })
+    upsertPosition({
+      id: 'aave:bond:1',
+      protocol: 'aave',
+      type: 'lending_supply',
+      asset: 'AAVE',
+      size: '1.0',
+      entryPrice: '120.00',
+      maturity: '2027-01-01',
+    })
+    const positions = getPositions('aave')
+    const p = positions.find((pos) => pos.id === 'aave:bond:1')
+    expect(p).toBeDefined()
+    expect(p!.entry_price).toBe('120.00')
+    expect(p!.maturity).toBe('2027-01-01')
+  })
+
   it('deletes a position', () => {
     deletePosition('binance:AAVEUSDT')
     const positions = getPositions('binance')

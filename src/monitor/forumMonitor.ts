@@ -65,26 +65,50 @@ interface DiscourseLatestResponse {
 
 // ─── Polling Logic ───────────────────────────────────────────────────
 
-async function fetchLatestTopics(forumUrl: string): Promise<DiscourseTopic[]> {
-  const response = await withRetry(
+const FORUM_PAGE_LIMIT = 20
+const DISCOURSE_PAGE_SIZE = 30
+
+async function fetchLatestTopicsPage(forumUrl: string, page: number): Promise<DiscourseTopic[]> {
+  const suffix = page > 0 ? `?page=${page}` : ''
+  return withRetry(
     async () => {
-      const res = await fetch(`${forumUrl}/latest.json`, {
+      const res = await fetch(`${forumUrl}/latest.json${suffix}`, {
         headers: { Accept: 'application/json' },
       })
       if (!res.ok) throw new Error(`Forum API error: ${res.status} from ${forumUrl}`)
       const data = (await res.json()) as DiscourseLatestResponse
       return data.topic_list.topics
     },
-    `forum-fetch-${forumUrl}`,
+    `forum-fetch-${forumUrl}-p${page}`,
     { maxRetries: 2, baseDelayMs: 5000 },
   )
-  return response
+}
+
+async function fetchLatestTopics(forumUrl: string, stopAtOrBelowTopicId: number): Promise<DiscourseTopic[]> {
+  const merged: DiscourseTopic[] = []
+  const seen = new Set<number>()
+  let reachedCursor = false
+
+  for (let page = 0; page < FORUM_PAGE_LIMIT; page++) {
+    const batch = await fetchLatestTopicsPage(forumUrl, page)
+    for (const topic of batch) {
+      if (seen.has(topic.id)) continue
+      seen.add(topic.id)
+      merged.push(topic)
+      if (stopAtOrBelowTopicId > 0 && topic.id <= stopAtOrBelowTopicId) {
+        reachedCursor = true
+      }
+    }
+    if (batch.length < DISCOURSE_PAGE_SIZE || reachedCursor) break
+  }
+
+  return merged
 }
 
 async function pollForum(forumConfig: ForumConfig): Promise<void> {
   try {
-    const topics = await fetchLatestTopics(forumConfig.url)
     const lastSeenId = getForumCursor(forumConfig.url)
+    const topics = await fetchLatestTopics(forumConfig.url, lastSeenId)
 
     // isFirstRun: cursor is 0 (no cursor stored yet — new or recreated governance.db).
     // On first run we only initialise the cursor — we do NOT emit historical topics

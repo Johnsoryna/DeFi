@@ -36,6 +36,7 @@ interface IPool {
     function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
     function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf) external;
     function repay(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf) external returns (uint256);
+    function withdraw(address asset, uint256 amount, address to) external returns (uint256);
 }
 
 contract GovernanceArb is IFlashLoanRecipient {
@@ -93,12 +94,14 @@ contract GovernanceArb is IFlashLoanRecipient {
             _executeArbitrage(tokens, amounts, userData);
         } else if (actionType == ACTION_LIQUIDATION) {
             _executeLiquidation(tokens, amounts, userData);
+        } else {
+            revert("Invalid action type");
         }
 
         // Repay flash loan (fee is 0 for Balancer V2)
         for (uint256 i = 0; i < tokens.length; i++) {
             uint256 amountOwed = amounts[i] + feeAmounts[i];
-            tokens[i].transfer(address(BALANCER_VAULT), amountOwed);
+            require(tokens[i].transfer(address(BALANCER_VAULT), amountOwed), "Repay transfer failed");
         }
     }
 
@@ -117,26 +120,49 @@ contract GovernanceArb is IFlashLoanRecipient {
             userData,
             (uint8, address, uint256, uint256)
         );
+        require(tokens.length == 1 && amounts.length == 1, "Single-asset only");
+        require(asset == address(tokens[0]), "Asset/token mismatch");
+        require(loops > 0, "Invalid loops");
+        require(borrowRatioBps > 0 && borrowRatioBps < 10000, "Invalid ratio");
 
+        // Track each leverage step so we can deterministically unwind in reverse order.
+        uint256[] memory supplied = new uint256[](loops);
+        uint256[] memory borrowed = new uint256[](loops);
+        uint256 performedLoops = 0;
         uint256 currentAmount = amounts[0];
 
         for (uint256 i = 0; i < loops; i++) {
-            // Approve and supply to Aave
+            supplied[i] = currentAmount;
             IERC20(asset).approve(address(AAVE_POOL), currentAmount);
             AAVE_POOL.supply(asset, currentAmount, address(this), 0);
 
-            // Borrow back a portion
             uint256 borrowAmount = (currentAmount * borrowRatioBps) / 10000;
-            if (borrowAmount == 0) break;
+            if (borrowAmount == 0) {
+                performedLoops = i + 1;
+                break;
+            }
 
             AAVE_POOL.borrow(asset, borrowAmount, 2, 0, address(this)); // 2 = variable rate
+            borrowed[i] = borrowAmount;
             currentAmount = borrowAmount;
+            performedLoops = i + 1;
         }
 
-        // Final deposit of remaining borrowed amount
-        if (currentAmount > 0) {
-            IERC20(asset).approve(address(AAVE_POOL), currentAmount);
-            AAVE_POOL.supply(asset, currentAmount, address(this), 0);
+        // Unwind in reverse: repay step debt, then withdraw the collateral of that step.
+        // This guarantees the contract regains enough free balance for Balancer repayment.
+        uint256 available = IERC20(asset).balanceOf(address(this));
+        for (uint256 i = performedLoops; i > 0; i--) {
+            uint256 idx = i - 1;
+            uint256 debtChunk = borrowed[idx];
+            if (debtChunk > 0) {
+                require(available >= debtChunk, "unwind liquidity shortfall");
+                IERC20(asset).approve(address(AAVE_POOL), debtChunk);
+                AAVE_POOL.repay(asset, debtChunk, 2, address(this));
+                available -= debtChunk;
+            }
+
+            uint256 withdrawn = AAVE_POOL.withdraw(asset, supplied[idx], address(this));
+            available += withdrawn;
         }
     }
 
@@ -168,7 +194,7 @@ contract GovernanceArb is IFlashLoanRecipient {
     function emergencyWithdraw(IERC20 token) external onlyOwner {
         uint256 balance = token.balanceOf(address(this));
         if (balance > 0) {
-            token.transfer(owner, balance);
+            require(token.transfer(owner, balance), "Token transfer failed");
         }
     }
 

@@ -8,9 +8,10 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
-    "lint": "eslint src/",
+    "lint": "eslint src/ test/ scripts/",
     "format": "prettier --write src/",
     "test": "vitest run",
+    "contracts:check": "node scripts/validate-contracts.mjs",
     "test:watch": "vitest",
     "backtest:collect": "tsx src/backtest/index.ts collect",
     "backtest:run": "tsx src/backtest/index.ts run",
@@ -41,6 +42,6 @@
     "prettier": "^3.4.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
-    "vitest": "^2.1.0"
+    "vitest": "^4.0.18"
   }
 }

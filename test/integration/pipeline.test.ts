@@ -6,28 +6,27 @@
  * Goal: Verify the bot produces CORRECT, PROFITABLE signals for known scenarios.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import Database from 'better-sqlite3'
+import type Database from 'better-sqlite3'
 import { eventBus } from '../../src/lib/eventBus.js'
 import { initBacktestStore } from '../../src/backtest/schema.js'
-import { VirtualClock, setClock, RealClock } from '../../src/backtest/clock.js'
+import { VirtualClock, setClock } from '../../src/backtest/clock.js'
 import { MockPriceMonitor } from '../../src/backtest/mockPrice.js'
 import { MockExecutor } from '../../src/backtest/mockExecutor.js'
 import { ResultCollector } from '../../src/backtest/resultCollector.js'
-import { EventReplayProvider } from '../../src/backtest/replayProvider.js'
 import { generateSignals } from '../../src/strategy/signalGenerator.js'
 import { wireSignalGenerator } from '../../src/strategy/signalGenerator.js'
 import { RiskManager, wireRiskManager, resetTrackedPositions } from '../../src/strategy/riskManager.js'
 import { calculateConfidence, getMinConfidence } from '../../src/strategy/confidenceScorer.js'
 import { analyzeOnchainProposal, analyzeSnapshotProposal, analyzeForumPost } from '../../src/analysis/intelligenceEngine.js'
 import { resetCorrelator } from '../../src/analysis/proposalCorrelator.js'
-import type { ProposalCreatedEvent, SnapshotProposalEvent, ForumPostEvent, IntelligentAnalysis } from '../../src/types/governance.js'
-import type { TradeSignal, Position } from '../../src/types/trading.js'
+import type { ProposalCreatedEvent, SnapshotProposalEvent, ForumPostEvent, IntelligentAnalysis, GovernanceProtocol } from '../../src/types/governance.js'
+import type { TradeSignal } from '../../src/types/trading.js'
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
 let db: Database.Database
 let clock: VirtualClock
-let prevClock: any
+let prevClock: ReturnType<typeof setClock>
 
 function seedPrice(asset: string, timestamp: number, price: string) {
   db.prepare(
@@ -36,7 +35,7 @@ function seedPrice(asset: string, timestamp: number, price: string) {
   ).run(asset, timestamp, price)
 }
 
-function makeProposal(overrides: Partial<ProposalCreatedEvent> & { proposalId: bigint; protocol: any; description: string }): ProposalCreatedEvent {
+function makeProposal(overrides: Partial<ProposalCreatedEvent> & { proposalId: bigint; protocol: GovernanceProtocol; description: string }): ProposalCreatedEvent {
   return {
     type: 'proposal_created',
     blockNumber: 18000000n,
@@ -134,8 +133,8 @@ describe('Signal Generation — Direction Correctness', () => {
     const signals = generateSignals(analysis, [])
 
     // On-chain longs are filtered — forum captures this alpha earlier
-    const mkrLongs = signals.filter(s => s.asset === 'MKR' && s.direction === 'long')
-    expect(mkrLongs.length).toBe(0)
+    const makerLongs = signals.filter(s => (s.asset === 'MKR' || s.asset === 'SKY') && s.direction === 'long')
+    expect(makerLongs.length).toBe(0)
   })
 
   it('generates no signal for irrelevant proposals', () => {
@@ -181,7 +180,7 @@ describe('Confidence Scorer — Feature Weights', () => {
     }
   }
 
-  function makeImpact(overrides: Partial<any> = {}): any {
+  function makeImpact(overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
     return {
       type: 'technical_parameter',
       affectedAssets: ['WETH'],
@@ -252,7 +251,7 @@ describe('Confidence Scorer — Feature Weights', () => {
 // ─── 3. Risk Manager Logic ───────────────────────────────────────────
 
 describe('Risk Manager — Position Sizing & Leverage', () => {
-  it('caps signal size to 15% of portfolio (max single position)', () => {
+  it('caps signal size to 12% of portfolio (max single position)', () => {
     const rm = new RiskManager()
     const signal: TradeSignal = {
       id: 'test-1',
@@ -270,10 +269,10 @@ describe('Risk Manager — Position Sizing & Leverage', () => {
 
     const validated = rm.validateSignal(signal)
     expect(validated).not.toBeNull()
-    expect(validated!.sizePct).toBeLessThanOrEqual(15) // Default max
+    expect(validated!.sizePct).toBeLessThanOrEqual(12) // Default max (Kelly cap)
   })
 
-  it('rejects signals when total exposure exceeds 60%', () => {
+  it('rejects signals when total exposure reaches 100%', () => {
     const rm = new RiskManager()
     rm.updatePortfolio([
       {
@@ -455,7 +454,7 @@ describe('Full Pipeline — End-to-End P&L', () => {
     collector.start()
 
     // Wire pipeline
-    eventBus.on('governance:proposal', (event: any) => {
+    eventBus.on('governance:proposal', (event: ProposalCreatedEvent) => {
       if (event.type !== 'proposal_created') return
       const analysis = analyzeOnchainProposal(event)
       if (analysis.impacts.length > 0 || analysis.dynamicImpacts.length > 0) {
@@ -491,10 +490,10 @@ describe('Full Pipeline — End-to-End P&L', () => {
 
     // Check: SHORT signal on WETH + price dropped = should be profitable
     const wethTrade = closedTrades.find(t => t.asset.includes('WETH') || t.asset.includes('0xA175'))
-    if (wethTrade && wethTrade.direction === 'short') {
-      // Short trade + price dropped = profit
-      expect(wethTrade.pnl!).toBeGreaterThan(0)
-    }
+    expect(wethTrade).toBeDefined()
+    expect(wethTrade!.direction).toBe('short')
+    // Short trade + price dropped = profit
+    expect(wethTrade!.pnl!).toBeGreaterThan(0)
   })
 
   it('supply cap increase → no on-chain long trade (on-chain longs filtered)', () => {
@@ -514,7 +513,7 @@ describe('Full Pipeline — End-to-End P&L', () => {
 
     collector.start()
 
-    eventBus.on('governance:proposal', (event: any) => {
+    eventBus.on('governance:proposal', (event: ProposalCreatedEvent) => {
       if (event.type !== 'proposal_created') return
       const analysis = analyzeOnchainProposal(event)
       if (analysis.impacts.length > 0 || analysis.dynamicImpacts.length > 0) {
@@ -567,7 +566,7 @@ describe('Full Pipeline — End-to-End P&L', () => {
 // ─── 6. Critical Logic Gaps ──────────────────────────────────────────
 
 describe('Critical Logic Gaps — Things Missing for Profitable Leverage Bot', () => {
-  it('Kelly Criterion: position sizing uses Kelly formula (3-15% range)', () => {
+  it('Kelly Criterion: position sizing uses Kelly formula (3-12% range)', () => {
     const proposal = makeProposal({
       proposalId: 300n,
       protocol: 'compound',
@@ -581,9 +580,9 @@ describe('Critical Logic Gaps — Things Missing for Profitable Leverage Bot', (
 
     expect(signals.length).toBeGreaterThan(0)
     for (const s of signals) {
-      // Kelly sizing produces 3-15% positions (configurable)
+      // Kelly sizing produces 3-12% positions (maxSizePct=12 cap)
       expect(s.sizePct).toBeGreaterThanOrEqual(3)
-      expect(s.sizePct).toBeLessThanOrEqual(15)
+      expect(s.sizePct).toBeLessThanOrEqual(12)
     }
   })
 

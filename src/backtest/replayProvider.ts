@@ -33,6 +33,7 @@ interface TimelineEvent {
 
 const CONTRACT_PROTOCOL: Record<string, GovernanceProtocol> = {
   [GOVERNANCE.compoundGovernorBravo.toLowerCase()]: 'compound',
+  [GOVERNANCE.uniswapGovernorBravo.toLowerCase()]: 'uniswap',
   [GOVERNANCE.aaveGovernanceCore.toLowerCase()]: 'aave',
   [GOVERNANCE.aaveVotingMachine.toLowerCase()]: 'aave',
   // Cosmos SDK chains (synthetic addresses from migration script)
@@ -124,7 +125,13 @@ function buildGovernanceEvent(row: any): { busEvent: string; payload: Governance
     log.error({ err, row_id: row.id, args_json: row.args_json?.slice(0, 100) }, 'Failed to parse governance event args_json')
     return null
   }
-  const protocol = CONTRACT_PROTOCOL[row.contract_address] ?? 'compound'
+  const protocol = CONTRACT_PROTOCOL[row.contract_address]
+  if (!protocol) {
+    // Skip on-chain events from contracts not explicitly mapped — avoids misattributing
+    // unknown contracts as 'compound' which would corrupt backtest signal attribution.
+    log.warn({ contract: row.contract_address, eventName: row.event_name, rowId: row.id }, 'Skipping unmapped governance contract')
+    return null
+  }
   const base = {
     protocol,
     blockNumber: BigInt(row.block_number),

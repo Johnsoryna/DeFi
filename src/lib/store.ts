@@ -246,16 +246,16 @@ export function upsertPosition(pos: {
       `INSERT INTO positions (id, protocol, type, asset, size, entry_price, current_price, unrealized_pnl, realized_pnl, accrued_yield, health_factor, maturity, last_updated)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
        ON CONFLICT(id) DO UPDATE SET
-         size = ?, current_price = ?, unrealized_pnl = ?, realized_pnl = ?,
-         accrued_yield = ?, health_factor = ?, last_updated = datetime('now')`,
+         entry_price = ?, size = ?, current_price = ?, unrealized_pnl = ?, realized_pnl = ?,
+         accrued_yield = ?, health_factor = ?, maturity = ?, last_updated = datetime('now')`,
     )
     .run(
       pos.id, pos.protocol, pos.type, pos.asset, pos.size, pos.entryPrice,
       pos.currentPrice ?? '0', pos.unrealizedPnl ?? '0', pos.realizedPnl ?? '0',
       pos.accruedYield ?? '0', pos.healthFactor ?? null, pos.maturity ?? null,
       // ON CONFLICT SET values
-      pos.size, pos.currentPrice ?? '0', pos.unrealizedPnl ?? '0', pos.realizedPnl ?? '0',
-      pos.accruedYield ?? '0', pos.healthFactor ?? null,
+      pos.entryPrice, pos.size, pos.currentPrice ?? '0', pos.unrealizedPnl ?? '0', pos.realizedPnl ?? '0',
+      pos.accruedYield ?? '0', pos.healthFactor ?? null, pos.maturity ?? null,
     )
 }
 

@@ -33,6 +33,7 @@ import {
 } from './analysis/intelligenceEngine.js'
 import { recordSnapshot, recordOnchain, resetCorrelator } from './analysis/proposalCorrelator.js'
 import { parseSpellSource } from './analysis/spellParser.js'
+import { refreshGraph } from './analysis/dependencyGraph.js'
 
 // Layer 2 — Processing
 import { startPositionTracker, stopPositionTracker, setWalletAddress } from './processing/positionTracker.js'
@@ -104,11 +105,9 @@ function wireAnalysisPipeline(rm: RiskManager): void {
 
   // ── governance:proposal → Intelligence Engine → analysis:proposal ──
   // IDENTICAL to backtest wireAnalysisPipeline lines 213-245
-  // Only list protocols for which an on-chain Ethereum monitor is running.
-  // cosmos/injective are Cosmos-SDK chains — no EVM monitor → removed to avoid dead flags.
-  const ONCHAIN_TRADE_ENABLED = new Set([
-    'arbitrum',
-  ])
+  // Runtime-configurable on-chain trading allowlist.
+  // Default is empty; proposal events are still ingested/analyzed for record/correlation.
+  const ONCHAIN_TRADE_ENABLED = new Set(config.onchainTradeEnabledProtocols)
 
   eventBus.on('governance:proposal', (event: GovernanceEvent) => {
     if (event.type !== 'proposal_created') return
@@ -188,7 +187,10 @@ function wireAnalysisPipeline(rm: RiskManager): void {
           .then((livePositions) => {
             const livePos = livePositions.find((p) => p.symbol === symbol)
             if (livePos && parseFloat(livePos.positionAmt) !== 0) {
-              return reduceAndRearm(symbol, livePos.positionAmt, reduction.reduceByPct)
+              void reduceAndRearm(symbol, livePos.positionAmt, reduction.reduceByPct).catch((err) =>
+                log.error({ err, symbol, reduceByPct: reduction.reduceByPct }, 'Stage-based live reduction failed'),
+              )
+              return
             }
             log.debug({ symbol, proposalId }, 'Stage reduction: position already closed on exchange')
           })
@@ -300,6 +302,15 @@ async function main(): Promise<void> {
   // 1. Initialize database
   initStore()
   log.info('Database initialized')
+
+  if (config.enableDependencyGraph) {
+    try {
+      await refreshGraph()
+      log.info('Dependency graph initialized')
+    } catch (err) {
+      log.warn({ err }, 'Dependency graph initialization failed — continuing without cascade graph')
+    }
+  }
 
   // 2. Initialize risk manager + reset adaptive Kelly tracker
   // (matches backtest: resetTrailingStats() + new RiskManager() + updatePortfolio([], portfolio))
