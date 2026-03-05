@@ -15,6 +15,7 @@ import {
   isEventProcessed,
   markEventProcessed,
   rollbackEvent,
+  getProposal,
 } from '../lib/store.js'
 import { config } from '../config/index.js'
 import type {
@@ -278,6 +279,107 @@ function subscribe(gov: GovernorBravoConfig): void {
   log.info({ protocol: gov.label, address: gov.address }, 'Subscribed to Governor Bravo events')
 }
 
+// ─── Active Proposal Backfill ────────────────────────────────────────
+// On startup: fetch recent proposals from chain, analyze any that are still
+// Active/Succeeded/Queued but not yet in the DB (e.g. from before a restart).
+// This populates cachedAnalyses so stage-transition re-entry signals can still fire.
+
+// Governor Bravo proposal states
+const PROPOSAL_STATE_ACTIVE = 1
+const PROPOSAL_STATE_SUCCEEDED = 4
+const PROPOSAL_STATE_QUEUED = 5
+
+async function backfillActiveProposals(gov: GovernorBravoConfig): Promise<void> {
+  const client = getReadClient()
+
+  const rawProposalCount = await client.readContract({
+    address: gov.address,
+    abi: governorBravoAbi,
+    functionName: 'proposalCount',
+  })
+  // Defensive: readContract may return undefined on RPC edge cases; BigInt(undefined) throws
+  const proposalCount: bigint = rawProposalCount != null ? BigInt(rawProposalCount as bigint | number) : 0n
+
+  if (proposalCount === 0n) return
+
+  // Fetch ALL ProposalCreated logs from the last ~16 days in one batch.
+  // This covers: votingDelay(2d) + votingPeriod(7d) + timelock(2d) + margin = ~16d.
+  // We do this ONCE to build a lookup map, then iterate candidate proposal IDs.
+  const currentBlock = BigInt(await getCurrentBlock())
+  const SEARCH_WINDOW = 120000n // ~16 days at 12s/block
+
+  const createdEventAbi = governorBravoAbi.filter(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (item: any) => item.type === 'event' && item.name === 'ProposalCreated',
+  )
+
+  const searchFrom = currentBlock > SEARCH_WINDOW ? currentBlock - SEARCH_WINDOW : 0n
+  const allCreatedLogs = await getPaginatedLogs(
+    {
+      address: gov.address,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      events: createdEventAbi as any,
+      fromBlock: searchFrom,
+      toBlock: currentBlock,
+    },
+    10000n,
+  )
+
+  // Build a map: proposalId (string) → log
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const createdLogById = new Map<string, any>()
+  for (const l of allCreatedLogs) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lid = (l as any).args?.id?.toString()
+    if (lid) createdLogById.set(lid, l)
+  }
+
+  if (createdLogById.size === 0) return
+
+  const LOOK_BACK = 30n
+  const startId = proposalCount > LOOK_BACK ? proposalCount - LOOK_BACK + 1n : 1n
+  let backfilled = 0
+
+  for (let id = startId; id <= proposalCount; id++) {
+    const proposalKey = `${gov.protocol}:${id.toString()}`
+
+    // Skip if already analyzed and persisted
+    if (getProposal(proposalKey)) continue
+
+    // Skip if no ProposalCreated log in our window (too old or not yet created)
+    const createdLog = createdLogById.get(id.toString())
+    if (!createdLog) continue
+
+    let state: number
+    try {
+      state = Number(await client.readContract({
+        address: gov.address,
+        abi: governorBravoAbi,
+        functionName: 'state',
+        args: [id],
+      }))
+    } catch {
+      continue
+    }
+
+    // Only backfill proposals that could still generate alpha
+    if (state !== PROPOSAL_STATE_ACTIVE && state !== PROPOSAL_STATE_SUCCEEDED && state !== PROPOSAL_STATE_QUEUED) continue
+
+    // Emit as proposal_created — wireAnalysisPipeline handler will analyze and persist to DB
+    const event = parseProposalCreated(createdLog, createdLog.args, gov.protocol)
+    eventBus.emit('governance:proposal', event)
+    backfilled++
+    log.info(
+      { protocol: gov.label, proposalId: id.toString(), state },
+      'Active proposal backfilled from on-chain',
+    )
+  }
+
+  if (backfilled > 0) {
+    log.info({ protocol: gov.label, backfilled }, 'Active proposal backfill complete')
+  }
+}
+
 // ─── Public API ─────────────────────────────────────────────────────
 
 export async function startGovernorBravoMonitor(): Promise<void> {
@@ -290,6 +392,7 @@ export async function startGovernorBravoMonitor(): Promise<void> {
   for (const gov of GOVERNORS) {
     try {
       await backfill(gov)
+      await backfillActiveProposals(gov)
       subscribe(gov)
     } catch (err) {
       log.error({ err, protocol: gov.label }, 'Failed to start Governor Bravo monitor')

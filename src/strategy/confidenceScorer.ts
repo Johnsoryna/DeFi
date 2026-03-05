@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Feature-based confidence scorer for trade signals.
  *
  * Replaces the simple (baseConfidence * stageMultiplier) formula with
@@ -10,7 +10,7 @@
  *   5. Source reliability (calldata vs NLP-only)
  *   6. Sentiment alignment with trade direction
  *
- * The model is a simple weighted linear combination — no external ML library needed.
+ * The model is a simple weighted linear combination â€” no external ML library needed.
  * Weights can be tuned via backtest feedback loops.
  */
 import { createLogger } from '../lib/logger.js'
@@ -24,7 +24,7 @@ import type { OrderSide } from '../types/trading.js'
 
 const log = createLogger('confidence-scorer')
 
-// ─── dYdX Leverage Limits ────────────────────────────────────────────
+// â”€â”€â”€ dYdX Leverage Limits â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const MAX_LEVERAGE: Record<string, number> = {
   BTC: 20, WBTC: 20, CBBTC: 20,
@@ -32,16 +32,10 @@ const MAX_LEVERAGE: Record<string, number> = {
 }
 const DEFAULT_MAX_LEVERAGE = 10
 
-// ─── Adaptive Kelly: Trailing Performance Tracker ────────────────────
+// â”€â”€â”€ Adaptive Kelly: Trailing Performance Tracker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Tracks recent trade outcomes to adjust Kelly parameters dynamically.
 // During a winning streak: slightly increase sizing (ride the momentum).
 // During a losing streak: reduce sizing (protect capital).
-
-interface TrailingStats {
-  winRate: number
-  rewardToRisk: number
-  sampleSize: number
-}
 
 const _trailingOutcomes: Array<{ win: boolean; rr: number }> = []
 const TRAILING_WINDOW = 12 // Look at last 12 trades
@@ -62,22 +56,8 @@ export function resetTrailingStats(): void {
   _trailingOutcomes.length = 0
 }
 
-function getTrailingStats(): TrailingStats | null {
-  const recent = _trailingOutcomes.slice(-TRAILING_WINDOW)
-  if (recent.length < 5) return null // Need at least 5 trades for meaningful stats
 
-  const wins = recent.filter(t => t.win)
-  const losses = recent.filter(t => !t.win)
-
-  const winRate = wins.length / recent.length
-  const avgWin = wins.length > 0 ? wins.reduce((a, b) => a + b.rr, 0) / wins.length : 0
-  const avgLoss = losses.length > 0 ? losses.reduce((a, b) => a + b.rr, 0) / losses.length : 1
-  const rewardToRisk = avgLoss > 0 ? avgWin / avgLoss : 2.5
-
-  return { winRate, rewardToRisk, sampleSize: recent.length }
-}
-
-// ─── Kelly Criterion Configuration ───────────────────────────────────
+// â”€â”€â”€ Kelly Criterion Configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface KellyConfig {
   /** Estimated win rate for governance-alpha trades (0-1) */
@@ -97,15 +77,15 @@ interface KellyConfig {
 const DEFAULT_KELLY: KellyConfig = {
   baseWinRate: 0.55,    // Governance alpha ~55% overall WR, ~85% for shorts
   rewardToRisk: 2.5,    // Winners are ~2.5x bigger than losers with wide SL
-  kellyFraction: 0.50,  // Half Kelly — justified by 56% WR, 1.9 PF, and governance consistency
+  kellyFraction: 0.50,  // Half Kelly â€” justified by 56% WR, 1.9 PF, and governance consistency
   minLeverage: 1,
   minSizePct: 3,        // Min 3% per position (capitalize on every valid signal)
-  maxSizePct: 12,       // Max 12% per position — reduced from 15% to limit max trade losses.
+  maxSizePct: 12,       // Max 12% per position â€” reduced from 15% to limit max trade losses.
                         // At 12% * 3.5x avg leverage = 42% effective exposure.
-                        // With 12% SL, max loss per trade ≈ $5K (vs $7.5K at 15%).
+                        // With 12% SL, max loss per trade â‰ˆ $5K (vs $7.5K at 15%).
 }
 
-// ─── Stop-Loss / Take-Profit Profiles ────────────────────────────────
+// â”€â”€â”€ Stop-Loss / Take-Profit Profiles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface RiskProfile {
   stopLossPct: number
@@ -117,35 +97,35 @@ interface RiskProfile {
 
 const RISK_PROFILES: Record<string, RiskProfile> = {
   // High-conviction technical parameter changes (LTV, LT, freeze)
-  // Governance alpha plays out over DAYS/WEEKS — wide SL and trailing required
-  // CRITICAL: Do NOT tighten trailing stops — governance moves are slow but large.
+  // Governance alpha plays out over DAYS/WEEKS â€” wide SL and trailing required
+  // CRITICAL: Do NOT tighten trailing stops â€” governance moves are slow but large.
   // Wide trails let winners like +$10,658 happen; tight trails cut them at +$3,000.
   aggressive: {
-    stopLossPct: 0.12,             // 12% stop-loss — governance moves take time
-    takeProfitPct: 0.36,           // 36% take-profit — let winners run BIG
-    trailingStopActivation: 0.15,  // Activate trailing at 15% profit — WIDE (proven optimal)
-    trailingStopDistance: 0.07,    // Trail at 7% from peak — governance needs room
-    maxHoldingHours: 720,          // Max 30 days — extended from 576h; all 4 prior max-holding exits were profitable at the 24d boundary
+    stopLossPct: 0.12,             // 12% stop-loss â€” governance moves take time
+    takeProfitPct: 0.36,           // 36% take-profit â€” let winners run BIG
+    trailingStopActivation: 0.15,  // Activate trailing at 15% profit â€” WIDE (proven optimal)
+    trailingStopDistance: 0.07,    // Trail at 7% from peak â€” governance needs room
+    maxHoldingHours: 720,          // Max 30 days â€” extended from 576h; all 4 prior max-holding exits were profitable at the 24d boundary
   },
   // Medium-conviction (supply cap changes, onboarding, economic policy)
   moderate: {
     stopLossPct: 0.10,             // 10% stop-loss
-    takeProfitPct: 0.26,           // 26% take-profit — wider for governance alpha
-    trailingStopActivation: 0.12,  // Activate trailing at 12% profit
+    takeProfitPct: 0.26,           // 26% take-profit â€” wider for governance alpha
+    trailingStopActivation: 0.14,  // Activate trailing at 14% profit â€” raised from 0.12 by OODA iter-3
     trailingStopDistance: 0.05,    // Trail at 5% from peak
-    maxHoldingHours: 720,          // Max 30 days — matched with aggressive profile
+    maxHoldingHours: 720,          // Max 30 days â€” matched with aggressive profile
   },
   // Low-conviction (infrastructure, treasury, deployments)
   conservative: {
     stopLossPct: 0.08,             // 8% stop-loss
-    takeProfitPct: 0.20,           // 20% take-profit — governance moves are large
+    takeProfitPct: 0.20,           // 20% take-profit â€” governance moves are large
     trailingStopActivation: 0.10,  // Activate trailing at 10% profit
     trailingStopDistance: 0.04,    // Trail at 4% from peak
-    maxHoldingHours: 720,          // Max 30 days — aligned with aggressive/moderate
+    maxHoldingHours: 720,          // Max 30 days â€” aligned with aggressive/moderate
   },
 }
 
-// ─── Public: Kelly Position Sizing ───────────────────────────────────
+// â”€â”€â”€ Public: Kelly Position Sizing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Calculate optimal position size and leverage using the Kelly Criterion.
@@ -164,11 +144,9 @@ export function calculateKellyPosition(
 ): { sizePct: number; leverage: number } {
   const cfg = DEFAULT_KELLY
 
-  // ─── Adaptive Kelly: use trailing performance when available ──
-  const trailing = getTrailingStats()
+  // â”€â”€â”€ Adaptive Kelly: use trailing performance when available â”€â”€
   const baseWR = cfg.baseWinRate
   const baseRR = cfg.rewardToRisk
-  void trailing
 
   // Directional asymmetry: shorts have proven 85%+ WR in governance alpha
   const isShortForKelly = direction === 'short'
@@ -192,7 +170,7 @@ export function calculateKellyPosition(
   // Clamp again after urgency
   sizePct = Math.max(cfg.minSizePct, Math.min(cfg.maxSizePct, sizePct))
 
-  // ─── Leverage Calculation ──────────────────────────────────────
+  // â”€â”€â”€ Leverage Calculation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   let leverage = 1
 
   if (protocol === 'dydx' || protocol === 'binance') {
@@ -200,14 +178,14 @@ export function calculateKellyPosition(
     const maxLev = MAX_LEVERAGE[asset.toUpperCase()] ?? DEFAULT_MAX_LEVERAGE
 
     // Asymmetric leverage: shorts get MORE leverage (85%+ historical WR = strong alpha)
-    // Longs get moderate leverage — governance alpha for longs is lower WR but
+    // Longs get moderate leverage â€” governance alpha for longs is lower WR but
     // with Smart Long Filter ensuring only high-quality types pass through,
     // moderate leverage (up to 3x) is justified.
     const isShort = direction === 'short'
     const leverageThreshold = isShort ? 0.25 : 0.38  // Shorts lever from 0.25, longs from 0.38
     const maxLeverageScale = isShort ? 10 : 3.5       // Shorts up to 10x (protocol max), longs up to 3.5x
-    // Shorts: aggressive scaling (0.25→2.5x, 0.45→7x, 0.55→8x, 0.70→10x)
-    // Longs: moderate scaling (0.38→1x, 0.50→2x, 0.60→2.8x, 0.70→3.5x)
+    // Shorts: aggressive scaling (0.25â†’2.5x, 0.45â†’7x, 0.55â†’8x, 0.70â†’10x)
+    // Longs: moderate scaling (0.38â†’1x, 0.50â†’2x, 0.60â†’2.8x, 0.70â†’3.5x)
     const scalePower = isShort ? 0.58 : 0.7           // Shorts: 0.58 (sensitivity: A+, +$3K vs 0.55)
 
     if (confidence < leverageThreshold) {
@@ -233,7 +211,7 @@ export function calculateKellyPosition(
   // Round sizePct
   sizePct = Math.round(sizePct * 100) / 100
 
-  // ─── MAX PORTFOLIO RISK CAP ──────────────────────────────────
+  // â”€â”€â”€ MAX PORTFOLIO RISK CAP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Ensure no single trade can lose more than 5% of portfolio.
   // Formula: maxLoss = sizePct * leverage * stopLossPct <= maxRiskPct
   // Therefore: sizePct <= maxRiskPct / (leverage * expectedSL)
@@ -272,7 +250,7 @@ export function calculateKellyPosition(
   return { sizePct, leverage }
 }
 
-// ─── Public: Risk Profile Selection ──────────────────────────────────
+// â”€â”€â”€ Public: Risk Profile Selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Select the appropriate risk profile based on proposal type and urgency.
@@ -293,9 +271,9 @@ export function selectRiskProfile(
 
   if (lev > 1) {
     if (isShort) {
-      // SHORTS: Keep WIDE stop-loss — governance bearish signals play out over days/weeks
+      // SHORTS: Keep WIDE stop-loss â€” governance bearish signals play out over days/weeks
       // The 10% price SL with 3.5x leverage means ~35% margin loss, but WINS are 50-85%+
-      // This asymmetry is our EDGE — don't tighten it
+      // This asymmetry is our EDGE â€” don't tighten it
       // Only slightly widen TP to capture larger moves
       return {
         stopLossPct: base.stopLossPct,           // Keep original (10%)
@@ -305,7 +283,7 @@ export function selectRiskProfile(
         maxHoldingHours: base.maxHoldingHours,
       }
     } else {
-      // LONGS: Tighter stop-loss with leverage — governance bullish signals are less reliable
+      // LONGS: Tighter stop-loss with leverage â€” governance bullish signals are less reliable
       // Cap portfolio loss to ~15% per trade
       const maxPortfolioLossPct = 0.15
       const adjustedSL = Math.min(base.stopLossPct, maxPortfolioLossPct / lev)
@@ -323,7 +301,7 @@ export function selectRiskProfile(
   return base
 }
 
-// ─── Feature Weights ─────────────────────────────────────────────────
+// â”€â”€â”€ Feature Weights â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface FeatureWeights {
   nlpConfidence: number
@@ -343,7 +321,7 @@ const DEFAULT_WEIGHTS: FeatureWeights = {
   sentimentAlignment: 0.10,
 }
 
-// ─── Stage Confidence Multipliers ────────────────────────────────────
+// â”€â”€â”€ Stage Confidence Multipliers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const STAGE_SCORES: Record<GovernanceStage, number> = {
   monitoring: 0.05,
@@ -355,21 +333,21 @@ const STAGE_SCORES: Record<GovernanceStage, number> = {
   canceled: 0.0,
 }
 
-// ─── Proposal Type Tradability ───────────────────────────────────────
+// â”€â”€â”€ Proposal Type Tradability â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // How likely this proposal type leads to profitable trades
 
 const TYPE_TRADABILITY: Record<ProposalType, number> = {
-  technical_parameter: 0.9,   // High — clear parameter changes affect prices
-  asset_onboarding: 0.8,     // High — new listings create demand
-  risk_mitigation: 0.85,     // High — freezes/deprecation cause price moves
-  protocol_deployment: 0.5,  // Medium — expansion is bullish but gradual
-  economic_policy: 0.5,      // Medium — reward/emission changes create trading opps
-  infrastructure: 0.15,      // Very Low — usually no direct price impact
-  treasury_funding: 0.30,    // Low — treasury outflows create short-term sell pressure
-  governance_process: 0.15,  // Low — only with non-neutral sentiment
+  technical_parameter: 0.9,   // High â€” clear parameter changes affect prices
+  asset_onboarding: 0.8,     // High â€” new listings create demand
+  risk_mitigation: 0.85,     // High â€” freezes/deprecation cause price moves
+  protocol_deployment: 0.5,  // Medium â€” expansion is bullish but gradual
+  economic_policy: 0.5,      // Medium â€” reward/emission changes create trading opps
+  infrastructure: 0.15,      // Very Low â€” usually no direct price impact
+  treasury_funding: 0.30,    // Low â€” treasury outflows create short-term sell pressure
+  governance_process: 0.15,  // Low â€” only with non-neutral sentiment
 }
 
-// ─── Known Priceable Assets ──────────────────────────────────────────
+// â”€â”€â”€ Known Priceable Assets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const KNOWN_PRICEABLE = new Set([
   'WETH', 'WBTC', 'ETH', 'BTC', 'CBBTC',
@@ -384,9 +362,12 @@ const KNOWN_PRICEABLE = new Set([
   'ENS',
   // New protocols
   'GMX', 'JUP', 'TIA', 'AVAX', 'POL', 'STRK', 'MORPHO', 'SUI', 'MNT', 'SEI',
+  // Parity with PROTOCOL_GOV_TOKEN + price DB (all have Binance USDT perps)
+  'ATOM', 'INJ', 'CVX', 'YFI', 'DRIFT', 'JTO', 'PYTH', 'GRT',
+  '1INCH', 'NEAR', 'ZK', 'PENDLE', 'EUL',
 ])
 
-// ─── Public API ──────────────────────────────────────────────────────
+// â”€â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Calculate the confidence score for a trade signal.
@@ -445,7 +426,7 @@ export function getMinConfidence(stage: GovernanceStage): number {
   switch (stage) {
     case 'monitoring': return 0.60
     case 'discussion': return 0.50  // Forum posts: high bar for quality
-    case 'snapshot': return 0.55    // Snapshots: higher bar — empirically validated (0.50 adds noise trades)
+    case 'snapshot': return 0.55    // Snapshots: higher bar â€” empirically validated (0.50 adds noise trades)
     case 'onchain_vote': return 0.50
     case 'timelock': return 0.40
     case 'executed': return 0.30
@@ -453,7 +434,7 @@ export function getMinConfidence(stage: GovernanceStage): number {
   }
 }
 
-// ─── Internal: Feature Extraction ────────────────────────────────────
+// â”€â”€â”€ Internal: Feature Extraction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface FeatureVector {
   nlpConfidence: number
@@ -507,3 +488,4 @@ function extractFeatures(
     sentimentAlignment,
   }
 }
+
