@@ -33,7 +33,8 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   ENA: 2.0, STX: 2.0,
   SEI: 2.0, LDO: 2.0, PYTH: 2.0,
   CVX: 2.0,
-  ARB: 2.5, DYDX: 2.5,
+  // Keep in sync with mockExecutor.ts for entry/exit symmetry.
+  ARB: 1.5, DYDX: 1.5,
   WSTETH: 2.0, RETH: 2.5, CBETH: 2.5,
 }
 

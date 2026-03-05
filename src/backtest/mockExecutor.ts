@@ -181,7 +181,8 @@ export class MockExecutor {
     }
 
     // Asset-specific slippage for Binance Futures
-    const slippagePct = calculateBinanceSlippage(signal.asset, notionalEst)
+    // Slippage tiers are defined by tradeable symbol (e.g. ARB), not raw address.
+    const slippagePct = calculateBinanceSlippage(resolvedSymbol, notionalEst)
 
     // Apply slippage: buys pay more, sells receive less
     const slippageMultiplier = signal.direction === 'long'
