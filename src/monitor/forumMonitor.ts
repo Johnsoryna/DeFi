@@ -39,6 +39,23 @@ const FORUM_CONFIGS: ForumConfig[] = [
   // NOTE: Curve SNAPSHOT proposals (gauge weight votes) have no alpha and are correctly
   // excluded via NON_ALPHA_SNAPSHOT_PROTOCOLS in index.ts. Forum != Snapshot.
   { url: FORUMS.curve, protocol: 'curve', label: 'Curve Governance Forum' },
+  // Uniswap: gov.uniswap.org Discourse forum — added Mar 2026.
+  // UNI has Binance perp (UNIUSDT), established protocol, risk-param governance.
+  // Backtest had uniswap in ESTABLISHED_PROTOCOLS but no forum monitor wired.
+  { url: FORUMS.uniswap, protocol: 'uniswap', label: 'Uniswap Governance Forum' },
+  // EigenLayer: forum.eigenlayer.xyz — 1 backtest trade (EIGEN), added Mar 2026.
+  // EIGENUSDT Binance perp exists. Risk-param / slashing events move EIGEN price.
+  { url: FORUMS.eigenlayer, protocol: 'eigenlayer', label: 'EigenLayer Governance Forum' },
+  // ─── New L2/L1 forums (Mar 2026) — 0 backtest trades today, wired for future risk events ───
+  // zkSync: forum.zknation.io 190 posts. 0 trades (routing/sequencer/validator governance).
+  // Wired: future L2-security or validator-exit risk events would move ZK price.
+  { url: FORUMS.zksync, protocol: 'zksync', label: 'zkSync Governance Forum' },
+  // Jupiter: discuss.jup.ag 165 posts. 0 trades (fee distribution, treasury allocation).
+  // Wired: future OI-cap or market-delisting events could move JUP price.
+  { url: FORUMS.jupiter, protocol: 'jupiter', label: 'Jupiter Governance Forum' },
+  // Stacks: forum.stacks.org 94 posts. 0 trades (PoX mechanism, BTC-peg operational gov).
+  // Wired: future risk-parameter events (PoX slashing, peg changes) could move STX.
+  { url: FORUMS.stacks, protocol: 'stacks', label: 'Stacks Governance Forum' },
   // Removed: cosmos (L1 operational governance, no trading alpha)
   // Removed: 1inch (dead governance, no trades in backtest)
   // Injective removed: 0 posts in backtest DB, forum API not public
@@ -167,11 +184,9 @@ async function pollForum(forumConfig: ForumConfig): Promise<void> {
 
 async function pollLoop(): Promise<void> {
   while (running) {
-    for (const forumConfig of FORUM_CONFIGS) {
-      await pollForum(forumConfig)
-      // Small delay between forums to spread load
-      await sleep(2000)
-    }
+    // Poll all forums in parallel — each has independent error handling.
+    // Previously sequential with 2s delays (16s+ extra per cycle for 9 forums).
+    await Promise.all(FORUM_CONFIGS.map((forumConfig) => pollForum(forumConfig)))
     await sleep(config.forumPollIntervalMs)
   }
 }
@@ -184,10 +199,8 @@ export async function startForumMonitor(): Promise<void> {
     { forums: FORUM_CONFIGS.map((f) => f.label), intervalMs: config.forumPollIntervalMs },
     'Starting forum monitor',
   )
-  // Initial poll
-  for (const forumConfig of FORUM_CONFIGS) {
-    await pollForum(forumConfig)
-  }
+  // Initial poll — run in parallel
+  await Promise.all(FORUM_CONFIGS.map((forumConfig) => pollForum(forumConfig)))
   // Background poll loop with auto-restart
   function startPollLoop() {
     pollLoop().catch((err) => {

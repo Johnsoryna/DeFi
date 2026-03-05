@@ -44,6 +44,8 @@ const CONTRACT_PROTOCOL: Record<string, GovernanceProtocol> = {
 
 // â”€â”€â”€ Snapshot Space → Protocol Mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+// Must match snapshotMonitor.ts SPACE_TO_PROTOCOL exactly for live/backtest parity.
+// Any space not in this map is ignored during replay (same as live ignoring unsubscribed spaces).
 const SPACE_PROTOCOL: Record<string, GovernanceProtocol> = {
   'aavedao.eth': 'aave',
   'compound-governance.eth': 'compound',
@@ -51,66 +53,45 @@ const SPACE_PROTOCOL: Record<string, GovernanceProtocol> = {
   'dydxgov.eth': 'dydx',
   '1inch.eth': '1inch',
   'cvx.eth': 'convex',
-  'lido-snapshot.eth': 'lido',
-  'morpho.eth': 'morpho',
   'veyfi.eth': 'yearn',
+  'lido-snapshot.eth': 'lido',
   'gmx.eth': 'gmx',
+  'ethenagovernance.eth': 'ethena',
   'starknet.eth': 'starknet',
   'ens.eth': 'ens',
-  'ethenagovernance.eth': 'ethena',
-  'snxgov.eth': 'synthetix',          // Re-enabled Feb 2026 — OI-cap/deprecation events
-  // ─── Euler Finance (Feb 2026) ────────────────────────────────────────────
-  'eulerdao.eth': 'euler',            // Euler Finance — 0 trades (routine Gauntlet params, neutral sentiment)
-  // ─── Not added (0 proposals or 0 trades) ─────────────────────────────────
-  // 'frax.eth': REMOVED — 0 trades (re-tested Feb 2026 with body analysis, still 0)
-  // 'pendle-politics.eth': 0 proposals in DB — no Snapshot history for pendle-politics.eth
+  'morpho.eth': 'morpho',
+  'snxgov.eth': 'synthetix',
+  // ─── Removed (0 trades, not in live monitor) ─────────────────────────────
+  // 'eulerdao.eth': 0 trades (routine Gauntlet params, neutral sentiment)
+  // 'frax.eth': 0 trades in backtest
+  // 'pendle-politics.eth': 0 proposals in DB
   // 'graphprotocol.eth': 0 trades (team updates/council meetings)
-  // 'balancer.eth': REMOVED — no Binance USDT perp for BAL (had 2 trades +$860 backtest only)
-  // 'venus-xvs.eth': REMOVED — 0 trades (asset listing proposals, conf <0.55)
-  // 'rocketpool-dao.eth': REMOVED — 0 trades (partnership proposals, no risk-param alpha)
+  // 'balancer.eth': no Binance USDT perp for BAL (delisted)
+  // 'venus-xvs.eth': 0 trades (asset listing proposals, conf <0.55)
+  // 'rocketpool-dao.eth': 0 trades (partnership proposals, no risk-param alpha)
 }
 
 // â”€â”€â”€ Forum URL → Protocol Mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+// Must match forumMonitor.ts FORUM_CONFIGS exactly for live/backtest parity.
+// Any forum URL not in this map is ignored during replay (same as live ignoring unmonitored forums).
+// All removed entries generated 0 backtest trades — no P&L impact.
 const FORUM_PROTOCOL: Record<string, GovernanceProtocol> = {
   'https://governance.aave.com': 'aave',
   'https://www.comp.xyz': 'compound',
   'https://forum.arbitrum.foundation': 'arbitrum',
   'https://dydx.forum': 'dydx',
-  'https://forum.cosmos.network': 'cosmos',
-  'https://gov.injective.network': 'injective',
-  'https://gov.1inch.io': '1inch',
-  'https://forum.makerdao.com': 'maker',
-  'https://gov.curve.fi': 'curve',
-  'https://discuss.ens.domains': 'ens',
-  'https://gov.near.org': 'near',
-  'https://forum.morpho.org': 'morpho',
   'https://research.lido.fi': 'lido',
+  'https://forum.makerdao.com': 'maker',
   'https://gov.optimism.io': 'optimism',
-  'https://forums.sui.io': 'sui',
-  'https://forum.celestia.org': 'celestia',
-  'https://forum.avax.network': 'avalanche',
-  'https://gov.ethenafoundation.com': 'ethena',
+  'https://forum.morpho.org': 'morpho',
+  'https://gov.curve.fi': 'curve',
+  'https://gov.uniswap.org': 'uniswap',
   'https://forum.eigenlayer.xyz': 'eigenlayer',
-  'https://forum.zknation.io': 'zksync',
-  'https://community.starknet.io': 'starknet',
-  'https://discuss.jup.ag': 'jupiter',
-  'https://forum.pyth.network': 'pyth',
-  'https://forum.stacks.org': 'stacks',
-  'https://forum.jito.network': 'jito',
-  'https://gov.gmx.io': 'gmx',
-  'https://driftgov.discourse.group': 'drift',
-  'https://forum.polygon.technology': 'polygon',
-  'https://gov.yearn.fi': 'yearn',
-  'https://gov.blur.foundation': 'blur',
-  // ─── Feb 2026 v2 ─────────────────────────────────────────────────────────
-  'https://forum.thegraph.com': 'thegraph',   // GRT: 154 forum posts, GRTUSDT perp
-  // ─── Euler Finance (Feb 2026) ─────────────────────────────────────────────
-  'https://forum.euler.finance': 'euler',     // EUL: Supply caps, LLTV, risk params (Gauntlet)
-  // 'https://gov.frax.finance': REMOVED — 0 trades (re-tested Feb 2026 with body analysis, still 0)
-  // 'https://forum.balancer.fi': REMOVED — no Binance USDT perp for BAL
-  // 'https://community.venus.io': REMOVED — 0 trades (asset listing proposals, conf <0.55)
-  // 'https://dao.rocketpool.net': REMOVED — 0 trades (partnership proposals, no risk-param alpha)
+  // ─── New L2/L1 forums (Mar 2026) — data in DB, now wired for replay ─────────
+  'https://forum.zknation.io': 'zksync',    // 190 posts
+  'https://discuss.jup.ag': 'jupiter',      // 165 posts
+  'https://forum.stacks.org': 'stacks',     // 94 posts
 }
 
 // â”€â”€â”€ Event Construction Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

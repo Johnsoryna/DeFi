@@ -543,6 +543,7 @@ const PROTOCOL_GOV_TOKEN: Record<string, string> = {
   pendle: 'PENDLE',   // Yield pool risk params, market expiry, PENDLEUSDT perp
   thegraph: 'GRT',    // Indexer slashing, query fees, delegation params, GRTUSDT perp
   euler: 'EUL',       // Supply caps, LLTV changes, asset listings — monthly Gauntlet risk updates
+  stacks: 'STX',      // Bitcoin L2 governance — OI-cap reductions, PoX mechanism changes, STXUSDT perp
   // frax: REMOVED — 0 trades (re-tested Feb 2026 with body analysis, still 0; treasury/strategy governance)
   // balancer: REMOVED — no Binance USDT perp for BAL (delisted); had 2 trades +$860 backtest only
   // venus: REMOVED — 0 trades. Asset listing proposals max conf 0.50 (below 0.55 threshold).
@@ -592,6 +593,7 @@ const ASSET_PROTOCOL: Record<string, string> = {
   PENDLE: 'pendle',
   GRT: 'thegraph',
   EUL: 'euler',       // Euler Finance governance token
+  STX: 'stacks',      // Stacks Bitcoin L2 governance token
   // ─── Removed ─────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis, still 0)
   // BAL: REMOVED — no Binance USDT perp (delisted)
@@ -653,6 +655,8 @@ const ESTABLISHED_PROTOCOLS = new Set([
   'pendle', 'thegraph',
   // ─── Euler Finance (Feb 2026) ────────────────────────────────
   'euler',
+  // ─── New L2/L1 forum data (Mar 2026) ─────────────────────────
+  'stacks',
   // ─── Removed ─────────────────────────────────────────────────
   // 'frax': REMOVED — 0 trades in backtest
   // 'balancer': REMOVED — no Binance USDT perp for BAL
@@ -704,7 +708,7 @@ const STAGE_CONFIDENCE: Record<GovernanceStage, number> = {
 
 const STAGE_MIN_CONFIDENCE: Record<GovernanceStage, number> = {
   monitoring: 0.60,
-  discussion: 0.50,  // Forum posts: high bar for quality
+  discussion: 0.5,  // Forum posts: high bar for quality
   snapshot: 0.55,    // Snapshots: very high bar (often speculative)
   onchain_vote: 0.50,
   timelock: 0.40,
@@ -814,9 +818,10 @@ function generateDynamicSignals(
   // carry real governance alpha.
   // Empirical: 2 DYDX losses (-$7.4K) from "Winding down Pareto Labs validator" and
   // "HashKey Cloud Validator shutdown" — individual exits, not protocol risk.
+  // Also: "Nansen Validator on dYdX: Sunset Notice" (Feb 2026) — "sunset" = company wind-down.
   if (
     /\bvalidator\b/i.test(analysis.title) &&
-    /\b(wind(?:ing)?\s*down|shutdown|shut\s*down)\b/i.test(analysis.title) &&
+    /\b(wind(?:ing)?\s*down|shutdown|shut\s*down|sunset)\b/i.test(analysis.title) &&
     !/\bvalidator\s+set\b/i.test(analysis.title)
   ) {
     log.debug(
@@ -1058,7 +1063,7 @@ function generateDynamicSignals(
       // Skip low-confidence signals.
       // Direction-asymmetric: longs need higher confidence (governance-bullish alpha is weaker).
       const directionMinConf = spec.direction === 'long'
-        ? minConfidence + 0.10   // Longs: +0.10 (e.g. discussion 0.60, snapshot 0.65)
+        ? minConfidence + 0.15   // Longs: +0.15 (e.g. discussion 0.65, snapshot 0.70) — raised from 0.10 by OODA iter-1
         : minConfidence          // Shorts: use stage-based threshold as-is
       if (confidence < directionMinConf) {
         log.debug(
@@ -1416,8 +1421,9 @@ function generateLegacySignals(
           // Redirect: short the governance token instead of the stablecoin
           const govToken = getGovTokenForAsset(impact.asset, [analysis.protocol])
           if (govToken) {
+            const originalAsset = impact.asset  // capture before mutation
             impact = { ...impact, asset: govToken }
-            rule = { ...rule, rationale: `${rule.rationale} (redirected from stablecoin ${impact.asset} to ${govToken})` }
+            rule = { ...rule, rationale: `${rule.rationale} (redirected from stablecoin ${originalAsset} to ${govToken})` }
           } else {
             log.debug({ asset: impact.asset }, 'Legacy: skipping stablecoin short — no gov token')
             continue
@@ -1742,13 +1748,74 @@ function detectDecrease(impact: ProposalImpact, proposalDescription?: string): b
 
 // ─── Event Bus Integration ──────────────────────────────────────────
 
-export function wireSignalGenerator(getCurrentPositions: () => Position[]): void {
+// ─── Funding Rate Qualifier ──────────────────────────────────────────
+// High positive funding rate (longs pay shorts) adds conviction to short signals:
+// market participants are heavily long → crowded positioning → mean-reversion risk.
+// Threshold: 0.05%/8h (0.0005) — historically elevated funding that persists.
+// Boost: +0.03 confidence (modest — only tips borderline signals, not a primary driver).
+const FUNDING_RATE_SHORT_THRESHOLD = 0.0005  // 0.05%/8h
+const FUNDING_RATE_CONFIDENCE_BOOST = 0.03
+
+async function applyFundingRateBoost(signals: TradeSignal[]): Promise<TradeSignal[]> {
+  const shortSignals = signals.filter(s => s.direction === 'short')
+  if (shortSignals.length === 0) return signals
+
+  // Fetch funding rates in parallel — one per unique asset
+  const uniqueAssets = [...new Set(shortSignals.map(s => `${s.asset}USDT`))]
+  const rateMap = new Map<string, number>()
+
+  await Promise.allSettled(
+    uniqueAssets.map(async (sym) => {
+      try {
+        const { getFundingRate } = await import('../clients/binance.js')
+        const rate = await getFundingRate(sym)
+        rateMap.set(sym, rate)
+      } catch {
+        // Fail-open: missing funding rate does not block the signal
+      }
+    })
+  )
+
+  return signals.map(signal => {
+    if (signal.direction !== 'short') return signal
+    const rate = rateMap.get(`${signal.asset}USDT`)
+    if (rate !== undefined && rate > FUNDING_RATE_SHORT_THRESHOLD) {
+      const boosted = Math.min(1.0, signal.confidence + FUNDING_RATE_CONFIDENCE_BOOST)
+      log.info(
+        { asset: signal.asset, fundingRate: (rate * 100).toFixed(4) + '%/8h', confidenceBefore: signal.confidence.toFixed(3), confidenceAfter: boosted.toFixed(3) },
+        'Funding rate qualifier: elevated funding confirms short bias (+0.03 confidence)',
+      )
+      return { ...signal, confidence: boosted }
+    }
+    return signal
+  })
+}
+
+export function wireSignalGenerator(
+  getCurrentPositions: () => Position[],
+  enableFundingRateBoost = false,
+): void {
   eventBus.on('analysis:proposal', (analysis: ProposalAnalysis) => {
     const positions = getCurrentPositions()
     const signals = generateSignals(analysis, positions)
+    if (signals.length === 0) return
 
-    for (const signal of signals) {
-      eventBus.emit('signal:trade', signal)
+    // Apply funding rate boost only when explicitly enabled (live mode only).
+    // Backtest and tests call wireSignalGenerator without the flag → synchronous path.
+    if (enableFundingRateBoost) {
+      applyFundingRateBoost(signals).then(boosted => {
+        for (const signal of boosted) {
+          eventBus.emit('signal:trade', signal)
+        }
+      }).catch(() => {
+        for (const signal of signals) {
+          eventBus.emit('signal:trade', signal)
+        }
+      })
+    } else {
+      for (const signal of signals) {
+        eventBus.emit('signal:trade', signal)
+      }
     }
   })
 

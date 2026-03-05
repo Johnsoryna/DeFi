@@ -72,6 +72,7 @@ const PROTOCOL_GOV_TOKENS: Record<string, string> = {
   pendle: 'PENDLE',
   thegraph: 'GRT',
   euler: 'EUL',
+  stacks: 'STX',
 }
 
 // ─── ImpactCategory ↔ ProposalType Bridge ────────────────────────────
