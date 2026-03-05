@@ -12,6 +12,27 @@ import type { TradeSignal, ExecutionResult } from '../types/trading.js'
 
 const log = createLogger('trade-executor')
 
+// ─── Duplicate Signal Guard ──────────────────────────────────────────
+// Prevents the same proposal+stage+direction from executing twice within 60s.
+// Root cause: two analysis paths (e.g. on-chain + forum) can emit signals for
+// the same event before the first execution is reflected in currentPositions,
+// causing both to pass the RiskManager exposure check simultaneously.
+
+const recentExecutions = new Map<string, number>() // key → timestamp
+
+function isDuplicateSignal(signal: TradeSignal): boolean {
+  // Lazily clean up entries older than 5 minutes
+  const cutoff = Date.now() - 5 * 60_000
+  for (const [key, ts] of recentExecutions) {
+    if (ts < cutoff) recentExecutions.delete(key)
+  }
+  const key = `${signal.proposalId ?? signal.id}:${signal.governanceStage ?? ''}:${signal.direction}:${signal.asset}`
+  const last = recentExecutions.get(key)
+  if (last && Date.now() - last < 60_000) return true
+  recentExecutions.set(key, Date.now())
+  return false
+}
+
 // ─── Execution Router ───────────────────────────────────────────────
 
 /**
@@ -61,6 +82,12 @@ async function executeSignal(signal: TradeSignal): Promise<ExecutionResult> {
         leverage: signal.leverage ?? 1,
       },
     )
+  } else if (result.skipped) {
+    // Asset has no Binance Futures perp — not a bug, just skip quietly
+    log.info(
+      { asset: signal.asset, signalId: signal.id, reason: result.error },
+      'Signal skipped — no Binance Futures perp for asset',
+    )
   } else {
     await sendAlert(
       'system_error',
@@ -82,6 +109,13 @@ async function executeSignal(signal: TradeSignal): Promise<ExecutionResult> {
  */
 export function wireTradeExecutor(): void {
   eventBus.on('signal:validated', (signal: TradeSignal) => {
+    if (isDuplicateSignal(signal)) {
+      log.warn(
+        { proposalId: signal.proposalId, stage: signal.governanceStage, asset: signal.asset, direction: signal.direction },
+        'Duplicate signal suppressed — same proposal+stage+direction within 60s (race condition guard)',
+      )
+      return
+    }
     executeSignal(signal).catch((err) => {
       log.error({ err, signalId: signal.id }, 'Unhandled execution error')
     })

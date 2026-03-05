@@ -104,6 +104,8 @@ export interface BinanceOrderParams {
 
 export interface ExecutionResult {
   success: boolean
+  /** True when asset has no Binance Futures perp — not an error, just not executable live */
+  skipped?: boolean
   signalId: string
   protocol: ExecutionProtocol | string
   orderId?: string

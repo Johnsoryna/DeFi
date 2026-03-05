@@ -104,6 +104,7 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   PENDLE: 'PENDLEUSDT',
   GRT: 'GRTUSDT',
   EUL: 'EULUSDT',    // Euler Finance — EULUSDT active on Binance Futures
+  MORPHO: 'MORPHOUSDT', // Morpho Labs — MORPHOUSDT active on Binance Futures
   // ─── Removed ────────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis — still 0)
   // BAL: REMOVED — no Binance USDT perp (delisted)
@@ -111,6 +112,11 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   // XVS: REMOVED — 0 trades in backtest
   // RPL: REMOVED — 0 trades in backtest
 }
+
+// Assets that can appear as trade targets (e.g. Hebel cascade) but have no Binance
+// USDT-M perpetual — signal is skipped gracefully, no error alert fired.
+// Backtest uses mockExecutor and is not affected.
+const NO_BINANCE_PERP = new Set(['WSTETH', 'STETH', 'RETH', 'CBETH', 'WEETH', 'DAI', 'GHO', 'CBBTC', 'USDE'])
 
 // Liquidity-tiered slippage multipliers for Binance Futures
 // Binance has significantly higher liquidity than dYdX on most tokens
@@ -136,6 +142,7 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   PENDLE: 1.5,    // $15M-40M vol — yield tokenization
   GRT: 2.0,       // $10M-25M vol — indexing protocol
   EUL: 2.5,       // ~$17M vol — smaller DeFi token, higher slippage
+  MORPHO: 2.0,    // ~$30M vol — mid-cap DeFi lending token
   // ─── Removed ────────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis — still 0)
   // BAL: REMOVED — no Binance USDT perp
@@ -191,11 +198,14 @@ async function getPortfolioEquity(): Promise<number> {
 // ─── Exchange Info Cache ────────────────────────────────────────────
 
 let symbolInfoCache: Map<string, { tickSize: string; stepSize: string; minNotional: string }> | null = null
+let symbolInfoCacheTs = 0
+const SYMBOL_INFO_CACHE_TTL_MS = 3_600_000 // 1h — refresh to pick up Binance spec changes
 
 async function getSymbolInfo(symbol: string): Promise<{ tickSize: string; stepSize: string; minNotional: string }> {
-  if (!symbolInfoCache) {
+  if (!symbolInfoCache || Date.now() - symbolInfoCacheTs > SYMBOL_INFO_CACHE_TTL_MS) {
     const info = await binanceClient.getExchangeInfo()
     symbolInfoCache = new Map()
+    symbolInfoCacheTs = Date.now()
     for (const [sym, market] of info) {
       symbolInfoCache.set(sym, {
         tickSize: market.tickSize,
@@ -222,6 +232,17 @@ async function getSymbolInfo(symbol: string): Promise<{ tickSize: string; stepSi
 export async function executeBinanceSignal(signal: TradeSignal): Promise<ExecutionResult> {
   const symbol = resolveSymbol(signal.asset)
   if (!symbol) {
+    // Known assets with no Binance USDT-M perp → skip silently (not an error)
+    if (NO_BINANCE_PERP.has(signal.asset.toUpperCase())) {
+      return {
+        success: false,
+        skipped: true,
+        signalId: signal.id,
+        protocol: 'binance',
+        error: `No Binance Futures perp for ${signal.asset} — skipped`,
+        timestamp: Date.now(),
+      }
+    }
     return {
       success: false,
       signalId: signal.id,
@@ -339,9 +360,11 @@ export async function executeBinanceSignal(signal: TradeSignal): Promise<Executi
       quantity,
     })
 
-    // Place protective orders after entry — use actual fill price + actual executed qty
+    // Place protective orders after entry — use actual fill price + actual executed qty.
+    // NOTE: result.executedQty can be "0" (string) for briefly-queued orders; "0" is
+    // truthy in JS so `executedQty || quantity` would pass "0". Use explicit check instead.
     const fillPrice = parseFloat(result.avgPrice) || price
-    const actualQty = result.executedQty || quantity
+    const actualQty = parseFloat(result.executedQty) > 0 ? result.executedQty : quantity
     await placeProtectiveOrders(symbol, signal, fillPrice, actualQty, info.tickSize)
     // Store protection state for re-arming after stage-based partial reductions
     protectionState.set(symbol, { signal, entryPrice: fillPrice, tickSize: info.tickSize, stepSize: info.stepSize })
@@ -385,8 +408,7 @@ async function placeProtectiveOrders(
 ): Promise<void> {
   const closeSide = signal.direction === 'long' ? 'SELL' : 'BUY'
 
-  // Stop-Loss (STOP_MARKET via Algo API) — hard floor protection against immediate adverse moves
-  // Since 2025-12-09, STOP_MARKET on /fapi/v1/order is rejected (-4120). Use /fapi/v1/algoOrder.
+  // Stop-Loss (STOP_MARKET via Algo API) — hard floor protection
   if (signal.stopLossPct && signal.stopLossPct > 0) {
     const slPrice = signal.direction === 'long'
       ? entryPrice * (1 - signal.stopLossPct)
@@ -401,10 +423,16 @@ async function placeProtectiveOrders(
         type: 'STOP_MARKET',
         triggerPrice,
         reduceOnly: true,
+        workingType: 'MARK_PRICE',
       })
-      log.info({ symbol, triggerPrice, algoId: result.algoId }, 'Stop-loss algo order placed')
+      log.info({ symbol, triggerPrice, algoId: result.algoId }, 'Stop-loss order placed')
     } catch (err) {
       log.error({ err, symbol }, 'CRITICAL: Stop-loss placement FAILED — position is UNPROTECTED')
+      sendAlert('system_error', 'critical', 'Stop-Loss FAILED',
+        `Stop-loss placement failed for ${symbol}. Position is UNPROTECTED. Check immediately.`,
+      ).catch((alertErr: unknown) => {
+        log.error({ alertErr, symbol }, 'Failed to send SL-failure alert')
+      })
     }
   }
 
@@ -421,8 +449,9 @@ async function placeProtectiveOrders(
     const activationPriceStr = binanceClient.roundTick(activationPrice, tickSize)
 
     try {
-      // TRAILING_STOP_MARKET must use the Algo Trading API endpoint.
-      // The regular /fapi/v1/order endpoint rejects it with error -4120.
+      // TRAILING_STOP_MARKET via /fapi/v1/algoOrder with algoType=CONDITIONAL
+      // Confirmed working 2026-03-02 — if position is already in profit (price has moved
+      // past activationPrice), Binance starts trailing immediately.
       const result = await binanceClient.placeTrailingStopAlgo({
         symbol,
         side: closeSide,
@@ -431,22 +460,13 @@ async function placeProtectiveOrders(
         activationPrice: activationPriceStr,
         reduceOnly: true,
       })
-      log.info(
-        {
-          symbol, algoId: result.algoId,
-          activationPrice: activationPriceStr,
-          callbackRate: callbackRate.toFixed(1) + '%',
-          backtestDistance: (signal.trailingStopDistance * 100).toFixed(1) + '%',
-        },
-        'Trailing stop algo order placed',
-      )
+      log.info({ symbol, callbackRate, activationPrice: activationPriceStr, algoId: result.algoId }, 'Trailing stop placed')
     } catch (err) {
-      log.warn({ err, symbol }, 'Trailing stop placement failed — static stop-loss still active')
+      log.warn({ err, symbol }, 'Trailing stop placement failed — static stop-loss remains active')
     }
   }
 
   // Take-Profit (TAKE_PROFIT_MARKET via Algo API)
-  // Since 2025-12-09, TAKE_PROFIT_MARKET on /fapi/v1/order is rejected (-4120). Use /fapi/v1/algoOrder.
   if (signal.takeProfitPct && signal.takeProfitPct > 0) {
     const tpPrice = signal.direction === 'long'
       ? entryPrice * (1 + signal.takeProfitPct)
@@ -461,10 +481,16 @@ async function placeProtectiveOrders(
         type: 'TAKE_PROFIT_MARKET',
         triggerPrice,
         reduceOnly: true,
+        workingType: 'MARK_PRICE',
       })
-      log.info({ symbol, triggerPrice, algoId: result.algoId }, 'Take-profit algo order placed')
+      log.info({ symbol, triggerPrice, algoId: result.algoId }, 'Take-profit order placed')
     } catch (err) {
-      log.warn({ err, symbol }, 'Take-profit placement failed')
+      log.error({ err, symbol }, 'Take-profit placement failed — position has no TP order')
+      sendAlert('system_error', 'error', 'Take-Profit FAILED',
+        `Take-profit placement failed for ${symbol}. Manual TP management required.`,
+      ).catch((alertErr: unknown) => {
+        log.error({ alertErr, symbol }, 'Failed to send TP-failure alert')
+      })
     }
   }
 }
@@ -498,12 +524,20 @@ export function reduceAndRearm(
     // Cancel protective orders that were sized for the old (larger) position
     await cancelPositionOrders(symbol)
 
-    // Re-arm protection for the remaining position (skip if fully closed)
+    // Re-arm protection for the remaining position (skip if fully closed).
+    // Use actual executed size from the reduce result rather than the stale `currentSize`
+    // snapshot, which may have drifted if a SL/TP partial-fill happened concurrently.
     if (reducePct < 100) {
       const state = protectionState.get(symbol)
       if (state) {
-        const remainingAbs = Math.abs(parseFloat(currentSize)) * (1 - reducePct / 100)
-        const remainingQty = binanceClient.roundStep(remainingAbs, state.stepSize)
+        const executedQty = parseFloat(result.executedSize ?? '0')
+        const originalAbs = Math.abs(parseFloat(currentSize))
+        // Prefer: original - executed (most accurate). Fallback: original * (1 - pct/100)
+        const remainingAbs = executedQty > 0
+          ? Math.max(0, originalAbs - executedQty)
+          : originalAbs * (1 - reducePct / 100)
+        // 'round' mode: same floating-point issue as reducePosition — floor can leave a 1-step residual
+        const remainingQty = binanceClient.roundStep(remainingAbs, state.stepSize, 'round')
         if (parseFloat(remainingQty) > 0) {
           try {
             await withRetry(
@@ -516,7 +550,9 @@ export function reduceAndRearm(
             log.error({ rearmErr, symbol }, 'CRITICAL: rearm failed — position unprotected after stage reduction')
             sendAlert('system_error', 'critical', 'Position Unprotected',
               `Failed to re-arm protection for ${symbol} after stage reduction. Manual intervention required.`
-            ).catch(() => {})
+            ).catch((alertErr: unknown) => {
+              log.error({ alertErr, symbol }, 'Failed to send position-unprotected alert')
+            })
           }
         }
       } else {
@@ -547,9 +583,14 @@ export async function reducePosition(
   const reduceSize = Math.abs(size) * (reducePct / 100)
   const side = size > 0 ? 'SELL' : 'BUY' // Close direction
 
-  // Get step size for rounding
+  // Get step size for rounding — use 'round' mode to avoid leaving tiny position fragments.
+  // Cap at abs(size) so a reduce-only order never exceeds the actual position (Binance -2022).
+  // Both roundStep calls must use 'round' mode: floating-point means 1200.8/0.1 = 12007.999...
+  // and floor(12007.999) = 12007 → 1200.7, leaving a 0.1-contract residual unintentionally.
   const info = await getSymbolInfo(symbol)
-  const quantity = binanceClient.roundStep(reduceSize, info.stepSize)
+  const quantityRaw = parseFloat(binanceClient.roundStep(reduceSize, info.stepSize, 'round'))
+  const quantityCapped = Math.min(quantityRaw, Math.abs(size))
+  const quantity = binanceClient.roundStep(quantityCapped, info.stepSize, 'round')
 
   // Guard: rounding can produce 0 for very small positions — abort to avoid API error
   if (parseFloat(quantity) <= 0) {
