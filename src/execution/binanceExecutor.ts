@@ -105,6 +105,8 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   GRT: 'GRTUSDT',
   EUL: 'EULUSDT',    // Euler Finance — EULUSDT active on Binance Futures
   MORPHO: 'MORPHOUSDT', // Morpho Labs — MORPHOUSDT active on Binance Futures
+  ETHFI: 'ETHFIUSDT', // Ether.fi — ETHFIUSDT active on Binance Futures
+  W: 'WUSDT',         // Wormhole — WUSDT active on Binance Futures
   // ─── Removed ────────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis — still 0)
   // BAL: REMOVED — no Binance USDT perp (delisted)
@@ -143,6 +145,8 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   GRT: 2.0,       // $10M-25M vol — indexing protocol
   EUL: 2.5,       // ~$17M vol — smaller DeFi token, higher slippage
   MORPHO: 2.0,    // ~$30M vol — mid-cap DeFi lending token
+  ETHFI: 1.5,     // ~$20-40M vol — liquid restaking, Tier 3
+  W: 1.5,         // ~$30-80M vol — bridge token, Tier 3
   // ─── Removed ────────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis — still 0)
   // BAL: REMOVED — no Binance USDT perp

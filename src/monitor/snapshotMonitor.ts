@@ -34,6 +34,8 @@ const SPACE_TO_PROTOCOL: Record<string, GovernanceProtocol> = {
   'morpho.eth': 'morpho',
   // Feb 2026 v2: SNX perp DEX — wired, 0 trades but correct for future OI-cap events
   'snxgov.eth': 'synthetix',
+  // Mar 2026: Ether.fi DAO — 13 proposals (treasury/buyback), ETHFIUSDT perp
+  'etherfi-dao.eth': 'etherfi',
   // ─── Removed ────────────────────────────────────────────────────────
   // 'frax.eth': REMOVED — 0 trades in backtest
   // 'balancer.eth': REMOVED — no BALUSDT Binance perp (delisted), live execution would fail

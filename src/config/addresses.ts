@@ -122,6 +122,12 @@ export const FORUMS = {
   balancer: 'https://forum.balancer.fi' as const,
   // ─── Euler Finance (Feb 2026) ────────────────────────────────────
   euler: 'https://forum.euler.finance' as const,
+  // ─── Uniswap (Mar 2026) ──────────────────────────────────────────
+  uniswap: 'https://gov.uniswap.org' as const,
+  // ─── New protocols (Mar 2026) ────────────────────────────────────
+  // etherfi: forum.ether.fi currently requires auth — monitored via Snapshot only
+  etherfi: 'https://forum.ether.fi' as const,
+  wormhole: 'https://forum.wormhole.com' as const,
 } as const
 
 // ─── Snapshot Spaces ─────────────────────────────────────────────────
@@ -143,6 +149,8 @@ export const SNAPSHOT_SPACES = [
   'ethenagovernance.eth',
   // ─── Feb 2026 v2 ─────────────────────────────────────────────────
   'snxgov.eth',             // SNX: Synthetix Perps governance — OI-cap events
+  // ─── Mar 2026 ─────────────────────────────────────────────────────
+  'etherfi-dao.eth',        // ETHFI: Ether.fi DAO — 13 proposals (treasury/buyback/seasonal rewards)
   // ─── Removed ──────────────────────────────────────────────────────
   // 'frax.eth': REMOVED — 0 trades in backtest
   // 'balancer.eth': REMOVED — no BALUSDT Binance perp (delisted)

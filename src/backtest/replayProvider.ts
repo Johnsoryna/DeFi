@@ -61,6 +61,8 @@ const SPACE_PROTOCOL: Record<string, GovernanceProtocol> = {
   'ens.eth': 'ens',
   'morpho.eth': 'morpho',
   'snxgov.eth': 'synthetix',
+  // ─── Mar 2026 ────────────────────────────────────────────────────────────
+  'etherfi-dao.eth': 'etherfi',
   // ─── Removed (0 trades, not in live monitor) ─────────────────────────────
   // 'eulerdao.eth': 0 trades (routine Gauntlet params, neutral sentiment)
   // 'frax.eth': 0 trades in backtest
@@ -92,6 +94,9 @@ const FORUM_PROTOCOL: Record<string, GovernanceProtocol> = {
   'https://forum.zknation.io': 'zksync',    // 190 posts
   'https://discuss.jup.ag': 'jupiter',      // 165 posts
   'https://forum.stacks.org': 'stacks',     // 94 posts
+  // ─── New protocols (Mar 2026) ─────────────────────────────────────────────
+  'https://forum.wormhole.com': 'wormhole', // Wormhole bridge governance forum
+  'https://forum.ether.fi': 'etherfi',      // Ether.fi — currently auth-required, wired for future
 }
 
 // â”€â”€â”€ Event Construction Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

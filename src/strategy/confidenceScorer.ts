@@ -365,6 +365,7 @@ const KNOWN_PRICEABLE = new Set([
   // Parity with PROTOCOL_GOV_TOKEN + price DB (all have Binance USDT perps)
   'ATOM', 'INJ', 'CVX', 'YFI', 'DRIFT', 'JTO', 'PYTH', 'GRT',
   '1INCH', 'NEAR', 'ZK', 'PENDLE', 'EUL', 'STX',
+  'ETHFI', 'W',
 ])
 
 // â”€â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

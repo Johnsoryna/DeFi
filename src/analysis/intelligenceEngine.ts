@@ -73,6 +73,8 @@ const PROTOCOL_GOV_TOKENS: Record<string, string> = {
   thegraph: 'GRT',
   euler: 'EUL',
   stacks: 'STX',
+  etherfi: 'ETHFI',
+  wormhole: 'W',
 }
 
 // ─── ImpactCategory ↔ ProposalType Bridge ────────────────────────────

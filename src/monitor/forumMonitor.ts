@@ -56,6 +56,12 @@ const FORUM_CONFIGS: ForumConfig[] = [
   // Stacks: forum.stacks.org 94 posts. 0 trades (PoX mechanism, BTC-peg operational gov).
   // Wired: future risk-parameter events (PoX slashing, peg changes) could move STX.
   { url: FORUMS.stacks, protocol: 'stacks', label: 'Stacks Governance Forum' },
+  // Wormhole: forum.wormhole.com — bridge governance, guardian set changes, bridge fee params.
+  // WUSDT Binance perp active. 0 backtest trades today (mostly delegate platforms + grants).
+  // Wired for future guardian set rotation or bridge security events.
+  { url: FORUMS.wormhole, protocol: 'wormhole', label: 'Wormhole Governance Forum' },
+  // NOTE: Ether.fi (etherfi-dao.eth) monitored via Snapshot only.
+  // forum.ether.fi requires authentication — cannot be polled as Discourse.
   // Removed: cosmos (L1 operational governance, no trading alpha)
   // Removed: 1inch (dead governance, no trades in backtest)
   // Injective removed: 0 posts in backtest DB, forum API not public

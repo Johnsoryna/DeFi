@@ -544,6 +544,8 @@ const PROTOCOL_GOV_TOKEN: Record<string, string> = {
   thegraph: 'GRT',    // Indexer slashing, query fees, delegation params, GRTUSDT perp
   euler: 'EUL',       // Supply caps, LLTV changes, asset listings — monthly Gauntlet risk updates
   stacks: 'STX',      // Bitcoin L2 governance — OI-cap reductions, PoX mechanism changes, STXUSDT perp
+  etherfi: 'ETHFI',  // Ether.fi liquid restaking — withdrawal params, validator ejection, ETHFIUSDT perp
+  wormhole: 'W',     // Wormhole bridge governance — guardian set, bridge params, WUSDT perp
   // frax: REMOVED — 0 trades (re-tested Feb 2026 with body analysis, still 0; treasury/strategy governance)
   // balancer: REMOVED — no Binance USDT perp for BAL (delisted); had 2 trades +$860 backtest only
   // venus: REMOVED — 0 trades. Asset listing proposals max conf 0.50 (below 0.55 threshold).
@@ -594,6 +596,8 @@ const ASSET_PROTOCOL: Record<string, string> = {
   GRT: 'thegraph',
   EUL: 'euler',       // Euler Finance governance token
   STX: 'stacks',      // Stacks Bitcoin L2 governance token
+  ETHFI: 'etherfi',  // Ether.fi liquid restaking governance token
+  W: 'wormhole',     // Wormhole bridge governance token
   // ─── Removed ─────────────────────────────────────────────────
   // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis, still 0)
   // BAL: REMOVED — no Binance USDT perp (delisted)
@@ -657,6 +661,9 @@ const ESTABLISHED_PROTOCOLS = new Set([
   'euler',
   // ─── New L2/L1 forum data (Mar 2026) ─────────────────────────
   'stacks',
+  // ─── New protocols (Mar 2026) ─────────────────────────────────
+  'etherfi',   // ETHFI — Ether.fi DAO, etherfi-dao.eth (13 proposals, treasury/buyback)
+  'wormhole',  // W — Wormhole bridge forum, WUSDT perp
   // ─── Removed ─────────────────────────────────────────────────
   // 'frax': REMOVED — 0 trades in backtest
   // 'balancer': REMOVED — no Binance USDT perp for BAL
