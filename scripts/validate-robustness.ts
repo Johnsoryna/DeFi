@@ -2,7 +2,7 @@
  * Robustness validation — run multiple overlapping time windows
  * to verify the strategy isn't sensitive to specific start/end dates.
  */
-import { execSync } from 'child_process'
+import { spawnSync } from 'child_process'
 import fs from 'fs'
 
 interface Report {
@@ -29,24 +29,49 @@ console.log()
 console.log(`${'Window'.padEnd(28)} | ${'Trades'.padStart(6)} | ${'WinRate'.padStart(7)} | ${'PnL'.padStart(10)} | ${'PnL%'.padStart(7)} | ${'Sharpe'.padStart(7)} | ${'MaxDD%'.padStart(7)} | ${'Worst'.padStart(8)} | ${'PF'.padStart(5)}`)
 console.log('-'.repeat(110))
 
+if (!fs.existsSync('./data/backtest.db')) {
+  console.error('Missing ./data/backtest.db. Run: npx tsx src/backtest/index.ts collect --from 2025-01-01 --to 2026-02-20')
+  process.exit(1)
+}
+
+const REPORT_PATH = './data/backtest-report.json'
+let failures = 0
+
 for (const w of windows) {
-  try {
-    execSync(`npx tsx src/backtest/index.ts run --from ${w.from} --to ${w.to}`, {
-      cwd: process.cwd(),
-      stdio: ['pipe', 'pipe', 'pipe'],
-      timeout: 60000,
-      maxBuffer: 50 * 1024 * 1024, // 50MB buffer
-    })
-    const report: Report = JSON.parse(fs.readFileSync('./data/backtest-report.json', 'utf-8'))
-    const s = report.summary
-    const p = report.performance
-    console.log(
-      `${w.label.padEnd(28)} | ${String(s.executedTrades).padStart(6)} | ${(p.winRate.toFixed(1) + '%').padStart(7)} | ${('$' + s.totalPnl.toFixed(0)).padStart(10)} | ${(s.totalPnlPct.toFixed(1) + '%').padStart(7)} | ${p.sharpeRatio.toFixed(2).padStart(7)} | ${(p.maxDrawdownPct.toFixed(1) + '%').padStart(7)} | ${('$' + p.worstTrade.toFixed(0)).padStart(8)} | ${p.profitFactor.toFixed(2).padStart(5)}`
-    )
-  } catch (e) {
-    console.log(`${w.label.padEnd(28)} | ERROR: ${(e as Error).message?.slice(0, 50)}`)
+  const result = spawnSync('npx', ['tsx', 'src/backtest/index.ts', 'run', '--from', w.from, '--to', w.to], {
+    cwd: process.cwd(),
+    encoding: 'utf-8',
+    timeout: 60000,
+    maxBuffer: 50 * 1024 * 1024,
+  })
+
+  if (result.status !== 0) {
+    failures += 1
+    const stderr = (result.stderr ?? '').replace(/\s+/g, ' ').trim()
+    const stdout = (result.stdout ?? '').replace(/\s+/g, ' ').trim()
+    const rootCause = stderr || stdout || `process exited with code ${result.status}`
+    console.log(`${w.label.padEnd(28)} | ERROR: ${rootCause.slice(0, 70)}`)
+    continue
   }
+
+  if (!fs.existsSync(REPORT_PATH)) {
+    failures += 1
+    console.log(`${w.label.padEnd(28)} | ERROR: Missing ${REPORT_PATH} after run`)
+    continue
+  }
+
+  const report: Report = JSON.parse(fs.readFileSync(REPORT_PATH, 'utf-8'))
+  const s = report.summary
+  const p = report.performance
+  console.log(
+    `${w.label.padEnd(28)} | ${String(s.executedTrades).padStart(6)} | ${(p.winRate.toFixed(1) + '%').padStart(7)} | ${('$' + s.totalPnl.toFixed(0)).padStart(10)} | ${(s.totalPnlPct.toFixed(1) + '%').padStart(7)} | ${p.sharpeRatio.toFixed(2).padStart(7)} | ${(p.maxDrawdownPct.toFixed(1) + '%').padStart(7)} | ${('$' + p.worstTrade.toFixed(0)).padStart(8)} | ${p.profitFactor.toFixed(2).padStart(5)}`
+  )
 }
 
 console.log()
-console.log('=' .repeat(110))
+console.log('='.repeat(110))
+
+if (failures > 0) {
+  console.error(`Robustness validation failed in ${failures}/${windows.length} windows.`)
+  process.exit(1)
+}
