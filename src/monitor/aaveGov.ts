@@ -32,6 +32,7 @@ const GOVERNANCE_CORE = GOVERNANCE.aaveGovernanceCore as `0x${string}`
 const VOTING_MACHINE = GOVERNANCE.aaveVotingMachine as `0x${string}`
 
 const unwatchers: WatchContractEventReturnType[] = []
+let reconnecting = false
 
 // ─── Event Processing ───────────────────────────────────────────────
 
@@ -235,6 +236,14 @@ function subscribeGovernanceCore(): void {
           log.warn({ eventName }, 'WSS disconnected — will auto-recover via HTTP polling')
         } else {
           log.error({ err: error, eventName }, 'GovernanceCore subscription error')
+          if (!reconnecting) {
+            reconnecting = true
+            log.warn('Scheduling Aave Gov reconnect in 10s')
+            setTimeout(() => {
+              reconnecting = false
+              startAaveGovMonitor().catch((err) => log.error({ err }, 'Aave Gov reconnect failed'))
+            }, 10_000)
+          }
         }
       },
     })
@@ -267,6 +276,14 @@ function subscribeVotingMachine(): void {
         log.warn('VotingMachine WSS disconnected — will auto-recover via HTTP polling')
       } else {
         log.error({ err: error }, 'VotingMachine subscription error')
+        if (!reconnecting) {
+          reconnecting = true
+          log.warn('Scheduling Aave Gov reconnect in 10s (VotingMachine error)')
+          setTimeout(() => {
+            reconnecting = false
+            startAaveGovMonitor().catch((err) => log.error({ err }, 'Aave Gov reconnect failed'))
+          }, 10_000)
+        }
       }
     },
   })

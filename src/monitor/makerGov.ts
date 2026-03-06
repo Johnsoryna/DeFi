@@ -49,6 +49,7 @@ const DS_CHIEF_ADDRESSES: `0x${string}`[] = [
 ]
 
 const unwatchers: (WatchEventReturnType | WatchContractEventReturnType)[] = []
+let reconnecting = false
 
 // ─── Selector to Function Name Mapping ──────────────────────────────
 
@@ -216,6 +217,14 @@ function subscribeDSNotes(address: `0x${string}`): void {
         log.warn({ address }, 'DSNote WSS disconnected — will auto-recover via HTTP polling')
       } else {
         log.error({ err: error, address }, 'DSNote subscription error')
+        if (!reconnecting) {
+          reconnecting = true
+          log.warn({ address }, 'Scheduling Maker Gov reconnect in 10s')
+          setTimeout(() => {
+            reconnecting = false
+            startMakerGovMonitor().catch((err) => log.error({ err }, 'Maker Gov reconnect failed'))
+          }, 10_000)
+        }
       }
     },
   })
@@ -240,6 +249,14 @@ function subscribeDSNotes(address: `0x${string}`): void {
         log.warn('Etch WSS disconnected — will auto-recover via HTTP polling')
       } else {
         log.error({ err: error }, 'Etch subscription error')
+        if (!reconnecting) {
+          reconnecting = true
+          log.warn('Scheduling Maker Gov reconnect in 10s (Etch error)')
+          setTimeout(() => {
+            reconnecting = false
+            startMakerGovMonitor().catch((err) => log.error({ err }, 'Maker Gov reconnect failed'))
+          }, 10_000)
+        }
       }
     },
   })
