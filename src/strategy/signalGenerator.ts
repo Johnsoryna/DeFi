@@ -510,46 +510,11 @@ const PROTOCOL_GOV_TOKEN: Record<string, string> = {
   arbitrum: 'ARB',
   curve: 'CRV',
   synthetix: 'SNX',   // C-ratio, OI-cap, market deprecation — re-enabled with improved NLP (Feb 2026)
-  convex: 'CVX',
   yearn: 'YFI',
-  optimism: 'OP',
   dydx: 'DYDX',
-  ethena: 'ENA',
   eigenlayer: 'EIGEN',
-  ens: 'ENS',
-  // ─── New Protocols ─────────────────────────────────────────
   gmx: 'GMX',
-  jupiter: 'JUP',
-  celestia: 'TIA',
-  avalanche: 'AVAX',
-  polygon: 'POL',
-  starknet: 'STRK',
   morpho: 'MORPHO',
-  sui: 'SUI',
-  // mantle: REMOVED — no Binance USDT perp for MNT, 0 backtest trades (7 forum posts, L2 operational gov)
-  sei: 'SEI',
-  // ─── Forum-active L1/L2 protocols (245 / 183 posts in DB) ───────
-  near: 'NEAR',
-  zksync: 'ZK',
-  // ─── Gruppe A: Forum data in DB, now wired (Feb 2026) ────────────
-  drift: 'DRIFT',      // Solana perp-DEX, DRIFTUSDT on Binance
-  injective: 'INJ',   // DEX-parameter governance, INJUSDT on Binance
-  cosmos: 'ATOM',     // L1 hub governance, ATOMUSDT on Binance
-  // ─── Gruppe C: Fusion/oracle/staking governance (Feb 2026) ───────
-  '1inch': '1INCH',   // Fusion protocol parameter governance, 226 forum + 19 snaps, 1INCHUSDT perp
-  jito: 'JTO',        // Solana liquid staking fee governance, 44 forum posts, JTOUSDT perp
-  pyth: 'PYTH',       // Oracle parameter governance, 113 forum posts, PYTHUSDT perp
-  // ─── Gruppe D: Yield/indexer governance (Feb 2026) ───────────────
-  pendle: 'PENDLE',   // Yield pool risk params, market expiry, PENDLEUSDT perp
-  thegraph: 'GRT',    // Indexer slashing, query fees, delegation params, GRTUSDT perp
-  euler: 'EUL',       // Supply caps, LLTV changes, asset listings — monthly Gauntlet risk updates
-  stacks: 'STX',      // Bitcoin L2 governance — OI-cap reductions, PoX mechanism changes, STXUSDT perp
-  etherfi: 'ETHFI',  // Ether.fi liquid restaking — withdrawal params, validator ejection, ETHFIUSDT perp
-  wormhole: 'W',     // Wormhole bridge governance — guardian set, bridge params, WUSDT perp
-  // frax: REMOVED — 0 trades (re-tested Feb 2026 with body analysis, still 0; treasury/strategy governance)
-  // balancer: REMOVED — no Binance USDT perp for BAL (delisted); had 2 trades +$860 backtest only
-  // venus: REMOVED — 0 trades. Asset listing proposals max conf 0.50 (below 0.55 threshold).
-  // rocketpool: REMOVED — 0 trades. Partnership/staking proposals, no risk-parameter alpha.
 }
 
 // Asset → Protocol mapping (which protocol manages this asset)
@@ -562,46 +527,19 @@ const ASSET_PROTOCOL: Record<string, string> = {
   // Note: WSTETH already mapped to 'aave' (primary collateral context)
   ARB: 'arbitrum',
   CRV: 'curve',
-  OP: 'optimism',
-  CVX: 'convex',
   YFI: 'yearn',
   DYDX: 'dydx',
-  ENA: 'ethena',
+  ENA: 'aave',    // Hebel-4 cascade target (USDe collateral in AAVE → short ENA); keep in TRADEABLE_ASSETS
   EIGEN: 'eigenlayer',
-  ENS: 'ens',
-  // ─── New Protocol Assets ──────────────────────────────────
   GMX: 'gmx',
-  JUP: 'jupiter',
-  TIA: 'celestia',
-  AVAX: 'avalanche',
-  POL: 'polygon',
-  STRK: 'starknet',
   MORPHO: 'morpho',
-  SUI: 'sui',
-  // MNT: REMOVED — no Binance USDT perp, 0 backtest trades
-  SEI: 'sei',
-  NEAR: 'near',
-  ZK: 'zksync',
-  // ─── Gruppe A (Feb 2026) ─────────────────────────────────────
-  DRIFT: 'drift',
-  INJ: 'injective',
-  ATOM: 'cosmos',
-  // ─── Gruppe C (Feb 2026) ─────────────────────────────────────
-  '1INCH': '1inch',
-  JTO: 'jito',
-  PYTH: 'pyth',
   SNX: 'synthetix',
-  // ─── Gruppe D (Feb 2026) ─────────────────────────────────────
-  PENDLE: 'pendle',
-  GRT: 'thegraph',
-  EUL: 'euler',       // Euler Finance governance token
-  STX: 'stacks',      // Stacks Bitcoin L2 governance token
-  ETHFI: 'etherfi',  // Ether.fi liquid restaking governance token
-  W: 'wormhole',     // Wormhole bridge governance token
-  // ─── Removed ─────────────────────────────────────────────────
-  // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis, still 0)
-  // BAL: REMOVED — no Binance USDT perp (delisted)
-  // XVS/RPL: REMOVED — 0 trades in backtest (venus: asset listings; rocketpool: partnership gov)
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // OP/CVX/ENS/JUP/TIA/AVAX/POL/STRK/SUI/SEI/NEAR/ZK: L1/L2 operational governance
+  // DRIFT/INJ/ATOM: Solana/Cosmos operational governance
+  // 1INCH/JTO/PYTH: treasury/oracle/staking governance
+  // PENDLE/GRT/EUL/STX/ETHFI/W: 0 trades confirmed, no risk-parameter alpha
+  // FXS/BAL/XVS/RPL/MNT: no Binance perp or 0 trades in backtest
 }
 
 // ─── Hebel 4: Collateral-Issuer Token Map ────────────────────────────────────
@@ -641,33 +579,17 @@ const TRADEABLE_ASSETS = new Set([
 //   4. Sufficient Binance liquidity for realistic execution
 const ESTABLISHED_PROTOCOLS = new Set([
   'aave', 'compound', 'uniswap', 'maker',
-  'lido', 'arbitrum', 'optimism',
-  'dydx', 'ethena', 'eigenlayer', 'ens',
-  // ─── Re-enabled with improved strategy (direction-asymmetric + short bias) ──
-  'curve', 'convex', 'yearn',
-  'synthetix',  // Re-enabled with improved NLP — OI-cap/market deprecation signals
-  // ─── New Protocols ─────────────────────────────────────────
-  'gmx', 'jupiter', 'celestia', 'avalanche', 'polygon',
-  'starknet', 'morpho', 'sui', 'sei',
-  // 'mantle': REMOVED — no Binance USDT perp for MNT
-  'near', 'zksync',
-  // ─── Gruppe A (Feb 2026) ─────────────────────────────────────
-  'drift', 'injective', 'cosmos',
-  // ─── Gruppe C (Feb 2026) ─────────────────────────────────────
-  '1inch', 'jito', 'pyth',
-  // ─── Gruppe D (Feb 2026) ─────────────────────────────────────
-  'pendle', 'thegraph',
-  // ─── Euler Finance (Feb 2026) ────────────────────────────────
-  'euler',
-  // ─── New L2/L1 forum data (Mar 2026) ─────────────────────────
-  'stacks',
-  // ─── New protocols (Mar 2026) ─────────────────────────────────
-  'etherfi',   // ETHFI — Ether.fi DAO, etherfi-dao.eth (13 proposals, treasury/buyback)
-  'wormhole',  // W — Wormhole bridge forum, WUSDT perp
-  // ─── Removed ─────────────────────────────────────────────────
-  // 'frax': REMOVED — 0 trades in backtest
-  // 'balancer': REMOVED — no Binance USDT perp for BAL
-  // 'venus', 'rocketpool': REMOVED — 0 trades in backtest
+  'lido', 'arbitrum', 'dydx', 'eigenlayer',
+  'curve', 'yearn',
+  'synthetix',
+  'gmx', 'morpho',
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // convex, optimism, ethena, ens: no alpha
+  // jupiter, celestia, avalanche, polygon, starknet, sui, sei, near, zksync: L1/L2 operational
+  // drift, injective, cosmos: Solana/Cosmos operational governance
+  // 1inch, jito, pyth: treasury/oracle/staking governance
+  // pendle, thegraph, euler, stacks, etherfi, wormhole: 0 trades confirmed
+  // frax, balancer, venus, rocketpool, mantle: no perp or 0 trades
 ])
 
 // Protocols with historically weak governance alpha requiring elevated signal quality.

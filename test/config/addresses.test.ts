@@ -83,7 +83,7 @@ describe('API endpoints', () => {
     expect(FORUMS.aave).toContain('aave')
     expect(FORUMS.compound).toContain('comp')
     expect(FORUMS.uniswap).toContain('uniswap')
-    expect(FORUMS.cosmos).toContain('cosmos')
+    expect(FORUMS.lido).toContain('lido')
   })
 })
 
@@ -94,7 +94,7 @@ describe('derived constants', () => {
   })
 
   it('SNAPSHOT_SPACES has expected entries', () => {
-    expect(SNAPSHOT_SPACES.length).toBeGreaterThanOrEqual(14)
+    expect(SNAPSHOT_SPACES.length).toBeGreaterThanOrEqual(9)
     // Core profitable spaces must be present
     expect(SNAPSHOT_SPACES).toContain('aavedao.eth')
     expect(SNAPSHOT_SPACES).toContain('compound-governance.eth')

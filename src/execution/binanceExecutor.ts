@@ -60,7 +60,7 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   ETH: 'ETHUSDT', WETH: 'ETHUSDT',
   BTC: 'BTCUSDT', WBTC: 'BTCUSDT',
   LINK: 'LINKUSDT',
-  // Governance Tokens (curated protocols)
+  // Governance Tokens (curated protocols with alpha)
   AAVE: 'AAVEUSDT',
   UNI: 'UNIUSDT',
   COMP: 'COMPUSDT',
@@ -69,50 +69,17 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   LDO: 'LDOUSDT',
   ARB: 'ARBUSDT',
   CRV: 'CRVUSDT',
-  CVX: 'CVXUSDT',
   YFI: 'YFIUSDT',
-  OP: 'OPUSDT',
   DYDX: 'DYDXUSDT',
-  ENA: 'ENAUSDT',
+  ENA: 'ENAUSDT',   // Hebel-4 cascade target (USDe collateral in AAVE)
   EIGEN: 'EIGENUSDT',
-  ENS: 'ENSUSDT',
-  // New Protocol Governance Tokens
   GMX: 'GMXUSDT',
-  JUP: 'JUPUSDT',
-  TIA: 'TIAUSDT',
-  AVAX: 'AVAXUSDT',
-  POL: 'POLUSDT',
-  STRK: 'STRKUSDT',
-  SUI: 'SUIUSDT',
-  // MNT: REMOVED — no Binance USDT perp (delisted)
-  SEI: 'SEIUSDT',
-  // Cosmos ecosystem
-  ATOM: 'ATOMUSDT',
-  INJ: 'INJUSDT',
-  AXL: 'AXLUSDT',
-  NEAR: 'NEARUSDT',
-  APT: 'APTUSDT',
-  BLUR: 'BLURUSDT',
-  JTO: 'JTOUSDT',
-  ZK: 'ZKUSDT',
-  DRIFT: 'DRIFTUSDT',
-  PYTH: 'PYTHUSDT',
-  STX: 'STXUSDT',
-  // ─── Gruppe C+D (Feb 2026) ──────────────────────────────────────
-  '1INCH': '1INCHUSDT',
+  MORPHO: 'MORPHOUSDT',
   SNX: 'SNXUSDT',
-  PENDLE: 'PENDLEUSDT',
-  GRT: 'GRTUSDT',
-  EUL: 'EULUSDT',    // Euler Finance — EULUSDT active on Binance Futures
-  MORPHO: 'MORPHOUSDT', // Morpho Labs — MORPHOUSDT active on Binance Futures
-  ETHFI: 'ETHFIUSDT', // Ether.fi — ETHFIUSDT active on Binance Futures
-  W: 'WUSDT',         // Wormhole — WUSDT active on Binance Futures
-  // ─── Removed ────────────────────────────────────────────────────
-  // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis — still 0)
-  // BAL: REMOVED — no Binance USDT perp (delisted)
-  // MNT: REMOVED — no Binance USDT perp (delisted)
-  // XVS: REMOVED — 0 trades in backtest
-  // RPL: REMOVED — 0 trades in backtest
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // CVX/OP/ENS/JUP/TIA/AVAX/POL/STRK/SUI/SEI/ATOM/INJ/AXL/NEAR/APT/BLUR
+  // JTO/ZK/DRIFT/PYTH/STX/1INCH/PENDLE/GRT/EUL/ETHFI/W
+  // FXS/BAL/MNT/XVS/RPL: no Binance perp or 0 trades in backtest
 }
 
 // Assets that can appear as trade targets (e.g. Hebel cascade) but have no Binance
@@ -126,32 +93,13 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   // Tier 1: Extremely liquid ($500M+ 24h vol) — base slippage
   ETH: 1.0, WETH: 1.0, BTC: 1.0, WBTC: 1.0,
   // Tier 2: Very liquid ($50M-500M vol) — 1.2x
-  AAVE: 1.2, LINK: 1.2, UNI: 1.2, ARB: 1.2, OP: 1.2,
-  SUI: 1.2, AVAX: 1.2, TIA: 1.2, NEAR: 1.2, APT: 1.2,
-  ATOM: 1.2, INJ: 1.2,
+  AAVE: 1.2, LINK: 1.2, UNI: 1.2, ARB: 1.2,
   // Tier 3: Liquid ($10M-50M vol) — 1.5x
-  LDO: 1.5, COMP: 1.5, ENA: 1.5, ENS: 1.5,
+  LDO: 1.5, COMP: 1.5, ENA: 1.5,
   MKR: 1.5, CRV: 1.5, YFI: 1.5,
-  SEI: 1.5, DYDX: 1.5, JUP: 1.5, STX: 1.5,
-  BLUR: 1.5, JTO: 1.5, PYTH: 1.5,
+  DYDX: 1.5, SNX: 1.5, MORPHO: 1.5,
   // Tier 4: Medium ($1M-10M vol) — 2.0x
-  CVX: 2.0,
-  SKY: 2.0, EIGEN: 2.0, GMX: 2.0, POL: 2.0,
-  STRK: 2.0, ZK: 2.0, DRIFT: 2.0, AXL: 2.0,
-  // ─── Gruppe C+D (Feb 2026) ──────────────────────────────────────
-  '1INCH': 2.0,   // $5M-15M vol tier
-  SNX: 1.5,       // $30M-80M vol — medium liquid derivatives token
-  PENDLE: 1.5,    // $15M-40M vol — yield tokenization
-  GRT: 2.0,       // $10M-25M vol — indexing protocol
-  EUL: 2.5,       // ~$17M vol — smaller DeFi token, higher slippage
-  MORPHO: 2.0,    // ~$30M vol — mid-cap DeFi lending token
-  ETHFI: 1.5,     // ~$20-40M vol — liquid restaking, Tier 3
-  W: 1.5,         // ~$30-80M vol — bridge token, Tier 3
-  // ─── Removed ────────────────────────────────────────────────────
-  // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis — still 0)
-  // BAL: REMOVED — no Binance USDT perp
-  // MNT: REMOVED — no Binance USDT perp
-  // XVS/RPL: REMOVED — 0 trades in backtest
+  SKY: 2.0, EIGEN: 2.0, GMX: 2.0,
 }
 
 function resolveSymbol(asset: string): string | null {

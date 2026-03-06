@@ -32,7 +32,6 @@ const FORUM_CONFIGS: ForumConfig[] = [
   // Added Feb 2026: Tier1 protocols that were missing from live monitor
   { url: FORUMS.lido, protocol: 'lido', label: 'Lido Research Forum' },
   { url: FORUMS.maker, protocol: 'maker', label: 'MakerDAO Forum' },
-  { url: FORUMS.optimism, protocol: 'optimism', label: 'Optimism Forum' },
   { url: FORUMS.morpho, protocol: 'morpho', label: 'Morpho Forum' },
   // Curve: 3 backtest trades, WR 67%, +$4,516 — alpha from forum posts ONLY (not Snapshot).
   // gov.curve.fi is a Discourse forum (risk param changes, gauge controller updates).
@@ -41,30 +40,17 @@ const FORUM_CONFIGS: ForumConfig[] = [
   { url: FORUMS.curve, protocol: 'curve', label: 'Curve Governance Forum' },
   // Uniswap: gov.uniswap.org Discourse forum — added Mar 2026.
   // UNI has Binance perp (UNIUSDT), established protocol, risk-param governance.
-  // Backtest had uniswap in ESTABLISHED_PROTOCOLS but no forum monitor wired.
   { url: FORUMS.uniswap, protocol: 'uniswap', label: 'Uniswap Governance Forum' },
   // EigenLayer: forum.eigenlayer.xyz — 1 backtest trade (EIGEN), added Mar 2026.
   // EIGENUSDT Binance perp exists. Risk-param / slashing events move EIGEN price.
   { url: FORUMS.eigenlayer, protocol: 'eigenlayer', label: 'EigenLayer Governance Forum' },
-  // ─── New L2/L1 forums (Mar 2026) — 0 backtest trades today, wired for future risk events ───
-  // zkSync: forum.zknation.io 190 posts. 0 trades (routing/sequencer/validator governance).
-  // Wired: future L2-security or validator-exit risk events would move ZK price.
-  { url: FORUMS.zksync, protocol: 'zksync', label: 'zkSync Governance Forum' },
-  // Jupiter: discuss.jup.ag 165 posts. 0 trades (fee distribution, treasury allocation).
-  // Wired: future OI-cap or market-delisting events could move JUP price.
-  { url: FORUMS.jupiter, protocol: 'jupiter', label: 'Jupiter Governance Forum' },
-  // Stacks: forum.stacks.org 94 posts. 0 trades (PoX mechanism, BTC-peg operational gov).
-  // Wired: future risk-parameter events (PoX slashing, peg changes) could move STX.
-  { url: FORUMS.stacks, protocol: 'stacks', label: 'Stacks Governance Forum' },
-  // Wormhole: forum.wormhole.com — bridge governance, guardian set changes, bridge fee params.
-  // WUSDT Binance perp active. 0 backtest trades today (mostly delegate platforms + grants).
-  // Wired for future guardian set rotation or bridge security events.
-  { url: FORUMS.wormhole, protocol: 'wormhole', label: 'Wormhole Governance Forum' },
-  // NOTE: Ether.fi (etherfi-dao.eth) monitored via Snapshot only.
-  // forum.ether.fi requires authentication — cannot be polled as Discourse.
-  // Removed: cosmos (L1 operational governance, no trading alpha)
-  // Removed: 1inch (dead governance, no trades in backtest)
-  // Injective removed: 0 posts in backtest DB, forum API not public
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // optimism: L2 stablecoin filter blocks all signals, 0 trades
+  // zksync: L2 operational governance (routing/sequencer), 0 trades after 190 posts
+  // jupiter: treasury/fee distribution governance, 0 trades after 165 posts
+  // stacks: PoX mechanism/BTC-peg operational governance, 0 trades after 94 posts
+  // wormhole: delegate platforms + support tickets, 0 trades
+  // cosmos/1inch/injective: operational/treasury governance, 0 trades
 ]
 
 // ─── Discourse API Types ─────────────────────────────────────────────
