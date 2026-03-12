@@ -1,0 +1,72 @@
+name: Codex Continuous Audit
+
+on:
+  push:
+    branches:
+      - v1
+    paths:
+      - '.codex/**'
+      - '.github/codex/**'
+      - '.github/workflows/codex-continuous-audit.yml'
+  schedule:
+    - cron: '17 3,15 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: codex-continuous-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: v1
+
+      - name: Check secret availability
+        id: secret_check
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip without OPENAI_API_KEY
+        if: steps.secret_check.outputs.available != 'true'
+        run: |
+          echo "OPENAI_API_KEY is not configured. Skipping Codex audit." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run Codex audit
+        if: steps.secret_check.outputs.available == 'true'
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: .github/codex/prompts/continuous-audit.md
+          output-file: codex-audit.md
+          safety-strategy: drop-sudo
+          sandbox: read-only
+          codex-args: '["--enable","multi_agent"]'
+
+      - name: Publish workflow summary
+        if: steps.secret_check.outputs.available == 'true'
+        run: |
+          {
+            echo "## Codex Continuous Audit"
+            echo
+            cat codex-audit.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload audit artifact
+        if: steps.secret_check.outputs.available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-audit
+          path: codex-audit.md

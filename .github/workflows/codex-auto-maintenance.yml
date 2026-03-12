@@ -1,0 +1,90 @@
+name: Codex Auto Maintenance
+
+on:
+  push:
+    branches:
+      - v1
+    paths:
+      - '.codex/**'
+      - '.github/codex/**'
+      - '.github/workflows/codex-auto-maintenance.yml'
+  schedule:
+    - cron: '47 4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: codex-auto-maintenance
+  cancel-in-progress: true
+
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: v1
+
+      - name: Check secret availability
+        id: secret_check
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip without OPENAI_API_KEY
+        if: steps.secret_check.outputs.available != 'true'
+        run: |
+          echo "OPENAI_API_KEY is not configured. Skipping Codex maintenance." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run Codex maintenance
+        if: steps.secret_check.outputs.available == 'true'
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: .github/codex/prompts/maintenance-v1.md
+          output-file: codex-maintenance.md
+          safety-strategy: drop-sudo
+          sandbox: workspace-write
+          codex-args: '["--enable","multi_agent","--full-auto"]'
+
+      - name: Detect worktree changes
+        if: steps.secret_check.outputs.available == 'true'
+        id: diff_check
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload maintenance artifact
+        if: steps.secret_check.outputs.available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-maintenance
+          path: codex-maintenance.md
+
+      - name: Create maintenance PR
+        if: steps.secret_check.outputs.available == 'true' && steps.diff_check.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: codex/auto-maintenance-v1
+          delete-branch: true
+          base: v1
+          title: 'Codex: automated maintenance for v1'
+          commit-message: 'Codex automated maintenance for v1'
+          body-path: codex-maintenance.md
+
+      - name: Publish no-change summary
+        if: steps.secret_check.outputs.available == 'true' && steps.diff_check.outputs.changed != 'true'
+        run: |
+          echo "No worthwhile maintenance diff was produced in this run." >> "$GITHUB_STEP_SUMMARY"
