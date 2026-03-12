@@ -1,0 +1,16 @@
+.git
+node_modules
+data/*.db
+data/*.db-wal
+data/*.db-shm
+*.tar.gz
+.env
+.env.*
+dist
+coverage
+*.log
+.claude
+scripts/tmp-*
+tmp-*.mjs
+eslint_report.json
+analysis_report.md

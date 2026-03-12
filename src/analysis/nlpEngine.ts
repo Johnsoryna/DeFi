@@ -160,7 +160,6 @@ const KEYWORD_CLUSTERS: KeywordCluster[] = [
       { pattern: /\boffboard\b/i, weight: 2.5 },
       { pattern: /\bdelist\b/i, weight: 3.0 },
       { pattern: /\bremove\b/i, weight: 2.0 },
-      { pattern: /\bwind\s*down\b/i, weight: 2.0 },
       { pattern: /\breduce\b/i, weight: 1.5 },
     ],
   },
@@ -369,12 +368,14 @@ const PROTOCOL_GOVERNANCE_TOKENS: Record<string, string> = {
   lido: 'LDO',
   arbitrum: 'ARB',
   curve: 'CRV',
-  optimism: 'OP',
   synthetix: 'SNX',
   dydx: 'DYDX',
-  ethena: 'ENA',
   eigenlayer: 'EIGEN',
-  ens: 'ENS',
+  morpho: 'MORPHO',
+  yearn: 'YFI',
+  gmx: 'GMX',
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // optimism, ethena, ens: purged in v36
 }
 
 // ─── Public API ──────────────────────────────────────────────────────

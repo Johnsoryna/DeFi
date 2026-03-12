@@ -154,6 +154,7 @@ export class ResultCollector {
   private initialPortfolio: number
   private peakEquity: number
   private maxDrawdownFraction: number = 0
+  private maxDrawdownAbsolute: number = 0  // USD amount at the worst drawdown point
   // Circuit breaker: pause trading after major drawdown
   private circuitBreakerUntil: number = 0
   private readonly CIRCUIT_BREAKER_DRAWDOWN = 0.25 // 25% drawdown triggers pause (aligned with maxDrawdownPct)
@@ -388,6 +389,10 @@ export class ResultCollector {
    * Get the maximum drawdown as a fraction (0-1).
    * E.g., 0.12 means 12% drawdown from peak.
    */
+  getMaxDrawdownAmount(): number {
+    return this.maxDrawdownAbsolute
+  }
+
   getMaxDrawdown(): number {
     return this.maxDrawdownFraction
   }
@@ -521,7 +526,8 @@ export class ResultCollector {
     const dynamicSL = signal.stopLossPct ?? 0.15
     const dynamicTP = signal.takeProfitPct ?? 0.30
     const dynamicTrailActivation = signal.trailingStopActivation ?? 0
-    const dynamicTrailDistance = signal.trailingStopDistance ?? 0
+    // Cap at 5% — Binance TRAILING_STOP_MARKET callbackRate max is 5.0%; aligns backtest to live behaviour
+    const dynamicTrailDistance = Math.min(signal.trailingStopDistance ?? 0, 0.05)
 
     if (atr > 0) {
       log.debug({
@@ -649,8 +655,10 @@ export class ResultCollector {
     // Record P&L for monthly loss budget
     recordMonthlyPnl(this.clock.now(), pnl)
 
-    // Return margin + P&L (includes trading PnL + funding)
-    this.cashBalance += pos.margin + pnl
+    // Return margin + trading PnL only.
+    // accumulatedFunding is already credited to cashBalance in real-time via
+    // accruePositionFunding(); adding pnl (which includes it) would double-count.
+    this.cashBalance += pos.margin + rawPnl
 
     // Remove from open positions
     const idx = this.openPositions.indexOf(pos)
@@ -722,6 +730,7 @@ export class ResultCollector {
       const drawdown = (this.peakEquity - equity) / this.peakEquity
       if (drawdown > this.maxDrawdownFraction) {
         this.maxDrawdownFraction = drawdown
+        this.maxDrawdownAbsolute = this.peakEquity - equity
       }
 
       // Trigger circuit breaker if drawdown exceeds threshold

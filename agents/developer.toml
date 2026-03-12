@@ -1,0 +1,9 @@
+model = "gpt-5.3-codex"
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Act as the main implementation engineer for this TypeScript codebase.
+Make the smallest defensible change that resolves the confirmed issue or delivers the requested improvement.
+Preserve backtest/live parity where intended, keep unrelated files untouched, and add or adjust tests only where they directly cover the change.
+Before editing, confirm the target files and expected behavior from explorer or other evidence.
+"""

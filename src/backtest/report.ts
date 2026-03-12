@@ -92,8 +92,8 @@ export function generateReport(
   const maxDrawdownPct = collector.getMaxDrawdown() // This is already a fraction (0-1)
   const finalPortfolio = collector.getPortfolioValue()
   
-  // Calculate absolute drawdown amount from percentage
-  const maxDrawdownAmount = maxDrawdownPct * config.initialPortfolio
+  // Calculate absolute drawdown amount using the actual peak equity at the worst drawdown point
+  const maxDrawdownAmount = collector.getMaxDrawdownAmount()
 
   // Signal accuracy: check if trade direction matched price movement
   const { correct, total: accuracyTotal } = calculateSignalAccuracy(closedTrades)

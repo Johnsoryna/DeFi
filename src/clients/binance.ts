@@ -103,6 +103,19 @@ async function fetchSigned<T>(
  */
 export async function ensureOneWayMode(): Promise<void> {
   try {
+    // GET current mode first — only POST if change is actually needed.
+    // Sending an unnecessary POST /fapi/v1/positionSide/dual can return -4067
+    // ("cannot change if open orders exist") and may cause Binance to cancel
+    // conditional algo orders as a side effect of the failed mode-change attempt.
+    const currentMode = await fetchSigned<{ dualSidePosition: boolean }>(
+      'GET', '/fapi/v1/positionSide/dual',
+    )
+    if (!currentMode.dualSidePosition) {
+      log.debug('Position mode already One-Way — no change needed')
+      return
+    }
+
+    // Account is in Hedge Mode — attempt to switch. Requires no open orders.
     const qs = new URLSearchParams()
     qs.set('timestamp', Date.now().toString())
     qs.set('recvWindow', '5000')
@@ -116,13 +129,11 @@ export async function ensureOneWayMode(): Promise<void> {
 
     if (res.ok) {
       log.info('Position mode set to One-Way')
-    } else if (body.includes('-4059')) {
-      log.debug('Position mode already One-Way')
     } else {
-      log.warn({ status: res.status, body }, 'Failed to set position mode — orders may fail if account is in Hedge Mode')
+      log.warn({ status: res.status, body }, 'Failed to switch from Hedge Mode to One-Way — cancel open orders first')
     }
   } catch (err) {
-    log.warn({ err }, 'Failed to set position mode — orders may fail if account is in Hedge Mode')
+    log.warn({ err }, 'Failed to check/set position mode')
   }
 }
 
@@ -192,10 +203,32 @@ export async function getMarkPrice(symbol: string): Promise<string> {
 }
 
 /**
+ * Get the current funding rate for a symbol.
+ * Returns lastFundingRate as a float (e.g. 0.0001 = 0.010%/8h).
+ * Positive = longs pay shorts (favourable for short trades).
+ */
+export async function getFundingRate(symbol: string): Promise<number> {
+  const data = await fetchPublic<{ lastFundingRate: string }>(`/fapi/v1/premiumIndex?symbol=${symbol}`)
+  return parseFloat(data.lastFundingRate)
+}
+
+/**
  * Get all mark prices.
  */
 export async function getAllMarkPrices(): Promise<Array<{ symbol: string; markPrice: string }>> {
   return fetchPublic('/fapi/v1/premiumIndex')
+}
+
+/**
+ * Get OHLCV klines (candlestick data) for a futures symbol.
+ * Returns array of [openTime, open, high, low, close, volume, closeTime, ...].
+ */
+export async function getKlines(
+  symbol: string,
+  interval: string,
+  limit: number,
+): Promise<Array<[number, string, string, string, string, ...unknown[]]>> {
+  return fetchPublic(`/fapi/v1/klines?symbol=${encodeURIComponent(symbol)}&interval=${interval}&limit=${limit}`)
 }
 
 // ─── Account & Positions ────────────────────────────────────────────
@@ -238,10 +271,26 @@ export async function getAccountInfo(): Promise<BinanceAccountInfo> {
 
 /**
  * Get open positions only.
+ * Uses /fapi/v2/positionRisk (NOT /fapi/v2/account) — the account endpoint returns
+ * wrong positionAmt for some symbols (e.g. DYDX: -0.1 instead of -1200.8) and
+ * does not include markPrice. positionRisk is the authoritative position source.
  */
 export async function getPositions(): Promise<BinancePosition[]> {
-  const account = await getAccountInfo()
-  return account.positions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data = await fetchSigned<any[]>('GET', '/fapi/v2/positionRisk', {})
+  return data
+    .filter((p: { positionAmt: string }) => parseFloat(p.positionAmt) !== 0)
+    .map((p: Record<string, string>) => ({
+      symbol: p.symbol,
+      positionSide: p.positionSide,
+      positionAmt: p.positionAmt,
+      entryPrice: p.entryPrice,
+      markPrice: p.markPrice,
+      unrealizedProfit: p.unRealizedProfit ?? p.unrealizedProfit,
+      leverage: p.leverage,
+      marginType: p.marginType,
+      liquidationPrice: p.liquidationPrice,
+    }))
 }
 
 // ─── Trading ────────────────────────────────────────────────────────
@@ -273,7 +322,11 @@ export async function setMarginType(symbol: string, marginType: 'CROSSED' | 'ISO
 }
 
 /**
- * Place a new order.
+ * Place a new order — idempotent via newClientOrderId.
+ *
+ * withRetry inside fetchSigned can retry on network timeout after Binance already processed
+ * the order. To prevent a double entry, we generate a newClientOrderId before the retry loop.
+ * If Binance rejects with -2010 (duplicate clientOrderId), we fetch the original order instead.
  */
 export async function placeOrder(params: Record<string, string | number | boolean>): Promise<{
   orderId: number
@@ -282,15 +335,30 @@ export async function placeOrder(params: Record<string, string | number | boolea
   avgPrice: string
   executedQty: string
 }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return fetchSigned<any>('POST', '/fapi/v1/order', params)
+  const clientOrderId = `bot-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+  const paramsWithId = { newClientOrderId: clientOrderId, ...params }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return await fetchSigned<any>('POST', '/fapi/v1/order', paramsWithId)
+  } catch (err) {
+    // -2010: duplicate clientOrderId — the order was already placed on a previous attempt.
+    // Recover by fetching the existing order rather than propagating the error.
+    if (err instanceof Error && err.message.includes('-2010')) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return fetchSigned<any>('GET', '/fapi/v1/order', {
+        symbol: params.symbol as string,
+        origClientOrderId: clientOrderId,
+      })
+    }
+    throw err
+  }
 }
 
 /**
- * Place a conditional (stop-market / take-profit-market) algo order.
- * Since 2025-12-09, STOP_MARKET and TAKE_PROFIT_MARKET on /fapi/v1/order are rejected with -4120.
- * These order types must now go through POST /fapi/v1/algoOrder with algoType=CONDITIONAL.
- * Binance requires: algoType, type (STOP_MARKET|TAKE_PROFIT_MARKET), triggerPrice.
+ * Place a conditional (stop-market / take-profit-market) order via Algo API.
+ * STOP_MARKET and TAKE_PROFIT_MARKET must go through POST /fapi/v1/algoOrder
+ * with algoType=CONDITIONAL — /fapi/v1/order rejects them with -4120 on this account.
+ * triggerPrice is the activation price; workingType should be MARK_PRICE.
  */
 export async function placeConditionalAlgo(params: {
   symbol: string
@@ -301,7 +369,11 @@ export async function placeConditionalAlgo(params: {
   reduceOnly?: boolean
   workingType?: 'MARK_PRICE' | 'CONTRACT_PRICE'
 }): Promise<{ algoId: number; symbol: string; status: string }> {
+  // clientAlgoId provides idempotency: if withRetry fires twice after a network timeout,
+  // Binance rejects the duplicate. Since orders are reduceOnly, no extra exposure is created.
+  const clientAlgoId = `bot-cond-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
   const body: Record<string, string | number | boolean> = {
+    clientAlgoId,
     symbol: params.symbol,
     side: params.side,
     algoType: 'CONDITIONAL',
@@ -311,8 +383,18 @@ export async function placeConditionalAlgo(params: {
   }
   if (params.reduceOnly) body.reduceOnly = 'true'
   if (params.workingType) body.workingType = params.workingType
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return fetchSigned<any>('POST', '/fapi/v1/algoOrder', body)
+  try {
+    return await fetchSigned<{ algoId: number; symbol: string; status: string }>('POST', '/fapi/v1/algoOrder', body)
+  } catch (err) {
+    // Duplicate clientAlgoId: order was already placed on a prior attempt (network timeout + retry).
+    // -2082 is the Binance algo-order duplicate code; -2010 is the generic duplicate code.
+    // The order IS on Binance and is reduceOnly — treat as success to avoid false CRITICAL alerts.
+    if (err instanceof Error && (err.message.includes('-2082') || err.message.includes('-2010') || err.message.includes('clientAlgoId'))) {
+      log.warn({ symbol: params.symbol, clientAlgoId, type: params.type }, 'Algo order duplicate — order already exists, treating as success')
+      return { algoId: -1, symbol: params.symbol, status: 'EXISTING' }
+    }
+    throw err
+  }
 }
 
 /**
@@ -322,10 +404,14 @@ export async function placeConditionalAlgo(params: {
  */
 export async function cancelAlgoOrdersForSymbol(symbol: string): Promise<void> {
   try {
-    const data = await fetchSigned<{ total: number; orders: Array<{ algoId: number; symbol: string }> }>(
-      'GET', '/fapi/v1/openAlgoOrders', {},
-    )
-    const toCancel = (data.orders ?? []).filter((o) => o.symbol === symbol)
+    // Binance returns a direct array (not {orders:[]}) when no symbol filter is used.
+    // Do NOT pass symbol filter — Binance ignores it and may return an empty object.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = await fetchSigned<any>('GET', '/fapi/v1/openAlgoOrders', {})
+    const allOrders: Array<{ algoId: number; symbol: string }> = Array.isArray(data)
+      ? data
+      : (data.orders ?? [])
+    const toCancel = allOrders.filter((o) => o.symbol === symbol)
     await Promise.all(
       toCancel.map((o) =>
         fetchSigned('DELETE', '/fapi/v1/algoOrder', { algoId: o.algoId }).catch((err) =>
@@ -342,9 +428,16 @@ export async function cancelAlgoOrdersForSymbol(symbol: string): Promise<void> {
 }
 
 /**
- * Place a trailing stop market algo order.
- * The regular /fapi/v1/order endpoint rejects TRAILING_STOP_MARKET with error -4120.
- * Since 2025-12-09, all trailing stops go through POST /fapi/v1/algoOrder.
+ * Place a trailing stop market order via the Algo API.
+ * Works with: /fapi/v1/algoOrder + algoType=CONDITIONAL + type=TRAILING_STOP_MARKET + callbackRate
+ * Confirmed working 2026-03-02 via live API probe (algoId=2000000548663520).
+ *
+ * For a SHORT position (BUY side):
+ *   - callbackRate: trailing distance as percentage (e.g. 5 = 5%)
+ *   - Trail starts immediately from current price — Binance rejects triggerPrice < current
+ *     for BUY TRAILING_STOP_MARKET with -2007 "Invalid callBack rate" (confirmed 2026-03-02).
+ *   - activationPrice param kept for API compatibility but intentionally NOT sent to Binance.
+ *   - The static SL protects against immediate adverse moves until trail locks in profit.
  */
 export async function placeTrailingStopAlgo(params: {
   symbol: string
@@ -357,14 +450,30 @@ export async function placeTrailingStopAlgo(params: {
   const body: Record<string, string | number | boolean> = {
     symbol: params.symbol,
     side: params.side,
-    algoType: 'TRAILING_STOP_MARKET',
+    algoType: 'CONDITIONAL',
+    type: 'TRAILING_STOP_MARKET',
     quantity: params.quantity,
-    callbackRate: params.callbackRate,
+    callbackRate: String(params.callbackRate),
   }
-  if (params.activationPrice) body.activationPrice = params.activationPrice
+  // NOTE: triggerPrice (activationPrice) intentionally omitted — Binance returns -2007 when
+  // triggerPrice < current mark price for BUY TRAILING_STOP_MARKET on CONDITIONAL algoOrder.
+  // Without triggerPrice, trail activates immediately from current price (acceptable behaviour:
+  // SL provides hard backstop; trail locks in profit as position moves in our favour).
+  body.workingType = 'MARK_PRICE'  // Default CONTRACT_PRICE uses last trade price — MARK_PRICE is more stable
   if (params.reduceOnly) body.reduceOnly = 'true'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return fetchSigned<any>('POST', '/fapi/v1/algoOrder', body)
+  // clientAlgoId for idempotency — see placeConditionalAlgo comment
+  const clientAlgoId = `bot-trail-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+  body.clientAlgoId = clientAlgoId
+  try {
+    return await fetchSigned<{ algoId: number; symbol: string; status: string }>('POST', '/fapi/v1/algoOrder', body)
+  } catch (err) {
+    // Duplicate clientAlgoId — same recovery as placeConditionalAlgo
+    if (err instanceof Error && (err.message.includes('-2082') || err.message.includes('-2010') || err.message.includes('clientAlgoId'))) {
+      log.warn({ symbol: params.symbol, clientAlgoId }, 'Trailing stop duplicate — order already exists, treating as success')
+      return { algoId: -1, symbol: params.symbol, status: 'EXISTING' }
+    }
+    throw err
+  }
 }
 
 // ─── Income History ──────────────────────────────────────────────────
@@ -397,6 +506,26 @@ export async function getIncome(params: {
   }
   if (params.endTime) p.endTime = params.endTime
   return fetchSigned<IncomeRecord[]>('GET', '/fapi/v1/income', p)
+}
+
+export interface OrderRecord {
+  orderId: number
+  symbol: string
+  status: string
+  type: string
+  side: string
+  origQty: string
+  executedQty: string
+  reduceOnly: boolean
+  time: number
+}
+
+/**
+ * Get recent order history for a symbol.
+ * Used to recover position entry timestamps after bot restart.
+ */
+export async function getOrderHistory(symbol: string, limit = 50): Promise<OrderRecord[]> {
+  return fetchSigned<OrderRecord[]>('GET', '/fapi/v1/allOrders', { symbol, limit })
 }
 
 /**
@@ -583,12 +712,16 @@ export function disconnectWebSocket(): void {
 
 /**
  * Round a quantity to the exchange's step size.
+ * mode='floor' (default): round down — safe for entry orders (never over-buy)
+ * mode='round': round to nearest — for reduce/close orders to avoid leaving tiny fragments
  */
-export function roundStep(value: number, stepSize: string): string {
+export function roundStep(value: number, stepSize: string, mode: 'floor' | 'round' = 'floor'): string {
   const step = parseFloat(stepSize)
   if (step <= 0) return value.toFixed(8)
   const precision = Math.max(0, Math.ceil(-Math.log10(step)))
-  const rounded = Math.floor(value / step) * step
+  const rounded = mode === 'round'
+    ? Math.round(value / step) * step
+    : Math.floor(value / step) * step
   return rounded.toFixed(precision)
 }
 
