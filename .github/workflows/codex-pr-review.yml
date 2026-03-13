@@ -1,13 +1,89 @@
-name: Codex PR Review Disabled
+name: Codex PR Review
 
 on:
+  pull_request:
+    branches:
+      - v1
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
   workflow_dispatch:
 
+concurrency:
+  group: codex-pr-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  disabled:
+  review:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    outputs:
+      final_message: ${{ steps.run_codex.outputs.final-message }}
+
     steps:
-      - name: Explain why this workflow is disabled
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || 'v1' }}
+
+      - name: Pre-fetch base and head refs
+        if: github.event_name == 'pull_request'
         run: |
-          echo "PR reviews should now be triggered through the native Codex GitHub integration."
-          echo "Use @codex review and enable automatic reviews in Codex settings."
+          git fetch --no-tags origin \
+            ${{ github.event.pull_request.base.ref }} \
+            +refs/pull/${{ github.event.pull_request.number }}/head
+
+      - name: Check secret availability
+        id: secret_check
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip without OPENAI_API_KEY
+        if: steps.secret_check.outputs.available != 'true'
+        run: |
+          echo "OPENAI_API_KEY is not configured. Skipping Codex review." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run Codex review
+        if: steps.secret_check.outputs.available == 'true'
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: .github/codex/prompts/review-v1.md
+          output-file: codex-review.md
+          safety-strategy: drop-sudo
+          sandbox: read-only
+          codex-args: '["--enable","multi_agent"]'
+
+      - name: Upload review artifact
+        if: steps.secret_check.outputs.available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-review
+          path: codex-review.md
+
+      - name: Post Codex feedback
+        if: steps.secret_check.outputs.available == 'true' && steps.run_codex.outputs.final-message != '' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          CODEX_FINAL_MESSAGE: ${{ steps.run_codex.outputs.final-message }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: process.env.CODEX_FINAL_MESSAGE,
+            });
