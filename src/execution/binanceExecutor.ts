@@ -470,45 +470,57 @@ export function reduceAndRearm(
   reducePct: number,
 ): Promise<ExecutionResult> {
   return withSymbolLock(symbol, async () => {
+    const state = protectionState.get(symbol)
+
     const result = await reducePosition(symbol, currentSize, reducePct)
     if (!result.success) return result
+
+    // Full close: always cancel stale orders.
+    if (reducePct >= 100) {
+      await cancelPositionOrders(symbol)
+      return result
+    }
+
+    // If protection state is missing after a restart or state-loss scenario,
+    // keep the existing reduce-only protection rather than leaving the
+    // remaining position fully unprotected after a partial reduction.
+    if (!state) {
+      log.warn(
+        { symbol, reducePct },
+        'Protection state missing - keeping existing protective orders to avoid unprotected position',
+      )
+      return result
+    }
 
     // Cancel protective orders that were sized for the old (larger) position
     await cancelPositionOrders(symbol)
 
-    // Re-arm protection for the remaining position (skip if fully closed).
+    // Re-arm protection for the remaining position.
     // Use actual executed size from the reduce result rather than the stale `currentSize`
     // snapshot, which may have drifted if a SL/TP partial-fill happened concurrently.
-    if (reducePct < 100) {
-      const state = protectionState.get(symbol)
-      if (state) {
-        const executedQty = parseFloat(result.executedSize ?? '0')
-        const originalAbs = Math.abs(parseFloat(currentSize))
-        // Prefer: original - executed (most accurate). Fallback: original * (1 - pct/100)
-        const remainingAbs = executedQty > 0
-          ? Math.max(0, originalAbs - executedQty)
-          : originalAbs * (1 - reducePct / 100)
-        // 'round' mode: same floating-point issue as reducePosition — floor can leave a 1-step residual
-        const remainingQty = binanceClient.roundStep(remainingAbs, state.stepSize, 'round')
-        if (parseFloat(remainingQty) > 0) {
-          try {
-            await withRetry(
-              () => placeProtectiveOrders(symbol, state.signal, state.entryPrice, remainingQty, state.tickSize),
-              `rearm-${symbol}`,
-              { maxRetries: 3, baseDelayMs: 500 },
-            )
-            log.info({ symbol, remainingQty, reducePct }, 'Protective orders re-armed after stage reduction')
-          } catch (rearmErr) {
-            log.error({ rearmErr, symbol }, 'CRITICAL: rearm failed — position unprotected after stage reduction')
-            sendAlert('system_error', 'critical', 'Position Unprotected',
-              `Failed to re-arm protection for ${symbol} after stage reduction. Manual intervention required.`
-            ).catch((alertErr: unknown) => {
-              log.error({ alertErr, symbol }, 'Failed to send position-unprotected alert')
-            })
-          }
-        }
-      } else {
-        log.warn({ symbol }, 'No protection state found — remaining position is unprotected after stage reduction')
+    const executedQty = parseFloat(result.executedSize ?? '0')
+    const originalAbs = Math.abs(parseFloat(currentSize))
+    // Prefer: original - executed (most accurate). Fallback: original * (1 - pct/100)
+    const remainingAbs = executedQty > 0
+      ? Math.max(0, originalAbs - executedQty)
+      : originalAbs * (1 - reducePct / 100)
+    // 'round' mode: same floating-point issue as reducePosition — floor can leave a 1-step residual
+    const remainingQty = binanceClient.roundStep(remainingAbs, state.stepSize, 'round')
+    if (parseFloat(remainingQty) > 0) {
+      try {
+        await withRetry(
+          () => placeProtectiveOrders(symbol, state.signal, state.entryPrice, remainingQty, state.tickSize),
+          `rearm-${symbol}`,
+          { maxRetries: 3, baseDelayMs: 500 },
+        )
+        log.info({ symbol, remainingQty, reducePct }, 'Protective orders re-armed after stage reduction')
+      } catch (rearmErr) {
+        log.error({ rearmErr, symbol }, 'CRITICAL: rearm failed — position unprotected after stage reduction')
+        sendAlert('system_error', 'critical', 'Position Unprotected',
+          `Failed to re-arm protection for ${symbol} after stage reduction. Manual intervention required.`
+        ).catch((alertErr: unknown) => {
+          log.error({ alertErr, symbol }, 'Failed to send position-unprotected alert')
+        })
       }
     }
 

@@ -36,9 +36,7 @@ const CONTRACT_PROTOCOL: Record<string, GovernanceProtocol> = {
   [GOVERNANCE.uniswapGovernorBravo.toLowerCase()]: 'uniswap',
   [GOVERNANCE.aaveGovernanceCore.toLowerCase()]: 'aave',
   [GOVERNANCE.aaveVotingMachine.toLowerCase()]: 'aave',
-  // Cosmos SDK chains (synthetic addresses from migration script)
-  ['0x' + 'cosmos'.padEnd(40, '0')]: 'cosmos',
-  ['0x' + 'inject'.padEnd(40, '0')]: 'injective',
+  // Non-Ethereum synthetic addresses retained only for currently-supported protocols.
   ['0x' + 'arbtrum'.padEnd(40, '0')]: 'arbitrum',
 }
 

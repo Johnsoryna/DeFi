@@ -58,7 +58,7 @@ vi.mock('../../src/clients/binance.js', async (importOriginal) => {
   }
 })
 
-import { executeBinanceSignal, cancelPositionOrders } from '../../src/execution/binanceExecutor.js'
+import { executeBinanceSignal, cancelPositionOrders, reduceAndRearm } from '../../src/execution/binanceExecutor.js'
 import type { TradeSignal } from '../../src/types/trading.js'
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -105,6 +105,7 @@ function makeLongSignal(overrides: Partial<TradeSignal> = {}): TradeSignal {
 describe('BinanceExecutor — Trailing Stop & Order Parity', () => {
   beforeEach(() => {
     placedOrders.length = 0
+    vi.clearAllMocks()
   })
 
   describe('Short signal — 3 protective orders placed', () => {
@@ -200,6 +201,20 @@ describe('BinanceExecutor — Trailing Stop & Order Parity', () => {
       const { cancelAllOpenOrders } = await import('../../src/clients/binance.js')
       await cancelPositionOrders('AAVEUSDT')
       expect(cancelAllOpenOrders).toHaveBeenCalledWith('AAVEUSDT')
+    })
+  })
+
+  describe('reduceAndRearm restart-safety', () => {
+    it('does not cancel existing protection on partial reduce when protection state is missing', async () => {
+      const { cancelAllOpenOrders, cancelAlgoOrdersForSymbol, placeConditionalAlgo } = await import('../../src/clients/binance.js')
+
+      // ETHUSDT is not opened anywhere in this test file, so no protection state exists.
+      const result = await reduceAndRearm('ETHUSDT', '2.00', 50)
+
+      expect(result.success).toBe(true)
+      expect(cancelAllOpenOrders).not.toHaveBeenCalled()
+      expect(cancelAlgoOrdersForSymbol).not.toHaveBeenCalled()
+      expect(placeConditionalAlgo).not.toHaveBeenCalled()
     })
   })
 })

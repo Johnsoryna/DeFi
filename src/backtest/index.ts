@@ -223,7 +223,7 @@ function wireAnalysisPipeline(clock: VirtualClock, riskManager: RiskManager): vo
         if (parsed.length > 0) spellActions = parsed
       }
       const analysis = analyzeOnchainProposal(proposal, spellActions)
-      const _stageKey = `${proposal.protocol}:${proposal.proposalId}`
+      cachedAnalyses.set(analysis.proposalId, analysis)
       recordOnchain(proposal, analysis)
       
       // Trade Cosmos SDK + Tally L2 chains, record-only for Ethereum chains
@@ -290,9 +290,6 @@ function wireAnalysisPipeline(clock: VirtualClock, riskManager: RiskManager): vo
           ...originalAnalysis,
           stage: newStage,
           // Keep original proposalId (no -reentry suffix) — matches live index.ts behaviour.
-          // Note: backtest cachedAnalyses is keyed "snapshot:protocol:snapId", so
-          // on-chain event keys "protocol:propId" never match here in practice.
-          // This block can only fire if Snapshot analyses are later cached under on-chain keys.
           confidenceScore: 0.85,
           timestamp: clock.now(),
         }
