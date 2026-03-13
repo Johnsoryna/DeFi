@@ -26,6 +26,8 @@ If you want the recurring schedules to stay live for `v1`, do one of these:
 
 Push-triggered and pull-request-triggered runs work on `v1` immediately.
 
+Activation note: branch `v1` is intended to be the default branch for this automation setup.
+
 ## Safety Model
 
 - review and audit jobs run read-only
