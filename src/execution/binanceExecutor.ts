@@ -64,7 +64,7 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   AAVE: 'AAVEUSDT',
   UNI: 'UNIUSDT',
   COMP: 'COMPUSDT',
-  MKR: 'MKRUSDT',
+  // MKR: delisted on Binance Futures (replaced by SKY) — removed to prevent failed orders
   SKY: 'SKYUSDT',
   LDO: 'LDOUSDT',
   ARB: 'ARBUSDT',

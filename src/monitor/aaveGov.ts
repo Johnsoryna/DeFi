@@ -233,17 +233,16 @@ function subscribeGovernanceCore(): void {
         const isSocketClosed = error?.name === 'SocketClosedError' ||
           (error?.message ?? '').includes('socket has been closed')
         if (isSocketClosed) {
-          log.warn({ eventName }, 'WSS disconnected — will auto-recover via HTTP polling')
+          log.warn({ eventName }, 'GovernanceCore WSS disconnected — scheduling reconnect with backfill in 10s')
         } else {
           log.error({ err: error, eventName }, 'GovernanceCore subscription error')
-          if (!reconnecting) {
-            reconnecting = true
-            log.warn('Scheduling Aave Gov reconnect in 10s')
-            setTimeout(() => {
-              reconnecting = false
-              startAaveGovMonitor().catch((err) => log.error({ err }, 'Aave Gov reconnect failed'))
-            }, 10_000)
-          }
+        }
+        if (!reconnecting) {
+          reconnecting = true
+          setTimeout(() => {
+            reconnecting = false
+            startAaveGovMonitor().catch((err) => log.error({ err }, 'Aave Gov reconnect failed'))
+          }, 10_000)
         }
       },
     })
@@ -273,17 +272,16 @@ function subscribeVotingMachine(): void {
       const isSocketClosed = error?.name === 'SocketClosedError' ||
         (error?.message ?? '').includes('socket has been closed')
       if (isSocketClosed) {
-        log.warn('VotingMachine WSS disconnected — will auto-recover via HTTP polling')
+        log.warn('VotingMachine WSS disconnected — scheduling reconnect with backfill in 10s')
       } else {
         log.error({ err: error }, 'VotingMachine subscription error')
-        if (!reconnecting) {
-          reconnecting = true
-          log.warn('Scheduling Aave Gov reconnect in 10s (VotingMachine error)')
-          setTimeout(() => {
-            reconnecting = false
-            startAaveGovMonitor().catch((err) => log.error({ err }, 'Aave Gov reconnect failed'))
-          }, 10_000)
-        }
+      }
+      if (!reconnecting) {
+        reconnecting = true
+        setTimeout(() => {
+          reconnecting = false
+          startAaveGovMonitor().catch((err) => log.error({ err }, 'Aave Gov reconnect failed'))
+        }, 10_000)
       }
     },
   })

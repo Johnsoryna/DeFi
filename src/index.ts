@@ -498,7 +498,7 @@ async function main(): Promise<void> {
             sendAlert(
               'trade_exit', 'info',
               `Position Closed: ${side} ${prev.asset}`,
-              `PnL: ${pnlSign}$${pnlToRecord.toFixed(2)}\nEntry: $${parseFloat(prev.entryPrice || '0').toFixed(4)}\nHeld: ${holdingHours.toFixed(0)}h\nExit: Trailing Stop / SL / TP`,
+              `PnL: ${pnlSign}$${pnlToRecord.toFixed(2)}\nEntry: $${(() => { const p = parseFloat(prev.entryPrice || '0'); return p >= 1 ? p.toFixed(2) : p.toFixed(4) })()}\nHeld: ${holdingHours.toFixed(0)}h\nExit: Trailing Stop / SL / TP`,
             ).catch(() => {})
           })()
         } else {
