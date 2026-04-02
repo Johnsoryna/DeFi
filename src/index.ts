@@ -233,9 +233,12 @@ function wireAnalysisPipeline(rm: RiskManager): void {
     const reentryProtocol = proposalId.split(':')[0]
     if (newStage === 'timelock' && ONCHAIN_TRADE_ENABLED.has(reentryProtocol) && cachedAnalyses.has(proposalId)) {
       const originalAnalysis = cachedAnalyses.get(proposalId)!
-      // Guard: don't re-enter if already in a position on this symbol
+      // Guard: don't re-enter if already in a position on this symbol.
+      // Normalize wrapped-token aliases (WETH→ETH, WBTC→BTC) — extractedAssets from NLP
+      // may return the wrapped form while Binance positions store the unwrapped ticker.
+      const normalizeAsset = (a: string) => a.replace(/^W(ETH|BTC)$/, '$1').replace(/^CBBTC$/, 'BTC')
       const alreadyOpen = originalAnalysis.extractedAssets?.some(
-        asset => currentPositions.some(p => p.asset === asset)
+        asset => currentPositions.some(p => normalizeAsset(p.asset) === normalizeAsset(asset))
       )
       const hasBearishImpact = originalAnalysis.dynamicImpacts?.some(
         i => i.type === 'risk_mitigation' ||
@@ -263,6 +266,20 @@ function wireAnalysisPipeline(rm: RiskManager): void {
   eventBus.on('governance:queued', handleStageTransition)
   eventBus.on('governance:executed', handleStageTransition)
   eventBus.on('governance:canceled', handleStageTransition)
+
+  // Evict cachedAnalyses when proposals reach terminal states (executed or canceled).
+  // Proposals in these states will never generate new signals, so the cache entry is stale.
+  // Without eviction the map grows unbounded over months of operation.
+  function evictProposalCache(event: GovernanceEvent): void {
+    if (event.type !== 'proposal_executed' && event.type !== 'proposal_canceled') return
+    // Key format matches handleStageTransition: "${protocol}:${proposalId}"
+    const key = `${event.protocol}:${event.proposalId}`
+    if (cachedAnalyses.delete(key)) {
+      log.debug({ key }, 'Evicted proposal from analysis cache (terminal state)')
+    }
+  }
+  eventBus.on('governance:executed', evictProposalCache)
+  eventBus.on('governance:canceled', evictProposalCache)
 
   // ── Snapshot proposals → Intelligence Engine (NLP-powered) ──
   // IDENTICAL to backtest wireAnalysisPipeline — keep in sync
@@ -402,6 +419,13 @@ async function main(): Promise<void> {
     const binance = await import('./clients/binance.js')
     await binance.ensureOneWayMode()
     log.info('Binance API configured — order execution available')
+
+    // 2a. Reconcile layer DB positions against Binance — clears ghost positions
+    // (positions closed externally during downtime or via manual trading)
+    if (!config.dryRun) {
+      const { reconcilePositions } = await import('./capital/reconcile.js')
+      await reconcilePositions()
+    }
   }
 
   // 4. Wire analysis pipeline (IDENTICAL to backtest wireAnalysisPipeline)
@@ -487,6 +511,9 @@ async function main(): Promise<void> {
             } catch (err) {
               log.warn({ err, symbol }, 'Income history fetch failed — recording snapshot PnL')
             }
+            // NOTE: 'margin' here is notional (size × entryPrice), not margin (notional/leverage).
+            // recordTradeOutcome is diagnostic-only (adaptive Kelly is disabled in confidenceScorer),
+            // so the imprecision has no effect on live sizing.
             const margin = Math.abs(parseFloat(prev.size || '0')) * parseFloat(prev.entryPrice || '0')
             if (margin > 0) recordTradeOutcome(pnlToRecord, margin)
             if (pnlToRecord < 0) { recordStopLoss(prev.asset, now); recordGlobalLoss(now) }
@@ -621,6 +648,7 @@ async function main(): Promise<void> {
   )
 
   log.info('All systems operational')
+
 }
 
 // ─── Max-Holding-Time Monitor ───────────────────────────────────────

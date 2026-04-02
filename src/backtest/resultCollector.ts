@@ -29,12 +29,14 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   AAVE: 1.5, BLUR: 1.5, JTO: 1.5,
   UNI: 1.5, OP: 1.5, COMP: 1.5, LINK: 1.5,
   MKR: 1.5, CRV: 1.5, YFI: 1.5,
+  SNX: 1.5, PENDLE: 1.5,
   ZK: 2.0, JUP: 2.0, DRIFT: 2.0, STRK: 2.0, TIA: 2.0,
   ENA: 2.0, STX: 2.0,
   SEI: 2.0, LDO: 2.0, PYTH: 2.0,
-  CVX: 2.0,
-  ARB: 2.5, DYDX: 2.5,
+  CVX: 2.0, GRT: 2.0,
+  ARB: 1.5, DYDX: 1.5,
   WSTETH: 2.0, RETH: 2.5, CBETH: 2.5,
+  EUL: 2.5,
 }
 
 /**
@@ -235,6 +237,7 @@ export class ResultCollector {
         accruedYield: '0',
         leverage: pos.leverage,
         lastUpdated: new Date(this.clock.now()).toISOString(),
+        proposalId: pos.proposalId,
       } satisfies Position
     })
   }
@@ -293,7 +296,7 @@ export class ResultCollector {
       // Prevents catastrophic losses from high-leverage positions while allowing winners to run.
       // DO NOT reduce below 10% — sensitivity analysis shows trades need room to recover:
       // reducing to 7.5% costs $12K because some trades temporarily dip past -7.5% but recover.
-      const maxAbsLoss = this.initialPortfolio * 0.10
+      const maxAbsLoss = this.initialPortfolio * 0.1
       if (pnl < -maxAbsLoss) {
         toClose.push({
           pos,
@@ -311,11 +314,11 @@ export class ResultCollector {
       const holdingMs = this.clock.now() - pos.openedAt
       const holdingHours = holdingMs / 3600_000
       let effectiveSL = pos.stopLossPct
-      if (priceChangePct < 0 && holdingHours > 336) {
+      if (priceChangePct < 0 && holdingHours > 240) {
         // Trade is losing AND held > 14 days: tighten SL progressively
         // Alpha decay: governance signal loses power over time
         // 14 days: start decay, 21 days: 83% of original, 28 days: 65%
-        const decayWeeks = Math.min(3, (holdingHours - 336) / 168) // 0 to 3 weeks of decay
+        const decayWeeks = Math.min(3, (holdingHours - 240) / 168) // 0 to 3 weeks of decay
         const decayFactor = 1.0 - (decayWeeks * 0.117) // 1.0 → 0.65 over 3 weeks (gentler)
         effectiveSL = pos.stopLossPct * Math.max(0.65, decayFactor)
       }
@@ -487,7 +490,7 @@ export class ResultCollector {
     }
 
     // ─── ONE POSITION PER MARKET GUARD ─────────────────────────────
-    // Only allow one position per market to simplify risk management.
+    // One position per market to avoid correlated double-exposure.
     // Use resolvedAsset so ETH/WETH, MATIC/STMATIC etc. are treated as same market.
     const resolvedAsset = resolveAssetSymbol(signal.asset)
     const existingOnAsset = this.openPositions.find(
@@ -501,7 +504,7 @@ export class ResultCollector {
           existingDirection: existingOnAsset.direction,
           signalId: result.signalId,
         },
-        'Rejecting trade: position already open on this asset (one per market)',
+        'Rejecting trade: position already open on this asset',
       )
       return
     }

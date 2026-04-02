@@ -196,6 +196,37 @@ function orient() {
   const longOffset = sg.match(/minConfidence \+ (0\.\d+)\s*\/\/ Longs/)
   if (longOffset) params['long_threshold_offset'] = { value: parseFloat(longOffset[1]), raw: longOffset[1], file: 'signalGenerator' }
 
+  // ─── v12: Kelly / scaling / stage-score params ─────────────────────────
+
+  // DEFAULT_KELLY constants in confidenceScorer.ts
+  const baseWR = cs.match(/baseWinRate:\s*([\d.]+)/)
+  if (baseWR) params['baseWinRate'] = { value: parseFloat(baseWR[1]), raw: baseWR[1], file: 'confidenceScorer' }
+
+  const rtr = cs.match(/rewardToRisk:\s*([\d.]+)/)
+  if (rtr) params['rewardToRisk'] = { value: parseFloat(rtr[1]), raw: rtr[1], file: 'confidenceScorer' }
+
+  const kf = cs.match(/kellyFraction:\s*([\d.]+)/)
+  if (kf) params['kellyFraction'] = { value: parseFloat(kf[1]), raw: kf[1], file: 'confidenceScorer' }
+
+  // shortScalePower: inline ternary "isShort ? 0.58 : 0.7"
+  const ssp = cs.match(/isShort \? ([\d.]+) : 0\.7/)
+  if (ssp) params['shortScalePower'] = { value: parseFloat(ssp[1]), raw: ssp[1], file: 'confidenceScorer' }
+
+  // riskOnlyBoost: full ternary anchor prevents ambiguity
+  const rob = cs.match(/hasRiskAction && !hasDirectionalValue && direction === 'short' \? ([\d.]+) : 0/)
+  if (rob) params['riskOnlyBoost'] = { value: parseFloat(rob[1]), raw: rob[1], file: 'confidenceScorer' }
+
+  // STAGE_SCORES (confidenceScorer.ts) — snapshot/discussion/timelock multipliers
+  // These differ in value from STAGE_MIN_CONFIDENCE (signalGenerator.ts) so value-anchoring is safe
+  const stageScoresBlock = cs.match(/const STAGE_SCORES[^{]+\{([^}]+)\}/)
+  if (stageScoresBlock) {
+    for (const [, key, val] of stageScoresBlock[1].matchAll(/(\w+):\s*([\d.]+)/g)) {
+      if (key === 'snapshot' || key === 'discussion' || key === 'timelock') {
+        params[`stageScore_${key}`] = { value: parseFloat(val), raw: val, file: 'confidenceScorer', stageKey: key }
+      }
+    }
+  }
+
   return params
 }
 
@@ -332,6 +363,80 @@ function decide(metrics, params, previousTried = []) {
       // Safe range: result must not exceed 15%
       condition: () => winRate > 82 && executedTrades < 35 && ((params['maxSizePct']?.value ?? 99) + 1) <= 15,
     },
+
+    // ─── v12: Kelly / scaling / stage-score params ──────────────────────
+
+    { id: 'kelly_wr_up', param: 'baseWinRate', delta: +0.02,
+      rationale: 'Increase Kelly base WR assumption — closer to observed 75%+ historical WR',
+      priority: 3, risk: 'low',
+      condition: () => winRate > 73 && ((params['baseWinRate']?.value ?? 0) + 0.02) <= 0.65 },
+    { id: 'kelly_wr_down', param: 'baseWinRate', delta: -0.02,
+      rationale: 'Decrease Kelly base WR — more conservative sizing in lower-WR regime',
+      priority: 4, risk: 'medium',
+      condition: () => maxDrawdownPct > 22 && ((params['baseWinRate']?.value ?? 1) - 0.02) >= 0.48 },
+
+    { id: 'kelly_rtr_up', param: 'rewardToRisk', delta: +0.10,
+      rationale: 'Increase R/R assumption — large winners justify higher sizing',
+      priority: 3, risk: 'low',
+      condition: () => profitFactor > 4.0 && ((params['rewardToRisk']?.value ?? 0) + 0.10) <= 3.5 },
+    { id: 'kelly_rtr_down', param: 'rewardToRisk', delta: -0.10,
+      rationale: 'Decrease R/R assumption — reduce sizing in high-drawdown regimes',
+      priority: 4, risk: 'medium',
+      condition: () => maxDrawdownPct > 22 && ((params['rewardToRisk']?.value ?? 1) - 0.10) >= 1.8 },
+
+    { id: 'kelly_frac_up', param: 'kellyFraction', delta: +0.05,
+      rationale: 'Increase Kelly fraction — high WR justifies larger fractional bet',
+      priority: 3, risk: 'medium',
+      condition: () => winRate > 78 && executedTrades < 35 && ((params['kellyFraction']?.value ?? 0) + 0.05) <= 0.65 },
+    { id: 'kelly_frac_down', param: 'kellyFraction', delta: -0.05,
+      rationale: 'Decrease Kelly fraction — reduce per-trade risk in volatile regime',
+      priority: 4, risk: 'low',
+      condition: () => maxDrawdownPct > 22 && ((params['kellyFraction']?.value ?? 1) - 0.05) >= 0.35 },
+
+    { id: 'scale_power_up', param: 'shortScalePower', delta: +0.02,
+      rationale: 'Increase short scaling exponent — more aggressive leverage at high confidence',
+      priority: 3, risk: 'medium',
+      condition: () => winRate > 78 && ((params['shortScalePower']?.value ?? 0) + 0.02) <= 0.75 },
+    { id: 'scale_power_down', param: 'shortScalePower', delta: -0.02,
+      rationale: 'Decrease short scaling exponent — reduce leverage sensitivity to confidence',
+      priority: 3, risk: 'low',
+      condition: () => maxDrawdownPct > 20 && ((params['shortScalePower']?.value ?? 1) - 0.02) >= 0.45 },
+
+    { id: 'risk_boost_up', param: 'riskOnlyBoost', delta: +0.02,
+      rationale: 'Increase risk-only NLP boost — reward high-quality risk signals with more confidence',
+      priority: 3, risk: 'low',
+      condition: () => winRate > 78 && ((params['riskOnlyBoost']?.value ?? 0) + 0.02) <= 0.25 },
+    { id: 'risk_boost_down', param: 'riskOnlyBoost', delta: -0.02,
+      rationale: 'Decrease risk-only boost — reduce over-confidence on risk-flagged signals',
+      priority: 4, risk: 'low',
+      condition: () => profitFactor < 3.0 && ((params['riskOnlyBoost']?.value ?? 1) - 0.02) >= 0.08 },
+
+    { id: 'stage_snap_score_up', param: 'stageScore_snapshot', delta: +0.03,
+      rationale: 'Increase snapshot stage score — snapshot votes carry stronger signal',
+      priority: 3, risk: 'low',
+      condition: () => winRate > 78 && ((params['stageScore_snapshot']?.value ?? 0) + 0.03) <= 0.60 },
+    { id: 'stage_snap_score_down', param: 'stageScore_snapshot', delta: -0.03,
+      rationale: 'Decrease snapshot stage score — reduce over-reliance on early voting signals',
+      priority: 4, risk: 'medium',
+      condition: () => winRate < 72 && ((params['stageScore_snapshot']?.value ?? 1) - 0.03) >= 0.35 },
+
+    { id: 'stage_disc_score_up', param: 'stageScore_discussion', delta: +0.02,
+      rationale: 'Increase discussion stage score — earlier alpha from forum posts',
+      priority: 4, risk: 'medium',
+      condition: () => executedTrades < 28 && ((params['stageScore_discussion']?.value ?? 0) + 0.02) <= 0.25 },
+    { id: 'stage_disc_score_down', param: 'stageScore_discussion', delta: -0.02,
+      rationale: 'Decrease discussion stage score — reduce forum noise in confidence computation',
+      priority: 3, risk: 'low',
+      condition: () => winRate < 72 && ((params['stageScore_discussion']?.value ?? 1) - 0.02) >= 0.08 },
+
+    { id: 'stage_tl_score_up', param: 'stageScore_timelock', delta: +0.02,
+      rationale: 'Increase timelock stage score — near-execution certainty warrants higher multiplier',
+      priority: 4, risk: 'low',
+      condition: () => executedTrades < 28 && ((params['stageScore_timelock']?.value ?? 0) + 0.02) <= 1.00 },
+    { id: 'stage_tl_score_down', param: 'stageScore_timelock', delta: -0.02,
+      rationale: 'Decrease timelock stage score — prevent over-leverage on late-stage proposals',
+      priority: 3, risk: 'medium',
+      condition: () => winRate < 72 && ((params['stageScore_timelock']?.value ?? 1) - 0.02) >= 0.85 },
   ]
 
   for (const c of pool) {
@@ -408,6 +513,28 @@ function applyMutation(mutation, params) {
   } else if (param === 'long_threshold_offset') {
     // Anchor on surrounding context — raw value from file handles trailing zeros
     const re = new RegExp(`(minConfidence \\+ )(${escRe(oldStr)})(\\s*\\/\\/ Longs)`)
+    if (re.test(content)) { content = content.replace(re, `$1${newStr}$3`); replaced = true }
+  } else if (param === 'baseWinRate') {
+    const re = /(baseWinRate:\s*)([\d.]+)/
+    if (re.test(content)) { content = content.replace(re, `$1${newStr}`); replaced = true }
+  } else if (param === 'rewardToRisk') {
+    const re = /(rewardToRisk:\s*)([\d.]+)/
+    if (re.test(content)) { content = content.replace(re, `$1${newStr}`); replaced = true }
+  } else if (param === 'kellyFraction') {
+    const re = /(kellyFraction:\s*)([\d.]+)/
+    if (re.test(content)) { content = content.replace(re, `$1${newStr}`); replaced = true }
+  } else if (param === 'shortScalePower') {
+    // Anchor: "isShort ? OLD : 0.7" — unique in confidenceScorer.ts
+    const re = new RegExp(`(isShort \\? )(${escRe(oldStr)})( : 0\\.7)`)
+    if (re.test(content)) { content = content.replace(re, `$1${newStr}$3`); replaced = true }
+  } else if (param === 'riskOnlyBoost') {
+    // Full ternary anchor — prevents ambiguity with other ternaries
+    const re = new RegExp(`(hasRiskAction && !hasDirectionalValue && direction === 'short' \\? )(${escRe(oldStr)})( : 0)`)
+    if (re.test(content)) { content = content.replace(re, `$1${newStr}$3`); replaced = true }
+  } else if (param.startsWith('stageScore_')) {
+    // STAGE_SCORES in confidenceScorer.ts — each key appears only once in this file
+    const stageKey = info.stageKey  // 'snapshot' | 'discussion' | 'timelock'
+    const re = new RegExp(`(${stageKey}:\\s*)(${escRe(oldStr)})(,)`)
     if (re.test(content)) { content = content.replace(re, `$1${newStr}$3`); replaced = true }
   }
 

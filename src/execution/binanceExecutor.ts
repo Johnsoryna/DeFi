@@ -49,7 +49,12 @@ const symbolLocks = new Map<string, Promise<void>>()
 function withSymbolLock<T>(symbol: string, fn: () => Promise<T>): Promise<T> {
   const prev = symbolLocks.get(symbol) ?? Promise.resolve()
   const next = prev.then(fn)
-  symbolLocks.set(symbol, next.then(() => {}, () => {}))
+  const sentinel = next.then(() => {}, () => {})
+  symbolLocks.set(symbol, sentinel)
+  // Clean up the map entry once this chain link settles and no newer chain was appended.
+  sentinel.then(() => {
+    if (symbolLocks.get(symbol) === sentinel) symbolLocks.delete(symbol)
+  })
   return next
 }
 
@@ -367,6 +372,7 @@ async function placeProtectiveOrders(
       : entryPrice * (1 + signal.stopLossPct)
     const triggerPrice = binanceClient.roundTick(slPrice, tickSize)
 
+    let slFailed = false
     try {
       const result = await binanceClient.placeConditionalAlgo({
         symbol,
@@ -385,7 +391,11 @@ async function placeProtectiveOrders(
       ).catch((alertErr: unknown) => {
         log.error({ alertErr, symbol }, 'Failed to send SL-failure alert')
       })
+      slFailed = true
     }
+    // Abort — do NOT place trailing stop or TP on an unprotected position.
+    // The hard stop-loss is the safety floor; without it, the position has no downside cap.
+    if (slFailed) return
   }
 
   // Trailing Stop (TRAILING_STOP_MARKET) — locks in profits after activation

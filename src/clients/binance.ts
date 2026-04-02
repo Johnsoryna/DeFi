@@ -238,6 +238,7 @@ export interface BinanceAccountInfo {
   totalUnrealizedProfit: string
   totalMarginBalance: string
   availableBalance: string
+  totalPositionInitialMargin: string
   positions: BinancePosition[]
 }
 
@@ -252,6 +253,7 @@ export async function getAccountInfo(): Promise<BinanceAccountInfo> {
     totalUnrealizedProfit: data.totalUnrealizedProfit,
     totalMarginBalance: data.totalMarginBalance,
     availableBalance: data.availableBalance,
+    totalPositionInitialMargin: data.totalPositionInitialMargin ?? '0',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     positions: (data.positions as any[])
       .filter((p: { positionAmt: string }) => parseFloat(p.positionAmt) !== 0)
@@ -310,15 +312,30 @@ export async function setLeverage(symbol: string, leverage: number): Promise<voi
  * Set margin type for a symbol (CROSSED or ISOLATED).
  */
 export async function setMarginType(symbol: string, marginType: 'CROSSED' | 'ISOLATED'): Promise<void> {
-  try {
-    await fetchSigned('POST', '/fapi/v1/marginType', { symbol, marginType })
-    log.debug({ symbol, marginType }, 'Margin type set')
-  } catch (err) {
-    // Error -4046 means "No need to change margin type" — already set
-    const msg = err instanceof Error ? err.message : ''
-    if (msg.includes('-4046')) return
-    throw err
-  }
+  await withRetry(
+    async () => {
+      const qs = new URLSearchParams()
+      qs.set('timestamp', Date.now().toString())
+      qs.set('recvWindow', '5000')
+      qs.set('symbol', symbol)
+      qs.set('marginType', marginType)
+      const queryString = qs.toString()
+      const url = `${BASE_URL}/fapi/v1/marginType?${queryString}&signature=${sign(queryString)}`
+      const res = await fetch(url, { method: 'POST', headers: authHeaders() })
+      if (!res.ok) {
+        const body = await res.text()
+        // -4046 = "No need to change margin type" — already set correctly, treat as success
+        if (body.includes('-4046')) {
+          log.debug({ symbol, marginType }, 'Margin type already set — skipping')
+          return
+        }
+        throw new Error(`Binance API ${res.status}: POST /fapi/v1/marginType — ${body}`)
+      }
+      log.debug({ symbol, marginType }, 'Margin type set')
+    },
+    `binance:/fapi/v1/marginType`,
+    { maxRetries: 2, baseDelayMs: 1000 },
+  )
 }
 
 /**
@@ -674,16 +691,19 @@ function scheduleReconnect(handlers: BinanceWsHandlers): void {
   reconnectAttempts++
 
   if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
-    log.error(
-      { attempts: reconnectAttempts, maxAttempts: MAX_RECONNECT_ATTEMPTS },
-      'Binance WS max reconnect attempts reached — giving up',
+    log.warn(
+      { attempts: reconnectAttempts },
+      'Binance WS max fast-reconnect attempts reached — entering slow-reconnect mode (every 5 min)',
     )
     sendAlert(
       'system_error',
       'critical',
-      'Binance WebSocket Failed',
-      `Max reconnect attempts (${MAX_RECONNECT_ATTEMPTS}) reached. WebSocket is offline.`,
-    ).catch((err) => log.error({ err }, 'Failed to send Binance WS critical alert'))
+      'Binance WebSocket Degraded',
+      `Fast reconnect exhausted after ${MAX_RECONNECT_ATTEMPTS} attempts. Slow-reconnect every 5 min.`,
+    ).catch((err) => log.error({ err }, 'Failed to send Binance WS degraded alert'))
+    // Reset counter so the next successful connection resets to fast reconnect.
+    reconnectAttempts = MAX_RECONNECT_ATTEMPTS - 1
+    reconnectTimer = setTimeout(() => connectWebSocket(handlers), 5 * 60_000)
     return
   }
 

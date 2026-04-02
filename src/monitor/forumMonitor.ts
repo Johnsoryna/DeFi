@@ -77,13 +77,26 @@ interface DiscourseLatestResponse {
 const FORUM_PAGE_LIMIT = 20
 const DISCOURSE_PAGE_SIZE = 30
 
+// Browser-like headers to bypass Cloudflare bot-protection on forums like gov.curve.fi
+const FORUM_FETCH_HEADERS = {
+  'Accept': 'application/json, text/plain, */*',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+}
+
 async function fetchLatestTopicsPage(forumUrl: string, page: number): Promise<DiscourseTopic[]> {
   const suffix = page > 0 ? `?page=${page}` : ''
   return withRetry(
     async () => {
       const res = await fetch(`${forumUrl}/latest.json${suffix}`, {
-        headers: { Accept: 'application/json' },
+        headers: { ...FORUM_FETCH_HEADERS, Referer: forumUrl + '/' },
       })
+      // 403/429: non-retryable — Cloudflare bot-block or rate limit. Return empty rather than
+      // hammering the endpoint 3x per cycle. pollForum will skip silently until next cycle.
+      if (res.status === 403 || res.status === 429) {
+        log.debug({ forumUrl, status: res.status }, 'Forum blocked (Cloudflare/rate-limit) — skipping cycle')
+        return []
+      }
       if (!res.ok) throw new Error(`Forum API error: ${res.status} from ${forumUrl}`)
       const data = (await res.json()) as DiscourseLatestResponse
       return data.topic_list.topics

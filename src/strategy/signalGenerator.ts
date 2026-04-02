@@ -550,6 +550,9 @@ const COLLATERAL_ISSUER_TOKEN: Record<string, string> = {
   WSTETH: 'LDO',   // Lido issues wstETH — AAVE/Compound degrading wstETH hurts Lido
   STETH:  'LDO',   // Lido issues stETH
   USDE:   'ENA',   // Ethena issues USDe — collateral freeze/degrade hits ENA token
+  DAI:    'SKY',   // MakerDAO issues DAI — AAVE/Compound degrading DAI is bearish for SKY (MakerDAO)
+  USDS:   'SKY',   // Updated MakerDAO stablecoin (rebrand from DAI)
+  SDAI:   'SKY',   // SparkFi savings DAI — SparkFi is MakerDAO's lending protocol
 }
 
 // ─── Hebel 3: Protocol Cascade Map ───────────────────────────────────────────
@@ -748,14 +751,18 @@ function generateDynamicSignals(
   // Empirical: 2 DYDX losses (-$7.4K) from "Winding down Pareto Labs validator" and
   // "HashKey Cloud Validator shutdown" — individual exits, not protocol risk.
   // Also: "Nansen Validator on dYdX: Sunset Notice" (Feb 2026) — "sunset" = company wind-down.
+  // Scoped to dYdX only — dYdX's permissioned validator set makes these announcements frequent.
+  // For other protocols (Ethereum PoS, Lido, etc.) "validator" in governance context
+  // usually means validator-set policy changes, not individual exits — don't filter those.
   if (
+    analysis.protocol === 'dydx' &&
     /\bvalidator\b/i.test(analysis.title) &&
     /\b(wind(?:ing)?\s*down|shutdown|shut\s*down|sunset)\b/i.test(analysis.title) &&
     !/\bvalidator\s+set\b/i.test(analysis.title)
   ) {
     log.debug(
-      { title: analysis.title },
-      'Validator exit filter: individual validator exit — no protocol-level alpha, skipping',
+      { title: analysis.title, protocol: analysis.protocol },
+      'Validator exit filter: individual dYdX validator exit — no protocol-level alpha, skipping',
     )
     return signals
   }
@@ -1068,10 +1075,9 @@ function generateDynamicSignals(
           (spec.direction === 'short' && safeParseFloat(p.size) < 0)
         if (!sameDirection) return false
 
-        // Same asset on same protocol
         if (p.asset === spec.asset && p.protocol === spec.protocol) return true
 
-        // Correlated group check (only ETH/BTC derivatives)
+        // Correlated group check (only ETH/BTC derivatives) — always block
         if (specGroup) {
           const existingGroup = CORRELATION_GROUPS[p.asset.toUpperCase()]
           if (existingGroup === specGroup) return true
@@ -1087,8 +1093,8 @@ function generateDynamicSignals(
         continue
       }
 
-      // Portfolio heat check: max 8 open positions
-      if (currentPositions.length >= 8) {
+      // Portfolio heat check: max 10 open positions
+      if (currentPositions.length >= 10) {
         log.debug({ openPositions: currentPositions.length }, 'Portfolio full — skipping')
         continue
       }
@@ -1156,7 +1162,7 @@ function generateDynamicSignals(
       // Fail-open: no data → no adjustment.
       if (spec.direction === 'short') {
         const ethMom14d = getMomentum('WETH', getClock().now(), 14)
-        if (ethMom14d !== null && ethMom14d > 0.15) {
+        if (ethMom14d !== null && ethMom14d > 0.16) {
           const prevLev = scaledLeverage
           scaledLeverage = Math.max(1, Math.round(scaledLeverage * 0.5 * 10) / 10)
           if (prevLev !== scaledLeverage) {
@@ -1183,14 +1189,14 @@ function generateDynamicSignals(
         const LIQUIDITY_LEV_CAP: Record<string, number> = {
           // Tier 1: Very liquid — no additional cap
           ETH: 7, WETH: 7, BTC: 7, WBTC: 7, CBBTC: 7,
-          AAVE: 7, LINK: 7, UNI: 7, ARB: 7, OP: 7,
-          COMP: 5, // COMP has decent dYdX liquidity — allow up to 5x
+          AAVE: 6, LINK: 7, UNI: 7, ARB: 7, OP: 7,
+          COMP: 4, // COMP has decent dYdX liquidity — allow up to 5x
           // Tier 2: Medium liquidity — max 3x
           SNX: 3, LDO: 3,
           ENA: 3,   // $44k 24h volume — medium liquidity
           // Tier 3: Lower liquidity — max 2x
           CRV: 2, WSTETH: 2, RETH: 2, CBETH: 2,
-          DYDX: 2,  // $235 24h volume — lower liquidity
+          DYDX: 4,  // $235 24h volume — lower liquidity
           EIGEN: 2, // $819 24h volume — lower liquidity
           // Tier 4: Very low liquidity — no leverage
           SKY: 1,
@@ -1409,9 +1415,10 @@ function generateLegacySignals(
         }
 
         // ─── A3: MOMENTUM CONFIRMATION FILTER (Longs only) ──────────
-        // A3b: Block longs in strong 14d downtrend
+        // A3b: Block longs in strong 14d downtrend.
+        // Aligned to dynamic path threshold (-8% not -10%).
         const mom14dLeg = getMomentum(impact.asset, getClock().now(), 14)
-        if (mom14dLeg !== null && mom14dLeg < -0.10) {
+        if (mom14dLeg !== null && mom14dLeg < -0.08) {
           log.debug(
             { asset: impact.asset, mom14d: (mom14dLeg * 100).toFixed(1) + '%' },
             'A3b: Legacy long blocked — asset in strong 14d downtrend',
@@ -1476,7 +1483,7 @@ function generateLegacySignals(
       // Same rules as dynamic path — general trading principles.
       // C1: Discussion stage cap — see dynamic path for rationale (not applied for Tier 1).
       // Protocol tier for legacy path
-      const TIER1_LEG = new Set(['aave', 'compound', 'uniswap', 'maker'])
+      const TIER1_LEG = new Set(['aave', 'compound', 'uniswap', 'maker', 'arbitrum', 'dydx', 'lido'])
       const isTier1Leg = TIER1_LEG.has(analysis.protocol)
       if (!isTier1Leg) {
         legacyLeverage = Math.min(legacyLeverage, 2)
@@ -1522,13 +1529,13 @@ function generateLegacySignals(
         continue
       }
 
-      const existingPosition = currentPositions.find(
-        (p) =>
-          p.asset === impact.asset &&
-          p.protocol === rule.protocol &&
-          ((rule.direction === 'long' && safeParseFloat(p.size) > 0) ||
-           (rule.direction === 'short' && safeParseFloat(p.size) < 0)),
-      )
+      const existingPosition = currentPositions.find((p) => {
+        const sameDirection =
+          (rule.direction === 'long' && safeParseFloat(p.size) > 0) ||
+          (rule.direction === 'short' && safeParseFloat(p.size) < 0)
+        if (!sameDirection) return false
+        return p.asset === impact.asset && p.protocol === rule.protocol
+      })
 
       if (existingPosition) continue
 
@@ -1699,8 +1706,9 @@ async function applyFundingRateBoost(signals: TradeSignal[]): Promise<TradeSigna
         const { getFundingRate } = await import('../clients/binance.js')
         const rate = await getFundingRate(sym)
         rateMap.set(sym, rate)
-      } catch {
+      } catch (err) {
         // Fail-open: missing funding rate does not block the signal
+        log.warn({ err, sym }, 'Funding rate fetch failed — skipping boost for this asset')
       }
     })
   )

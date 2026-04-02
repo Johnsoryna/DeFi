@@ -104,6 +104,11 @@ export function initStore(): Database.Database {
   `)
 
   log.info({ dbPath: config.dbPath }, 'Database initialized')
+
+  // Prune processed_events older than 90 days on startup.
+  // Prevents unbounded table growth on long-running bots without impacting de-dup correctness.
+  pruneOldEvents(90)
+
   return db
 }
 
@@ -168,6 +173,21 @@ export function rollbackEvent(txHash: string, logIndex?: number): void {
     getDb().prepare('DELETE FROM processed_events WHERE tx_hash = ? AND log_index = ?').run(txHash, logIndex)
   } else {
     getDb().prepare('DELETE FROM processed_events WHERE tx_hash = ?').run(txHash)
+  }
+}
+
+/**
+ * Prune processed_events rows older than retentionDays (default 90).
+ * The de-duplication guard only needs to cover re-org depth + replay window.
+ * Long-running bots accumulate millions of rows without this — causes slow queries.
+ * Called at startup; also safe to call periodically.
+ */
+export function pruneOldEvents(retentionDays = 90): void {
+  const result = getDb()
+    .prepare(`DELETE FROM processed_events WHERE processed_at < datetime('now', ?)`)
+    .run(`-${retentionDays} days`)
+  if ((result.changes ?? 0) > 0) {
+    log.info({ deleted: result.changes, retentionDays }, 'Pruned old processed_events')
   }
 }
 
