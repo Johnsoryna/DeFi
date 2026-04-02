@@ -368,6 +368,27 @@ async function recoverHoldingMeta(symbol: string): Promise<void> {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// PRODUCTION BOT — GOVERNANCE LAYER ONLY
+//
+// This file starts EXACTLY these systems and nothing else:
+//   1. DB + config validation
+//   2. Reconcile ghost positions (startup DB vs Binance cross-check)
+//   3. Analysis pipeline (governance event → proposal analysis)
+//   4. Signal generator (analysis → trading signals)
+//   5. Risk manager (position sizing, stop-loss, Kelly criterion)
+//   6. Position tracker + price monitor
+//   7. Governance monitors (on-chain WSS, forum, Snapshot)
+//   8. Trade executor (Binance orders)
+//   9. Keep-alive loop (health checks, Telegram reports)
+//
+// DO NOT add imports or start calls for bb-bounce, momentum, btc-trend,
+// or any other trading layer here. Those are separate programs.
+// Adding them here causes LIVE UNINTENDED TRADES on the server because
+// old layer files persist on the server even after deletion from the repo
+// (tar extract never removes files).
+// ═══════════════════════════════════════════════════════════════════════════
+
 // ─── Main Boot Sequence ─────────────────────────────────────────────
 
 async function main(): Promise<void> {

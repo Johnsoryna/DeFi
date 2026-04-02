@@ -161,6 +161,14 @@ const KEYWORD_CLUSTERS: KeywordCluster[] = [
       { pattern: /\bdelist\b/i, weight: 3.0 },
       { pattern: /\bremove\b/i, weight: 2.0 },
       { pattern: /\breduce\b/i, weight: 1.5 },
+      // dYdX market-level bearish: explicit market/perpetual removal (C4b)
+      { pattern: /\bremove\b.{0,20}\b(?:market|trading\s*pair|perpetual)\b/i, weight: 3.0 },
+      { pattern: /\bdelist\b.{0,20}\b(?:market|perpetual)\b/i, weight: 3.0 },
+      // MakerDAO DSR decrease → bearish for SKY (C5a routed to risk_mitigation for actual signal)
+      { pattern: /\bDSR\b.{0,20}(?:reduc|decreas|cut|lower)/i, weight: 2.5 },
+      { pattern: /(?:reduc|decreas|cut|lower).{0,20}\bDSR\b/i, weight: 2.5 },
+      // SparkFi (MakerDAO subdao) risk events → co-occurrence guard: needs ≥0.5 from another pattern (C5b)
+      { pattern: /\bSpark\s*(?:Fi|Lend|Protocol|DAO)\b/i, weight: 1.5 },
     ],
   },
   {

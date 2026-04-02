@@ -1467,3 +1467,419 @@ Stop iterating when:
 > Mode: SCORE-ONLY
 
 ---
+
+## Iteration 1 — 2026-04-02 16:54
+
+### OBSERVE — Current State
+| Metric | Value | Sub-Score |
+|--------|-------|----------|
+| winRate | 75.00% | 79/100 |
+| pnl | $298,440 | 100/100 |
+| drawdown | 19.68% | 59/100 |
+| tradeCount | 36 | 100/100 |
+| profitFactor | 5.79 | 100/100 |
+
+**Composite Score: 85.5/100**
+> Period: 2025-01-01 → 2026-02-20
+> Events replayed: 11’850
+
+### ORIENT — Gap Analysis
+- Max drawdown 19.7% exceeds target (≤15%) — position sizing / stop-loss gap
+
+### DECIDE — Candidate Mutations (ranked)
+| # | ID | Param | Delta | Priority | Risk | Condition Met |
+|---|-----|-------|-------|----------|------|---------------|
+| **→**1 | discussion_threshold_up | stage_discussion | +0.02 | 2 | low | ✓ |
+| 2 | snapshot_threshold_up | stage_snapshot | +0.02 | 2 | low | ✓ |
+| 3 | trailing_act_agg_up | trailingAct_aggressive | +0.02 | 2 | medium | ✓ |
+| 4 | trailing_dist_agg_down | trailingDist_aggressive | -0.01 | 3 | low | ✓ |
+| 5 | trailing_act_mod_up | trailingAct_moderate | +0.02 | 3 | low | ✓ |
+| 6 | kelly_wr_up | baseWinRate | +0.02 | 3 | low | ✓ |
+
+**Selected:** `discussion_threshold_up`  
+**Rationale:** Raise discussion min-confidence 0.50→0.52 to filter marginal forum signals  
+**Change:** stage_discussion 0.5 → 0.52
+
+> Mode: SCORE-ONLY
+
+---
+
+## Iteration 1 — 2026-04-02 16:54
+
+### OBSERVE — Current State
+| Metric | Value | Sub-Score |
+|--------|-------|----------|
+| winRate | 75.00% | 79/100 |
+| pnl | $298,440 | 100/100 |
+| drawdown | 19.68% | 59/100 |
+| tradeCount | 36 | 100/100 |
+| profitFactor | 5.79 | 100/100 |
+
+**Composite Score: 85.5/100**
+> Period: 2025-01-01 → 2026-02-20
+> Events replayed: 11’850
+
+### ORIENT — Gap Analysis
+- Max drawdown 19.7% exceeds target (≤15%) — position sizing / stop-loss gap
+
+### DECIDE — Candidate Mutations (ranked)
+| # | ID | Param | Delta | Priority | Risk | Condition Met |
+|---|-----|-------|-------|----------|------|---------------|
+| **→**1 | discussion_threshold_up | stage_discussion | +0.02 | 2 | low | ✓ |
+| 2 | snapshot_threshold_up | stage_snapshot | +0.02 | 2 | low | ✓ |
+| 3 | trailing_act_agg_up | trailingAct_aggressive | +0.02 | 2 | medium | ✓ |
+| 4 | trailing_dist_agg_down | trailingDist_aggressive | -0.01 | 3 | low | ✓ |
+| 5 | trailing_act_mod_up | trailingAct_moderate | +0.02 | 3 | low | ✓ |
+| 6 | kelly_wr_up | baseWinRate | +0.02 | 3 | low | ✓ |
+
+**Selected:** `discussion_threshold_up`  
+**Rationale:** Raise discussion min-confidence 0.50→0.52 to filter marginal forum signals  
+**Change:** stage_discussion 0.5 → 0.52
+
+### ACT — Backtest Result
+| Metric | Before | After | Δ |
+|--------|--------|-------|---|
+| Win Rate (%) | 75.00 | 91.67 | 16.67 |
+| Total PnL ($) | $298’440 | $116’476 | -181963.96 |
+| Max Drawdown (%) | 19.68 | 10.58 | -9.10 |
+| Trades | 36.00 | 12.00 | -24.00 |
+| Profit Factor | 5.79 | 12.46 | 6.67 |
+
+**Score: 85.5 → 89.1 (Δ NaN)**  
+**Decision: ✅ ACCEPTED**
+
+---
+
+## Iteration 1 — 2026-04-02 17:03
+
+### OBSERVE — Current State
+| Metric | Value | Sub-Score |
+|--------|-------|----------|
+| winRate | 75.00% | 79/100 |
+| pnl | $298,440 | 100/100 |
+| drawdown | 19.68% | 59/100 |
+| tradeCount | 36 | 100/100 |
+| profitFactor | 5.79 | 100/100 |
+
+**Composite Score: 85.5/100**
+> Period: 2025-01-01 → 2026-02-20
+> Events replayed: 11’850
+
+### ORIENT — Gap Analysis
+- Max drawdown 19.7% exceeds target (≤15%) — position sizing / stop-loss gap
+
+### DECIDE — Candidate Mutations (ranked)
+| # | ID | Param | Delta | Priority | Risk | Condition Met |
+|---|-----|-------|-------|----------|------|---------------|
+| **→**1 | discussion_threshold_up | stage_discussion | +0.02 | 2 | low | ✓ |
+| 2 | snapshot_threshold_up | stage_snapshot | +0.02 | 2 | low | ✓ |
+| 3 | trailing_act_agg_up | trailingAct_aggressive | +0.02 | 2 | medium | ✓ |
+| 4 | trailing_dist_agg_down | trailingDist_aggressive | -0.01 | 3 | low | ✓ |
+| 5 | trailing_act_mod_up | trailingAct_moderate | +0.02 | 3 | low | ✓ |
+| 6 | kelly_wr_up | baseWinRate | +0.02 | 3 | low | ✓ |
+
+**Selected:** `discussion_threshold_up`  
+**Rationale:** Raise discussion min-confidence 0.50→0.52 to filter marginal forum signals  
+**Change:** stage_discussion 0.5 → 0.52
+
+### ACT — Backtest Result
+| Metric | Before | After | Δ |
+|--------|--------|-------|---|
+| Win Rate (%) | 75.00 | 75.00 | 0.00 |
+| Total PnL ($) | $298’440 | $298’440 | 0.00 |
+| Max Drawdown (%) | 19.68 | 19.68 | 0.00 |
+| Trades | 36.00 | 36.00 | 0.00 |
+| Profit Factor | 5.79 | 5.79 | 0.00 |
+
+**Score: 85.5 → 85.5 (Δ NaN)**  
+**Decision: ❌ REJECTED**
+
+---
+
+## Iteration 2 — 2026-04-02 17:04
+
+### OBSERVE — Current State
+| Metric | Value | Sub-Score |
+|--------|-------|----------|
+| winRate | 75.00% | 79/100 |
+| pnl | $298,440 | 100/100 |
+| drawdown | 19.68% | 59/100 |
+| tradeCount | 36 | 100/100 |
+| profitFactor | 5.79 | 100/100 |
+
+**Composite Score: 85.5/100**
+> Period: 2025-01-01 → 2026-02-20
+> Events replayed: 11’850
+
+### ORIENT — Gap Analysis
+- Max drawdown 19.7% exceeds target (≤15%) — position sizing / stop-loss gap
+
+### DECIDE — Candidate Mutations (ranked)
+| # | ID | Param | Delta | Priority | Risk | Condition Met |
+|---|-----|-------|-------|----------|------|---------------|
+| **→**1 | snapshot_threshold_up | stage_snapshot | +0.02 | 2 | low | ✓ |
+| 2 | trailing_act_agg_up | trailingAct_aggressive | +0.02 | 2 | medium | ✓ |
+| 3 | trailing_dist_agg_down | trailingDist_aggressive | -0.01 | 3 | low | ✓ |
+| 4 | trailing_act_mod_up | trailingAct_moderate | +0.02 | 3 | low | ✓ |
+| 5 | kelly_wr_up | baseWinRate | +0.02 | 3 | low | ✓ |
+| 6 | kelly_rtr_up | rewardToRisk | +0.1 | 3 | low | ✓ |
+
+**Selected:** `snapshot_threshold_up`  
+**Rationale:** Raise snapshot min-confidence 0.55→0.57 to filter speculative snapshot signals  
+**Change:** stage_snapshot 0.55 → 0.57
+
+### ACT — Backtest Result
+| Metric | Before | After | Δ |
+|--------|--------|-------|---|
+| Win Rate (%) | 75.00 | 75.00 | 0.00 |
+| Total PnL ($) | $298’440 | $298’440 | 0.00 |
+| Max Drawdown (%) | 19.68 | 19.68 | 0.00 |
+| Trades | 36.00 | 36.00 | 0.00 |
+| Profit Factor | 5.79 | 5.79 | 0.00 |
+
+**Score: 85.5 → 85.5 (Δ NaN)**  
+**Decision: ❌ REJECTED**
+
+---
+
+## Iteration 3 — 2026-04-02 17:04
+
+### OBSERVE — Current State
+| Metric | Value | Sub-Score |
+|--------|-------|----------|
+| winRate | 75.00% | 79/100 |
+| pnl | $298,440 | 100/100 |
+| drawdown | 19.68% | 59/100 |
+| tradeCount | 36 | 100/100 |
+| profitFactor | 5.79 | 100/100 |
+
+**Composite Score: 85.5/100**
+> Period: 2025-01-01 → 2026-02-20
+> Events replayed: 11’850
+
+### ORIENT — Gap Analysis
+- Max drawdown 19.7% exceeds target (≤15%) — position sizing / stop-loss gap
+
+### DECIDE — Candidate Mutations (ranked)
+| # | ID | Param | Delta | Priority | Risk | Condition Met |
+|---|-----|-------|-------|----------|------|---------------|
+| **→**1 | trailing_act_agg_up | trailingAct_aggressive | +0.02 | 2 | medium | ✓ |
+| 2 | trailing_dist_agg_down | trailingDist_aggressive | -0.01 | 3 | low | ✓ |
+| 3 | trailing_act_mod_up | trailingAct_moderate | +0.02 | 3 | low | ✓ |
+| 4 | kelly_wr_up | baseWinRate | +0.02 | 3 | low | ✓ |
+| 5 | kelly_rtr_up | rewardToRisk | +0.1 | 3 | low | ✓ |
+
+**Selected:** `trailing_act_agg_up`  
+**Rationale:** Raise aggressive trailing activation — lock in bigger wins before trailing fires  
+**Change:** trailingAct_aggressive 0.15 → 0.17
+
+### ACT — Backtest Result
+| Metric | Before | After | Δ |
+|--------|--------|-------|---|
+| Win Rate (%) | 75.00 | 77.14 | 2.14 |
+| Total PnL ($) | $298’440 | $345’686 | 47246.02 |
+| Max Drawdown (%) | 19.68 | 19.68 | 0.00 |
+| Trades | 36.00 | 35.00 | -1.00 |
+| Profit Factor | 5.79 | 6.86 | 1.07 |
+
+**Score: 85.5 → 87.4 (Δ NaN)**  
+**Decision: ✅ ACCEPTED**
+
+---
+
+## Iteration 4 — 2026-04-02 17:04
+
+### OBSERVE — Current State
+| Metric | Value | Sub-Score |
+|--------|-------|----------|
+| winRate | 77.14% | 86/100 |
+| pnl | $345,686 | 100/100 |
+| drawdown | 19.68% | 59/100 |
+| tradeCount | 35 | 100/100 |
+| profitFactor | 6.86 | 100/100 |
+
+**Composite Score: 87.4/100**
+> Period: 2025-01-01 → 2026-02-20
+> Events replayed: 11’850
+
+### ORIENT — Gap Analysis
+- Max drawdown 19.7% exceeds target (≤15%) — position sizing / stop-loss gap
+
+### DECIDE — Candidate Mutations (ranked)
+| # | ID | Param | Delta | Priority | Risk | Condition Met |
+|---|-----|-------|-------|----------|------|---------------|
+| **→**1 | trailing_dist_agg_down | trailingDist_aggressive | -0.01 | 3 | low | ✓ |
+| 2 | trailing_act_mod_up | trailingAct_moderate | +0.02 | 3 | low | ✓ |
+| 3 | kelly_wr_up | baseWinRate | +0.02 | 3 | low | ✓ |
+| 4 | kelly_rtr_up | rewardToRisk | +0.1 | 3 | low | ✓ |
+
+**Selected:** `trailing_dist_agg_down`  
+**Rationale:** Tighten aggressive trailing distance — reduce P&L retracement on exit  
+**Change:** trailingDist_aggressive 0.07 → 0.06
+
+### ACT — Backtest Result
+| Metric | Before | After | Δ |
+|--------|--------|-------|---|
+| Win Rate (%) | 77.14 | 77.14 | 0.00 |
+| Total PnL ($) | $345’686 | $319’798 | -25888.06 |
+| Max Drawdown (%) | 19.68 | 19.63 | -0.05 |
+| Trades | 35.00 | 35.00 | 0.00 |
+| Profit Factor | 6.86 | 6.52 | -0.34 |
+
+**Score: 87.4 → 87.5 (Δ NaN)**  
+**Decision: ✅ ACCEPTED**
+
+---
+
+## Iteration 5 — 2026-04-02 17:04
+
+### OBSERVE — Current State
+| Metric | Value | Sub-Score |
+|--------|-------|----------|
+| winRate | 77.14% | 86/100 |
+| pnl | $319,798 | 100/100 |
+| drawdown | 19.63% | 59/100 |
+| tradeCount | 35 | 100/100 |
+| profitFactor | 6.52 | 100/100 |
+
+**Composite Score: 87.5/100**
+> Period: 2025-01-01 → 2026-02-20
+> Events replayed: 11’850
+
+### ORIENT — Gap Analysis
+- Max drawdown 19.6% exceeds target (≤15%) — position sizing / stop-loss gap
+
+### DECIDE — Candidate Mutations (ranked)
+| # | ID | Param | Delta | Priority | Risk | Condition Met |
+|---|-----|-------|-------|----------|------|---------------|
+| **→**1 | trailing_act_mod_up | trailingAct_moderate | +0.02 | 3 | low | ✓ |
+| 2 | kelly_wr_up | baseWinRate | +0.02 | 3 | low | ✓ |
+| 3 | kelly_rtr_up | rewardToRisk | +0.1 | 3 | low | ✓ |
+
+**Selected:** `trailing_act_mod_up`  
+**Rationale:** Raise moderate trailing activation — let moderate positions run further before locking  
+**Change:** trailingAct_moderate 0.14 → 0.16
+
+### ACT — Backtest Result
+| Metric | Before | After | Δ |
+|--------|--------|-------|---|
+| Win Rate (%) | 77.14 | 77.14 | 0.00 |
+| Total PnL ($) | $319’798 | $325’866 | 6068.19 |
+| Max Drawdown (%) | 19.63 | 19.63 | 0.00 |
+| Trades | 35.00 | 35.00 | 0.00 |
+| Profit Factor | 6.52 | 6.61 | 0.09 |
+
+**Score: 87.5 → 87.5 (Δ NaN)**  
+**Decision: ❌ REJECTED**
+
+---
+
+## Iteration 6 — 2026-04-02 17:04
+
+### OBSERVE — Current State
+| Metric | Value | Sub-Score |
+|--------|-------|----------|
+| winRate | 77.14% | 86/100 |
+| pnl | $325,866 | 100/100 |
+| drawdown | 19.63% | 59/100 |
+| tradeCount | 35 | 100/100 |
+| profitFactor | 6.61 | 100/100 |
+
+**Composite Score: 87.5/100**
+> Period: 2025-01-01 → 2026-02-20
+> Events replayed: 11’850
+
+### ORIENT — Gap Analysis
+- Max drawdown 19.6% exceeds target (≤15%) — position sizing / stop-loss gap
+
+### DECIDE — Candidate Mutations (ranked)
+| # | ID | Param | Delta | Priority | Risk | Condition Met |
+|---|-----|-------|-------|----------|------|---------------|
+| **→**1 | kelly_wr_up | baseWinRate | +0.02 | 3 | low | ✓ |
+| 2 | kelly_rtr_up | rewardToRisk | +0.1 | 3 | low | ✓ |
+
+**Selected:** `kelly_wr_up`  
+**Rationale:** Increase Kelly base WR assumption — closer to observed 75%+ historical WR  
+**Change:** baseWinRate 0.55 → 0.57
+
+### ACT — Backtest Result
+| Metric | Before | After | Δ |
+|--------|--------|-------|---|
+| Win Rate (%) | 77.14 | 77.14 | 0.00 |
+| Total PnL ($) | $325’866 | $319’798 | -6068.19 |
+| Max Drawdown (%) | 19.63 | 19.63 | 0.00 |
+| Trades | 35.00 | 35.00 | 0.00 |
+| Profit Factor | 6.61 | 6.52 | -0.09 |
+
+**Score: 87.5 → 87.5 (Δ NaN)**  
+**Decision: ❌ REJECTED**
+
+---
+
+## Iteration 7 — 2026-04-02 17:04
+
+### OBSERVE — Current State
+| Metric | Value | Sub-Score |
+|--------|-------|----------|
+| winRate | 77.14% | 86/100 |
+| pnl | $319,798 | 100/100 |
+| drawdown | 19.63% | 59/100 |
+| tradeCount | 35 | 100/100 |
+| profitFactor | 6.52 | 100/100 |
+
+**Composite Score: 87.5/100**
+> Period: 2025-01-01 → 2026-02-20
+> Events replayed: 11’850
+
+### ORIENT — Gap Analysis
+- Max drawdown 19.6% exceeds target (≤15%) — position sizing / stop-loss gap
+
+### DECIDE — Candidate Mutations (ranked)
+| # | ID | Param | Delta | Priority | Risk | Condition Met |
+|---|-----|-------|-------|----------|------|---------------|
+| **→**1 | kelly_rtr_up | rewardToRisk | +0.1 | 3 | low | ✓ |
+
+**Selected:** `kelly_rtr_up`  
+**Rationale:** Increase R/R assumption — large winners justify higher sizing  
+**Change:** rewardToRisk 2.5 → 2.6
+
+### ACT — Backtest Result
+| Metric | Before | After | Δ |
+|--------|--------|-------|---|
+| Win Rate (%) | 77.14 | 77.14 | 0.00 |
+| Total PnL ($) | $319’798 | $319’798 | 0.00 |
+| Max Drawdown (%) | 19.63 | 19.63 | 0.00 |
+| Trades | 35.00 | 35.00 | 0.00 |
+| Profit Factor | 6.52 | 6.52 | 0.00 |
+
+**Score: 87.5 → 87.5 (Δ NaN)**  
+**Decision: ❌ REJECTED**
+
+---
+
+## Iteration 8 — 2026-04-02 17:04
+
+### OBSERVE — Current State
+| Metric | Value | Sub-Score |
+|--------|-------|----------|
+| winRate | 77.14% | 86/100 |
+| pnl | $319,798 | 100/100 |
+| drawdown | 19.63% | 59/100 |
+| tradeCount | 35 | 100/100 |
+| profitFactor | 6.52 | 100/100 |
+
+**Composite Score: 87.5/100**
+> Period: 2025-01-01 → 2026-02-20
+> Events replayed: 11’850
+
+### ORIENT — Gap Analysis
+- Max drawdown 19.6% exceeds target (≤15%) — position sizing / stop-loss gap
+
+### DECIDE — Candidate Mutations (ranked)
+| # | ID | Param | Delta | Priority | Risk | Condition Met |
+|---|-----|-------|-------|----------|------|---------------|
+
+**No candidates met conditions — baseline is optimal for current window.**
+
+### ACT — Backtest Result
+---
