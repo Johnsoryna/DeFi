@@ -160,8 +160,15 @@ const KEYWORD_CLUSTERS: KeywordCluster[] = [
       { pattern: /\boffboard\b/i, weight: 2.5 },
       { pattern: /\bdelist\b/i, weight: 3.0 },
       { pattern: /\bremove\b/i, weight: 2.0 },
-      { pattern: /\bwind\s*down\b/i, weight: 2.0 },
       { pattern: /\breduce\b/i, weight: 1.5 },
+      // dYdX market-level bearish: explicit market/perpetual removal (C4b)
+      { pattern: /\bremove\b.{0,20}\b(?:market|trading\s*pair|perpetual)\b/i, weight: 3.0 },
+      { pattern: /\bdelist\b.{0,20}\b(?:market|perpetual)\b/i, weight: 3.0 },
+      // MakerDAO DSR decrease → bearish for SKY (C5a routed to risk_mitigation for actual signal)
+      { pattern: /\bDSR\b.{0,20}(?:reduc|decreas|cut|lower)/i, weight: 2.5 },
+      { pattern: /(?:reduc|decreas|cut|lower).{0,20}\bDSR\b/i, weight: 2.5 },
+      // SparkFi (MakerDAO subdao) risk events → co-occurrence guard: needs ≥0.5 from another pattern (C5b)
+      { pattern: /\bSpark\s*(?:Fi|Lend|Protocol|DAO)\b/i, weight: 1.5 },
     ],
   },
   {
@@ -369,12 +376,14 @@ const PROTOCOL_GOVERNANCE_TOKENS: Record<string, string> = {
   lido: 'LDO',
   arbitrum: 'ARB',
   curve: 'CRV',
-  optimism: 'OP',
   synthetix: 'SNX',
   dydx: 'DYDX',
-  ethena: 'ENA',
   eigenlayer: 'EIGEN',
-  ens: 'ENS',
+  morpho: 'MORPHO',
+  yearn: 'YFI',
+  gmx: 'GMX',
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // optimism, ethena, ens: purged in v36
 }
 
 // ─── Public API ──────────────────────────────────────────────────────

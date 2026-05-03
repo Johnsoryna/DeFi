@@ -23,46 +23,33 @@ export type GovernanceProtocol =
   | 'lido'
   | 'arbitrum'
   | 'curve'
-  | 'optimism'
   | 'synthetix'
   | 'dydx'
-  | 'ethena'
   | 'eigenlayer'
-  | 'ens'
   | 'gmx'
-  | 'jupiter'
-  | 'celestia'
-  | 'avalanche'
-  | 'polygon'
-  | 'starknet'
   | 'morpho'
-  | 'sui'
-  | 'mantle'
-  | 'sei'
-  // ─── New Tier A protocols (dYdX vol >$5K/day) ──────────
-  | 'cosmos'        // ATOM — $301K vol
-  | 'aptos'         // APT — $62K vol
-  | 'axelar'        // AXL — $57K vol
-  | 'near'          // NEAR — $53K vol
-  | 'injective'     // INJ — $35K vol
-  | 'blur'          // BLUR — $31K vol
-  | 'jito'          // JTO — $28K vol
-  | 'zksync'        // ZK — $19K vol
-  | 'drift'         // DRIFT — $19K vol
-  | 'pyth'          // PYTH — $8K vol
-  | 'stacks'        // STX — $12K vol
-  | '1inch'
   | 'yearn'
-  | 'convex'
-  // balancer: REMOVED — no Binance USDT perp for BAL
-  // venus: TESTED — 0 trades. Asset listing proposals, max confidence 0.50 (below 0.55 threshold).
-  // rocketpool: TESTED — 0 trades. Partnership/staking proposals, no risk-parameter alpha.
-  | 'pendle'        // PENDLE — yield tokenization protocol, yield pool risk params
-  | 'thegraph'      // GRT — indexer slashing, query fees, protocol economics
-  | 'euler'         // EUL — Euler Finance, AAVE-like lending with monthly risk updates (Gauntlet)
-  | 'etherfi'       // ETHFI — Ether.fi liquid restaking, Snapshot etherfi-dao.eth (13 proposals)
-  | 'wormhole'      // W — Wormhole bridge, forum.wormhole.com, WUSDT Binance perp
-  // frax: REMOVED — 0 trades (re-tested Feb 2026 with body analysis, still 0; treasury governance)
+  // ─── Removed (0 trades, no risk-parameter alpha) ──────────────────────
+  // convex: gauge-weight emission votes (563 props, 0 trades confirmed)
+  // optimism: L2 operational governance — all signals blocked by stablecoin-L2 filter
+  // ethena: 0 trades; ENA cascade runs via COLLATERAL_ISSUER_TOKEN, no protocol entry needed
+  // ens: treasury/delegate compensation governance
+  // jupiter, celestia, avalanche, polygon, starknet, sui, sei, near: L1/L2 operational governance
+  // cosmos, injective: losing trades (on-chain default OFF); no forum alpha
+  // drift, jito, pyth: Solana operational/oracle/staking governance
+  // 1inch: Fusion protocol operational governance
+  // zksync, stacks: L2 operational governance (tested Mar 2026, 0 trades after 190+94 posts)
+  // thegraph: team updates, council meetings — no risk-parameter alpha
+  // euler: Gauntlet LLTV revisions = neutral NLP — 0 trades confirmed
+  // pendle: no data source (DNS fail on forum, 0 proposals on pendle-politics.eth)
+  // etherfi: treasury/buyback/seasonal rewards — 0 trades confirmed (Mar 2026)
+  // wormhole: bridge delegate platforms + support tickets — 0 trades confirmed (Mar 2026)
+  // mantle: no Binance USDT perp (delisted)
+  // aptos, axelar, blur: no governance data, 0 trades
+  // frax: 0 trades (re-tested Feb 2026 with body analysis, still 0; treasury governance)
+  // balancer: no Binance USDT perp for BAL (delisted)
+  // venus: 0 trades. Asset listing proposals, max confidence 0.50 (below 0.55 threshold)
+  // rocketpool: 0 trades. Partnership/staking proposals, no risk-parameter alpha
 
 // ─── Impact Categories ──────────────────────────────────────────────
 

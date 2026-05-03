@@ -85,6 +85,7 @@ const WELL_KNOWN_TOKENS: Record<string, string> = {
   '0xca14007eff0db1f8135f4c25b34de49ab0d42766': 'STRK',     // Starknet STRK
   '0x9994e35db50125e0df82e4c2dde62496ce330999': 'MORPHO',   // Morpho
   '0x3c3a81e81dc49a522a592e7622a7e711c06bf354': 'MNT',      // Mantle MNT
+  '0xec53bf9167f50cdeb3ae105f56099aaab9061f83': 'EIGEN',    // EigenLayer
 }
 
 for (const [addr, symbol] of Object.entries(WELL_KNOWN_TOKENS)) {

@@ -27,7 +27,7 @@ export function setWalletAddress(address: string): void {
 
 // ─── Binance Futures Positions ───────────────────────────────────────
 
-async function fetchBinancePositions(): Promise<Position[]> {
+async function fetchBinancePositions(): Promise<Position[] | null> {
   try {
     const positions = await binanceClient.getPositions()
     return positions.map((p) => ({
@@ -45,8 +45,11 @@ async function fetchBinancePositions(): Promise<Position[]> {
       lastUpdated: new Date().toISOString(),
     }))
   } catch (err) {
+    // Return null (not []) so callers can distinguish "API error" from "no open positions".
+    // Returning [] on error would falsely trigger position-close detection in index.ts,
+    // causing protective SL/trailing-stop orders to be cancelled while the position is still open.
     log.error({ err }, 'Failed to fetch Binance positions')
-    return []
+    return null
   }
 }
 
@@ -118,11 +121,16 @@ async function fetchAavePositions(): Promise<Position[]> {
 /**
  * Fetch all positions and aggregate into a portfolio.
  */
-export async function refreshPositions(): Promise<Portfolio> {
+export async function refreshPositions(): Promise<Portfolio | null> {
   const [binance, aave] = await Promise.all([
     fetchBinancePositions(),
     fetchAavePositions(),
   ])
+
+  // If Binance fetch failed, skip this cycle entirely — do NOT emit position:update.
+  // Emitting an update with an empty list would falsely trigger position-close detection
+  // in index.ts, cancelling protective SL/TP orders for still-open positions.
+  if (binance === null) return null
 
   const allPositions = [...binance, ...aave]
   const liveIds = new Set(allPositions.map((p) => p.id))
@@ -200,10 +208,14 @@ async function refreshLoop(): Promise<void> {
       refreshing = true
       try {
         const portfolio = await refreshPositions()
-        log.info(
-          { positions: portfolio.positions.length, unrealizedPnl: portfolio.totalUnrealizedPnl },
-          'Position refresh complete',
-        )
+        if (portfolio === null) {
+          log.warn('Position refresh skipped — Binance fetch failed, retaining previous state')
+        } else {
+          log.info(
+            { positions: portfolio.positions.length, unrealizedPnl: portfolio.totalUnrealizedPnl },
+            'Position refresh complete',
+          )
+        }
       } catch (err) {
         log.error({ err }, 'Position refresh error')
       } finally {

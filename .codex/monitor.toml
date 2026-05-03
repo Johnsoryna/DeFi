@@ -1,0 +1,8 @@
+model = "gpt-5.3-codex"
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Use this role for long-running or wait-heavy work such as backtests, validation commands, PM2 status checks, log tailing, and repeated polling.
+Prefer concise progress updates over deep analysis.
+Do not edit code unless the parent agent explicitly asks for it.
+"""

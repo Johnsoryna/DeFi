@@ -267,17 +267,16 @@ function subscribe(gov: GovernorBravoConfig): void {
         const isSocketClosed = error?.name === 'SocketClosedError' ||
           (error?.message ?? '').includes('socket has been closed')
         if (isSocketClosed) {
-          log.warn({ protocol: gov.label, eventName }, 'WSS disconnected — will auto-recover via HTTP polling')
+          log.warn({ protocol: gov.label, eventName }, 'WSS disconnected — scheduling reconnect with backfill in 10s')
         } else {
           log.error({ err: error, protocol: gov.label, eventName }, 'Subscription error')
-          if (!reconnecting) {
-            reconnecting = true
-            log.warn({ protocol: gov.label }, 'Scheduling Governor Bravo reconnect in 10s')
-            setTimeout(() => {
-              reconnecting = false
-              startGovernorBravoMonitor().catch((err) => log.error({ err }, 'Governor Bravo reconnect failed'))
-            }, 10_000)
-          }
+        }
+        if (!reconnecting) {
+          reconnecting = true
+          setTimeout(() => {
+            reconnecting = false
+            startGovernorBravoMonitor().catch((err) => log.error({ err }, 'Governor Bravo reconnect failed'))
+          }, 10_000)
         }
       },
     })

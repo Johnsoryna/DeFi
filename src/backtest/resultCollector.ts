@@ -29,12 +29,14 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   AAVE: 1.5, BLUR: 1.5, JTO: 1.5,
   UNI: 1.5, OP: 1.5, COMP: 1.5, LINK: 1.5,
   MKR: 1.5, CRV: 1.5, YFI: 1.5,
+  SNX: 1.5, PENDLE: 1.5,
   ZK: 2.0, JUP: 2.0, DRIFT: 2.0, STRK: 2.0, TIA: 2.0,
   ENA: 2.0, STX: 2.0,
   SEI: 2.0, LDO: 2.0, PYTH: 2.0,
-  CVX: 2.0,
-  ARB: 2.5, DYDX: 2.5,
+  CVX: 2.0, GRT: 2.0,
+  ARB: 1.5, DYDX: 1.5,
   WSTETH: 2.0, RETH: 2.5, CBETH: 2.5,
+  EUL: 2.5,
 }
 
 /**
@@ -154,6 +156,7 @@ export class ResultCollector {
   private initialPortfolio: number
   private peakEquity: number
   private maxDrawdownFraction: number = 0
+  private maxDrawdownAbsolute: number = 0  // USD amount at the worst drawdown point
   // Circuit breaker: pause trading after major drawdown
   private circuitBreakerUntil: number = 0
   private readonly CIRCUIT_BREAKER_DRAWDOWN = 0.25 // 25% drawdown triggers pause (aligned with maxDrawdownPct)
@@ -234,6 +237,7 @@ export class ResultCollector {
         accruedYield: '0',
         leverage: pos.leverage,
         lastUpdated: new Date(this.clock.now()).toISOString(),
+        proposalId: pos.proposalId,
       } satisfies Position
     })
   }
@@ -292,7 +296,7 @@ export class ResultCollector {
       // Prevents catastrophic losses from high-leverage positions while allowing winners to run.
       // DO NOT reduce below 10% — sensitivity analysis shows trades need room to recover:
       // reducing to 7.5% costs $12K because some trades temporarily dip past -7.5% but recover.
-      const maxAbsLoss = this.initialPortfolio * 0.10
+      const maxAbsLoss = this.initialPortfolio * 0.1
       if (pnl < -maxAbsLoss) {
         toClose.push({
           pos,
@@ -310,11 +314,11 @@ export class ResultCollector {
       const holdingMs = this.clock.now() - pos.openedAt
       const holdingHours = holdingMs / 3600_000
       let effectiveSL = pos.stopLossPct
-      if (priceChangePct < 0 && holdingHours > 336) {
+      if (priceChangePct < 0 && holdingHours > 240) {
         // Trade is losing AND held > 14 days: tighten SL progressively
         // Alpha decay: governance signal loses power over time
         // 14 days: start decay, 21 days: 83% of original, 28 days: 65%
-        const decayWeeks = Math.min(3, (holdingHours - 336) / 168) // 0 to 3 weeks of decay
+        const decayWeeks = Math.min(3, (holdingHours - 240) / 168) // 0 to 3 weeks of decay
         const decayFactor = 1.0 - (decayWeeks * 0.117) // 1.0 → 0.65 over 3 weeks (gentler)
         effectiveSL = pos.stopLossPct * Math.max(0.65, decayFactor)
       }
@@ -388,6 +392,10 @@ export class ResultCollector {
    * Get the maximum drawdown as a fraction (0-1).
    * E.g., 0.12 means 12% drawdown from peak.
    */
+  getMaxDrawdownAmount(): number {
+    return this.maxDrawdownAbsolute
+  }
+
   getMaxDrawdown(): number {
     return this.maxDrawdownFraction
   }
@@ -482,7 +490,7 @@ export class ResultCollector {
     }
 
     // ─── ONE POSITION PER MARKET GUARD ─────────────────────────────
-    // Only allow one position per market to simplify risk management.
+    // One position per market to avoid correlated double-exposure.
     // Use resolvedAsset so ETH/WETH, MATIC/STMATIC etc. are treated as same market.
     const resolvedAsset = resolveAssetSymbol(signal.asset)
     const existingOnAsset = this.openPositions.find(
@@ -496,7 +504,7 @@ export class ResultCollector {
           existingDirection: existingOnAsset.direction,
           signalId: result.signalId,
         },
-        'Rejecting trade: position already open on this asset (one per market)',
+        'Rejecting trade: position already open on this asset',
       )
       return
     }
@@ -521,7 +529,8 @@ export class ResultCollector {
     const dynamicSL = signal.stopLossPct ?? 0.15
     const dynamicTP = signal.takeProfitPct ?? 0.30
     const dynamicTrailActivation = signal.trailingStopActivation ?? 0
-    const dynamicTrailDistance = signal.trailingStopDistance ?? 0
+    // Cap at 5% — Binance TRAILING_STOP_MARKET callbackRate max is 5.0%; aligns backtest to live behaviour
+    const dynamicTrailDistance = Math.min(signal.trailingStopDistance ?? 0, 0.05)
 
     if (atr > 0) {
       log.debug({
@@ -649,8 +658,10 @@ export class ResultCollector {
     // Record P&L for monthly loss budget
     recordMonthlyPnl(this.clock.now(), pnl)
 
-    // Return margin + P&L (includes trading PnL + funding)
-    this.cashBalance += pos.margin + pnl
+    // Return margin + trading PnL only.
+    // accumulatedFunding is already credited to cashBalance in real-time via
+    // accruePositionFunding(); adding pnl (which includes it) would double-count.
+    this.cashBalance += pos.margin + rawPnl
 
     // Remove from open positions
     const idx = this.openPositions.indexOf(pos)
@@ -722,6 +733,7 @@ export class ResultCollector {
       const drawdown = (this.peakEquity - equity) / this.peakEquity
       if (drawdown > this.maxDrawdownFraction) {
         this.maxDrawdownFraction = drawdown
+        this.maxDrawdownAbsolute = this.peakEquity - equity
       }
 
       // Trigger circuit breaker if drawdown exceeds threshold

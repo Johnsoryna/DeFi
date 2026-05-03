@@ -36,9 +36,7 @@ const CONTRACT_PROTOCOL: Record<string, GovernanceProtocol> = {
   [GOVERNANCE.uniswapGovernorBravo.toLowerCase()]: 'uniswap',
   [GOVERNANCE.aaveGovernanceCore.toLowerCase()]: 'aave',
   [GOVERNANCE.aaveVotingMachine.toLowerCase()]: 'aave',
-  // Cosmos SDK chains (synthetic addresses from migration script)
-  ['0x' + 'cosmos'.padEnd(40, '0')]: 'cosmos',
-  ['0x' + 'inject'.padEnd(40, '0')]: 'injective',
+  // Non-Ethereum synthetic addresses retained only for currently-supported protocols.
   ['0x' + 'arbtrum'.padEnd(40, '0')]: 'arbitrum',
 }
 
@@ -51,26 +49,25 @@ const SPACE_PROTOCOL: Record<string, GovernanceProtocol> = {
   'compound-governance.eth': 'compound',
   'arbitrumfoundation.eth': 'arbitrum',
   'dydxgov.eth': 'dydx',
-  '1inch.eth': '1inch',
-  'cvx.eth': 'convex',
   'veyfi.eth': 'yearn',
   'lido-snapshot.eth': 'lido',
   'gmx.eth': 'gmx',
-  'ethenagovernance.eth': 'ethena',
-  'starknet.eth': 'starknet',
-  'ens.eth': 'ens',
   'morpho.eth': 'morpho',
   'snxgov.eth': 'synthetix',
-  // ─── Mar 2026 ────────────────────────────────────────────────────────────
-  'etherfi-dao.eth': 'etherfi',
   // ─── Removed (0 trades, not in live monitor) ─────────────────────────────
-  // 'eulerdao.eth': 0 trades (routine Gauntlet params, neutral sentiment)
+  // '1inch.eth': no alpha (fusion protocol operational governance)
+  // 'cvx.eth': no alpha (563 gauge-weight votes, 0 trades)
+  // 'ethenagovernance.eth': ENA cascade runs via COLLATERAL_ISSUER_TOKEN, not protocol monitor
+  // 'starknet.eth': L2 operational governance, 0 trades
+  // 'ens.eth': treasury/delegate compensation governance, 0 trades
+  // 'etherfi-dao.eth': treasury/buyback/seasonal rewards, 0 trades
+  // 'eulerdao.eth': routine Gauntlet params, neutral NLP, 0 trades
   // 'frax.eth': 0 trades in backtest
   // 'pendle-politics.eth': 0 proposals in DB
-  // 'graphprotocol.eth': 0 trades (team updates/council meetings)
+  // 'graphprotocol.eth': team updates/council meetings, 0 trades
   // 'balancer.eth': no Binance USDT perp for BAL (delisted)
-  // 'venus-xvs.eth': 0 trades (asset listing proposals, conf <0.55)
-  // 'rocketpool-dao.eth': 0 trades (partnership proposals, no risk-param alpha)
+  // 'venus-xvs.eth': asset listing proposals, conf <0.55, 0 trades
+  // 'rocketpool-dao.eth': partnership proposals, no risk-param alpha, 0 trades
 }
 
 // â”€â”€â”€ Forum URL → Protocol Mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -85,18 +82,17 @@ const FORUM_PROTOCOL: Record<string, GovernanceProtocol> = {
   'https://dydx.forum': 'dydx',
   'https://research.lido.fi': 'lido',
   'https://forum.makerdao.com': 'maker',
-  'https://gov.optimism.io': 'optimism',
   'https://forum.morpho.org': 'morpho',
   'https://gov.curve.fi': 'curve',
   'https://gov.uniswap.org': 'uniswap',
   'https://forum.eigenlayer.xyz': 'eigenlayer',
-  // ─── New L2/L1 forums (Mar 2026) — data in DB, now wired for replay ─────────
-  'https://forum.zknation.io': 'zksync',    // 190 posts
-  'https://discuss.jup.ag': 'jupiter',      // 165 posts
-  'https://forum.stacks.org': 'stacks',     // 94 posts
-  // ─── New protocols (Mar 2026) ─────────────────────────────────────────────
-  'https://forum.wormhole.com': 'wormhole', // Wormhole bridge governance forum
-  'https://forum.ether.fi': 'etherfi',      // Ether.fi — currently auth-required, wired for future
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // 'https://gov.optimism.io': L2 stablecoin filter blocks all signals, 0 trades
+  // 'https://forum.zknation.io': L2 operational governance, 0 trades (190 posts)
+  // 'https://discuss.jup.ag': treasury/fee distribution governance, 0 trades (165 posts)
+  // 'https://forum.stacks.org': PoX mechanism governance, 0 trades (94 posts)
+  // 'https://forum.wormhole.com': delegate platforms + support tickets, 0 trades
+  // 'https://forum.ether.fi': treasury/buyback/seasonal rewards, 0 trades; also auth-required
 }
 
 // â”€â”€â”€ Event Construction Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

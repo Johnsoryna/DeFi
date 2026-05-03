@@ -22,23 +22,21 @@ const SPACE_TO_PROTOCOL: Record<string, GovernanceProtocol> = {
   'compound-governance.eth': 'compound',
   'arbitrumfoundation.eth': 'arbitrum',
   'dydxgov.eth': 'dydx',
-  '1inch.eth': '1inch',
-  'cvx.eth': 'convex',
   'veyfi.eth': 'yearn',
-  // Added Feb 2026: spaces that were in backtest DB but missing from live monitor
   'lido-snapshot.eth': 'lido',
   'gmx.eth': 'gmx',
-  'ethenagovernance.eth': 'ethena',
-  'starknet.eth': 'starknet',
-  'ens.eth': 'ens',
   'morpho.eth': 'morpho',
-  // Feb 2026 v2: SNX perp DEX — wired, 0 trades but correct for future OI-cap events
   'snxgov.eth': 'synthetix',
-  // Mar 2026: Ether.fi DAO — 13 proposals (treasury/buyback), ETHFIUSDT perp
-  'etherfi-dao.eth': 'etherfi',
   // ─── Removed ────────────────────────────────────────────────────────
-  // 'frax.eth': REMOVED — 0 trades in backtest
-  // 'balancer.eth': REMOVED — no BALUSDT Binance perp (delisted), live execution would fail
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // '1inch.eth': fusion protocol operational governance
+  // 'cvx.eth': 563 gauge-weight votes, NLP correctly rejects all
+  // 'ethenagovernance.eth': ENA cascade via COLLATERAL_ISSUER_TOKEN, no protocol monitor needed
+  // 'starknet.eth': L2 operational governance
+  // 'ens.eth': treasury/delegate compensation governance
+  // 'etherfi-dao.eth': treasury/buyback/seasonal rewards (Mar 2026)
+  // 'frax.eth': 0 trades in backtest
+  // 'balancer.eth': no BALUSDT Binance perp (delisted)
 }
 
 // ─── GraphQL Query ──────────────────────────────────────────────────

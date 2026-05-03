@@ -62,7 +62,7 @@ export function getDrawdownFromHigh(asset: string, timestamp: number): number {
   const currentPriceStr = _priceService.getPrice(asset, timestamp)
   if (!currentPriceStr) return 0
   const currentPrice = parseFloat(currentPriceStr)
-  if (currentPrice <= 0) return 0
+  if (!Number.isFinite(currentPrice) || currentPrice <= 0) return 0
 
   const highPrice = _priceService.getHighPrice(asset, timestamp, 30)
   if (highPrice <= 0) return 0
@@ -89,7 +89,7 @@ export function getShortTermMomentum(asset: string, timestamp: number): number {
   const current = parseFloat(currentStr)
   const weekAgo = parseFloat(weekAgoStr)
 
-  if (weekAgo <= 0) return 0
+  if (!Number.isFinite(current) || !Number.isFinite(weekAgo) || weekAgo <= 0) return 0
   return (current - weekAgo) / weekAgo
 }
 
@@ -111,7 +111,7 @@ export function getMomentum(asset: string, timestamp: number, lookbackDays: numb
   const current = parseFloat(currentStr)
   const past = parseFloat(pastStr)
 
-  if (past <= 0 || !Number.isFinite(current)) return null
+  if (!Number.isFinite(past) || past <= 0 || !Number.isFinite(current)) return null
   return (current - past) / past
 }
 
@@ -152,7 +152,7 @@ export function hasEthVReversal(timestamp: number): boolean {
   const d7 = parseFloat(d7Str)
   const d14 = parseFloat(d14Str)
 
-  if (d14 <= 0 || d7 <= 0) return false
+  if (!Number.isFinite(now) || !Number.isFinite(d7) || !Number.isFinite(d14) || d14 <= 0 || d7 <= 0) return false
 
   const firstWeekChange = (d7 - d14) / d14   // negative = drop
   const secondWeekChange = (now - d7) / d7    // positive = recovery

@@ -17,7 +17,7 @@ if (typeof globalThis.WebSocket === 'undefined') {
 }
 
 import { config, validateConfigForLiveTrading } from './config/index.js'
-import { initStore, closeStore } from './lib/store.js'
+import { initStore, closeStore, upsertProposal, getActiveProposals, getProposal } from './lib/store.js'
 import { createLogger } from './lib/logger.js'
 import { eventBus } from './lib/eventBus.js'
 import { sleep } from './lib/retry.js'
@@ -100,6 +100,19 @@ function wireAnalysisPipeline(rm: RiskManager): void {
   // Cache proposal analyses for re-entry on stage transitions.
   const cachedAnalyses = new Map<string, IntelligentAnalysis>()
 
+  // Restore cached analyses from DB (survive restarts — enables timelock re-entry)
+  for (const row of getActiveProposals()) {
+    if (row.analysis) {
+      try {
+        const analysis = JSON.parse(row.analysis as string) as IntelligentAnalysis
+        cachedAnalyses.set(row.id as string, analysis)
+      } catch { /* ignore corrupt rows */ }
+    }
+  }
+  if (cachedAnalyses.size > 0) {
+    log.info({ restored: cachedAnalyses.size }, 'Cached analyses restored from DB')
+  }
+
   // Reset correlator state (matches backtest)
   resetCorrelator()
 
@@ -126,6 +139,13 @@ function wireAnalysisPipeline(rm: RiskManager): void {
       // Key matches stage-transition handler: "${protocol}:${proposalId}"
       // (analysis.proposalId now uses this format after intelligenceEngine fix)
       cachedAnalyses.set(analysis.proposalId, analysis)
+      upsertProposal({
+        id: analysis.proposalId,
+        protocol: analysis.protocol,
+        stage: analysis.stage,
+        title: analysis.title ?? proposal.description?.slice(0, 200) ?? '',
+        analysis: JSON.stringify(analysis, (_, v) => typeof v === 'bigint' ? v.toString() : v),
+      })
       recordOnchain(proposal, analysis)
 
       // Trade Cosmos SDK + Tally L2 chains, record-only for Ethereum chains
@@ -164,6 +184,12 @@ function wireAnalysisPipeline(rm: RiskManager): void {
     }
 
     if (!proposalId || !newStage) return
+
+    // Update proposal stage in DB so getActiveProposals() excludes executed/canceled on next restart
+    const existingProposal = getProposal(proposalId)
+    if (existingProposal) {
+      upsertProposal({ id: proposalId, protocol: existingProposal.protocol as string, stage: newStage })
+    }
 
     const reductions = rm.handleStageTransition(proposalId, newStage)
     for (const reduction of reductions) {
@@ -207,9 +233,12 @@ function wireAnalysisPipeline(rm: RiskManager): void {
     const reentryProtocol = proposalId.split(':')[0]
     if (newStage === 'timelock' && ONCHAIN_TRADE_ENABLED.has(reentryProtocol) && cachedAnalyses.has(proposalId)) {
       const originalAnalysis = cachedAnalyses.get(proposalId)!
-      // Guard: don't re-enter if already in a position on this symbol
+      // Guard: don't re-enter if already in a position on this symbol.
+      // Normalize wrapped-token aliases (WETH→ETH, WBTC→BTC) — extractedAssets from NLP
+      // may return the wrapped form while Binance positions store the unwrapped ticker.
+      const normalizeAsset = (a: string) => a.replace(/^W(ETH|BTC)$/, '$1').replace(/^CBBTC$/, 'BTC')
       const alreadyOpen = originalAnalysis.extractedAssets?.some(
-        asset => currentPositions.some(p => p.asset === asset)
+        asset => currentPositions.some(p => normalizeAsset(p.asset) === normalizeAsset(asset))
       )
       const hasBearishImpact = originalAnalysis.dynamicImpacts?.some(
         i => i.type === 'risk_mitigation' ||
@@ -238,11 +267,27 @@ function wireAnalysisPipeline(rm: RiskManager): void {
   eventBus.on('governance:executed', handleStageTransition)
   eventBus.on('governance:canceled', handleStageTransition)
 
+  // Evict cachedAnalyses when proposals reach terminal states (executed or canceled).
+  // Proposals in these states will never generate new signals, so the cache entry is stale.
+  // Without eviction the map grows unbounded over months of operation.
+  function evictProposalCache(event: GovernanceEvent): void {
+    if (event.type !== 'proposal_executed' && event.type !== 'proposal_canceled') return
+    // Key format matches handleStageTransition: "${protocol}:${proposalId}"
+    const key = `${event.protocol}:${event.proposalId}`
+    if (cachedAnalyses.delete(key)) {
+      log.debug({ key }, 'Evicted proposal from analysis cache (terminal state)')
+    }
+  }
+  eventBus.on('governance:executed', evictProposalCache)
+  eventBus.on('governance:canceled', evictProposalCache)
+
   // ── Snapshot proposals → Intelligence Engine (NLP-powered) ──
   // IDENTICAL to backtest wireAnalysisPipeline — keep in sync
-  // Protocols with no tradeable assets (CRV/SNX removed, 1INCH never in list) —
-  // skip before NLP to avoid wasting CPU on signals that will always be discarded.
-  const NON_ALPHA_SNAPSHOT_PROTOCOLS = new Set(['curve', 'synthetix', '1inch'])
+  // 1inch: no Binance perps for 1INCH → always discarded.
+  // synthetix: snxgov.eth proposals are routine governance (50% WR, -$2,212 backtest).
+  // Note: 'curve' is NOT in this set — no Snapshot space maps to 'curve' (cvx.eth→convex,
+  // veyfi.eth→yearn), so filtering it would have no effect. Matches backtest exactly.
+  const NON_ALPHA_SNAPSHOT_PROTOCOLS = new Set(['synthetix', '1inch'])
 
   eventBus.on('governance:snapshot', (event: GovernanceEvent) => {
     const snap = event as SnapshotProposalEvent
@@ -282,6 +327,67 @@ function wireAnalysisPipeline(rm: RiskManager): void {
 
   log.info('Intelligence Engine pipeline wired (1:1 backtest parity)')
 }
+
+// ─── Holding-Time Recovery ──────────────────────────────────────────
+
+/**
+ * Recover the real entry timestamp for a position after bot restart.
+ * Queries /fapi/v1/allOrders to find the most recent FILLED MARKET entry order
+ * (non-reduce-only) and uses its `time` as the positionHoldingMeta entryTime.
+ * Falls back to 24h ago if no matching order is found.
+ */
+async function recoverHoldingMeta(symbol: string): Promise<void> {
+  let entryTime = Date.now() - 24 * 3600_000 // conservative fallback: assume 24h old
+  try {
+    const { getOrderHistory } = await import('./clients/binance.js')
+    const orders = await getOrderHistory(symbol, 50)
+    // Find the most recent filled MARKET entry (not a close/reduce order)
+    const entryOrder = orders
+      .filter(o => o.status === 'FILLED' && o.type === 'MARKET' && !o.reduceOnly)
+      .sort((a, b) => b.time - a.time)[0]
+    if (entryOrder) {
+      entryTime = entryOrder.time
+      // Also update income-tracking start time so getIncome() at close covers the full range.
+      // The fallback in position:update sets 720h; here we narrow it to the real entry.
+      positionOpenTimeMs.set(symbol, entryTime)
+      log.info(
+        { symbol, entryTime: new Date(entryTime).toISOString() },
+        'Max-holding-time tracking restored — real entry time from order history',
+      )
+    } else {
+      log.info(
+        { symbol },
+        'Max-holding-time tracking restored — no MARKET entry order found, assuming 24h ago',
+      )
+    }
+  } catch (err) {
+    log.warn({ err, symbol }, 'Order history fetch failed — max-holding-time assumes 24h ago')
+  }
+  if (!positionHoldingMeta.has(symbol)) {
+    positionHoldingMeta.set(symbol, { entryTime, maxHoldingHours: 720 })
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PRODUCTION BOT — GOVERNANCE LAYER ONLY
+//
+// This file starts EXACTLY these systems and nothing else:
+//   1. DB + config validation
+//   2. Reconcile ghost positions (startup DB vs Binance cross-check)
+//   3. Analysis pipeline (governance event → proposal analysis)
+//   4. Signal generator (analysis → trading signals)
+//   5. Risk manager (position sizing, stop-loss, Kelly criterion)
+//   6. Position tracker + price monitor
+//   7. Governance monitors (on-chain WSS, forum, Snapshot)
+//   8. Trade executor (Binance orders)
+//   9. Keep-alive loop (health checks, Telegram reports)
+//
+// DO NOT add imports or start calls for bb-bounce, momentum, btc-trend,
+// or any other trading layer here. Those are separate programs.
+// Adding them here causes LIVE UNINTENDED TRADES on the server because
+// old layer files persist on the server even after deletion from the repo
+// (tar extract never removes files).
+// ═══════════════════════════════════════════════════════════════════════════
 
 // ─── Main Boot Sequence ─────────────────────────────────────────────
 
@@ -334,6 +440,13 @@ async function main(): Promise<void> {
     const binance = await import('./clients/binance.js')
     await binance.ensureOneWayMode()
     log.info('Binance API configured — order execution available')
+
+    // 2a. Reconcile layer DB positions against Binance — clears ghost positions
+    // (positions closed externally during downtime or via manual trading)
+    if (!config.dryRun) {
+      const { reconcilePositions } = await import('./capital/reconcile.js')
+      await reconcilePositions()
+    }
   }
 
   // 4. Wire analysis pipeline (IDENTICAL to backtest wireAnalysisPipeline)
@@ -341,7 +454,7 @@ async function main(): Promise<void> {
 
   // 5. Wire signal generator (analysis → signals)
   // (matches backtest step 5: wireSignalGenerator(() => collector.getCurrentPositions()))
-  wireSignalGenerator(() => currentPositions)
+  wireSignalGenerator(() => currentPositions, true) // true = enable funding rate boost (live mode)
 
   // 6. Wire risk manager (signals → validated signals)
   // (matches backtest step 6: wireRiskManager(riskManager))
@@ -361,7 +474,17 @@ async function main(): Promise<void> {
       if (!previousIds.has(pos.id) && pos.protocol === 'binance') {
         const symbol = pos.id.replace('binance:', '')
         if (!positionOpenTimeMs.has(symbol)) {
-          positionOpenTimeMs.set(symbol, Date.now() - 60_000) // 1-min buffer — may miss prior income
+          // Wide fallback: cover full maxHoldingHours (720h) so getIncome() at close captures
+          // entry commissions and all funding fees. recoverHoldingMeta() will narrow this to the
+          // real entry time once the Binance order history is fetched (async, runs in parallel).
+          positionOpenTimeMs.set(symbol, Date.now() - 720 * 3600_000)
+        }
+        // Restore max-holding-time tracking after bot restart.
+        // execution:result sets this on new trades; if missing, the bot restarted
+        // with an existing position. Query Binance order history for the real entry
+        // timestamp so the 720h clock starts from the actual open, not from restart.
+        if (!positionHoldingMeta.has(symbol)) {
+          void recoverHoldingMeta(symbol)
         }
       }
     }
@@ -386,11 +509,14 @@ async function main(): Promise<void> {
           // Fetch income history async — record ONCE with accurate PnL.
           // Do NOT record synchronously first: that would cause double-counting
           // because recordFromIncome also calls record* when income records exist.
+          const holdingHours = (now - openTime) / 3_600_000
           void (async () => {
             let pnlToRecord = pnl // snapshot PnL as fallback
             try {
               const { getIncome } = await import('./clients/binance.js')
-              const records = await getIncome({ symbol: symbol!, startTime: openTime })
+              // endTime = now + 5s buffer ensures the close income record is captured
+              // while excluding income from any subsequent same-symbol position.
+              const records = await getIncome({ symbol: symbol!, startTime: openTime, endTime: now + 5_000 })
               const incomePnl = records
                 .filter(r => ['REALIZED_PNL', 'FUNDING_FEE', 'COMMISSION'].includes(r.incomeType))
                 .reduce((sum, r) => sum + parseFloat(r.income), 0)
@@ -406,11 +532,22 @@ async function main(): Promise<void> {
             } catch (err) {
               log.warn({ err, symbol }, 'Income history fetch failed — recording snapshot PnL')
             }
+            // NOTE: 'margin' here is notional (size × entryPrice), not margin (notional/leverage).
+            // recordTradeOutcome is diagnostic-only (adaptive Kelly is disabled in confidenceScorer),
+            // so the imprecision has no effect on live sizing.
             const margin = Math.abs(parseFloat(prev.size || '0')) * parseFloat(prev.entryPrice || '0')
             if (margin > 0) recordTradeOutcome(pnlToRecord, margin)
             if (pnlToRecord < 0) { recordStopLoss(prev.asset, now); recordGlobalLoss(now) }
             else if (pnlToRecord > 0) { recordWin(prev.asset); resetGlobalLosses() }
             recordMonthlyPnl(now, pnlToRecord)
+            // Telegram notification — mirrors trade_executed alert on entry
+            const side = parseFloat(prev.size || '0') < 0 ? 'SHORT' : 'LONG'
+            const pnlSign = pnlToRecord >= 0 ? '+' : ''
+            sendAlert(
+              'trade_exit', 'info',
+              `Position Closed: ${side} ${prev.asset}`,
+              `PnL: ${pnlSign}$${pnlToRecord.toFixed(2)}\nEntry: $${(() => { const p = parseFloat(prev.entryPrice || '0'); return p >= 1 ? p.toFixed(2) : p.toFixed(4) })()}\nHeld: ${holdingHours.toFixed(0)}h\nExit: Trailing Stop / SL / TP`,
+            ).catch(() => {})
           })()
         } else {
           // No API keys or non-Binance: use snapshot fields as-is
@@ -435,9 +572,12 @@ async function main(): Promise<void> {
           positionHoldingMeta.delete(symbol)
           clearProtectionState(symbol)
           riskManager.untrackPosition(prev.id)
-          cancelPositionOrders(symbol).catch((err) =>
-            log.warn({ err, symbol }, 'Order cleanup after position close failed'),
-          )
+          cancelPositionOrders(symbol).catch((err) => {
+            log.warn({ err, symbol }, 'Order cleanup after position close failed')
+            sendAlert('system_error', 'error', 'Order Cleanup Failed',
+              `Failed to cancel protective orders for ${symbol} after position close. Old orders may interfere with next trade.`,
+            ).catch(() => {})
+          })
         }
       }
     }
@@ -529,6 +669,7 @@ async function main(): Promise<void> {
   )
 
   log.info('All systems operational')
+
 }
 
 // ─── Max-Holding-Time Monitor ───────────────────────────────────────
@@ -576,10 +717,56 @@ async function maxHoldingTimeMonitor(): Promise<void> {
 
 // ─── Keep-Alive Loop ────────────────────────────────────────────────
 
+// Track last heap alert to avoid spamming (max once per 30 min)
+let lastHeapAlertMs = 0
+// Track last weekly report by date string (YYYY-MM-DD) to send exactly once per Monday
+let lastWeeklyReportDate = ''
+
 async function keepAliveLoop(): Promise<void> {
   while (running) {
     await sleep(60_000)
     log.debug({ positions: currentPositions.length }, 'Keep-alive tick')
+
+    // ─── Heap Memory Alert (every 30 min) ───────────────────────────
+    const now = Date.now()
+    if (now - lastHeapAlertMs >= 30 * 60_000) {
+      lastHeapAlertMs = now
+      const mem = process.memoryUsage()
+      const heapPct = mem.heapUsed / mem.heapTotal
+      // Only alert once heapTotal > 200MB — avoids false positive at startup when
+      // Node.js V8 begins with a tiny heap (32MB) that grows dynamically.
+      // A 93% reading on a 32MB heap is meaningless; only a 90%+ reading on a
+      // substantial heap (>200MB) indicates real OOM risk.
+      if (heapPct > 0.90 && mem.heapTotal > 200 * 1048576) {
+        log.warn({ heapUsedMb: (mem.heapUsed / 1048576).toFixed(0), heapTotalMb: (mem.heapTotal / 1048576).toFixed(0), heapPct: (heapPct * 100).toFixed(1) + '%' }, 'Heap memory critical (>90%)')
+        sendAlert('system_health', 'error', 'Heap Memory Critical', `Heap: ${(heapPct * 100).toFixed(1)}% used (${(mem.heapUsed / 1048576).toFixed(0)}/${(mem.heapTotal / 1048576).toFixed(0)} MB)\nBot may become unstable. Consider restarting.`).catch(() => {})
+      }
+    }
+
+    // ─── Weekly Telegram Report (Monday 08:00 UTC) ───────────────────
+    const d = new Date()
+    const isMonday = d.getUTCDay() === 1
+    const isReportHour = d.getUTCHours() === 8
+    const todayStr = d.toISOString().slice(0, 10)
+    if (isMonday && isReportHour && lastWeeklyReportDate !== todayStr) {
+      lastWeeklyReportDate = todayStr
+      try {
+        const { getAccountInfo } = await import('./clients/binance.js')
+        const acc = await getAccountInfo()
+        const wallet = parseFloat(acc.totalWalletBalance).toFixed(2)
+        const upnl = parseFloat(acc.totalUnrealizedProfit).toFixed(2)
+        const openCount = currentPositions.length
+        const upnlSign = parseFloat(upnl) >= 0 ? '+' : ''
+        await sendAlert(
+          'system_health', 'info',
+          `Weekly Report — ${todayStr}`,
+          `Wallet: $${wallet}\nUnrealized PnL: ${upnlSign}$${upnl}\nOpen positions: ${openCount}\n\nBot running normally.`,
+        )
+        log.info({ wallet, upnl, openCount }, 'Weekly report sent')
+      } catch (err) {
+        log.warn({ err }, 'Weekly report failed')
+      }
+    }
   }
 }
 

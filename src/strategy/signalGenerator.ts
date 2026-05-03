@@ -510,46 +510,11 @@ const PROTOCOL_GOV_TOKEN: Record<string, string> = {
   arbitrum: 'ARB',
   curve: 'CRV',
   synthetix: 'SNX',   // C-ratio, OI-cap, market deprecation — re-enabled with improved NLP (Feb 2026)
-  convex: 'CVX',
   yearn: 'YFI',
-  optimism: 'OP',
   dydx: 'DYDX',
-  ethena: 'ENA',
   eigenlayer: 'EIGEN',
-  ens: 'ENS',
-  // ─── New Protocols ─────────────────────────────────────────
   gmx: 'GMX',
-  jupiter: 'JUP',
-  celestia: 'TIA',
-  avalanche: 'AVAX',
-  polygon: 'POL',
-  starknet: 'STRK',
   morpho: 'MORPHO',
-  sui: 'SUI',
-  // mantle: REMOVED — no Binance USDT perp for MNT, 0 backtest trades (7 forum posts, L2 operational gov)
-  sei: 'SEI',
-  // ─── Forum-active L1/L2 protocols (245 / 183 posts in DB) ───────
-  near: 'NEAR',
-  zksync: 'ZK',
-  // ─── Gruppe A: Forum data in DB, now wired (Feb 2026) ────────────
-  drift: 'DRIFT',      // Solana perp-DEX, DRIFTUSDT on Binance
-  injective: 'INJ',   // DEX-parameter governance, INJUSDT on Binance
-  cosmos: 'ATOM',     // L1 hub governance, ATOMUSDT on Binance
-  // ─── Gruppe C: Fusion/oracle/staking governance (Feb 2026) ───────
-  '1inch': '1INCH',   // Fusion protocol parameter governance, 226 forum + 19 snaps, 1INCHUSDT perp
-  jito: 'JTO',        // Solana liquid staking fee governance, 44 forum posts, JTOUSDT perp
-  pyth: 'PYTH',       // Oracle parameter governance, 113 forum posts, PYTHUSDT perp
-  // ─── Gruppe D: Yield/indexer governance (Feb 2026) ───────────────
-  pendle: 'PENDLE',   // Yield pool risk params, market expiry, PENDLEUSDT perp
-  thegraph: 'GRT',    // Indexer slashing, query fees, delegation params, GRTUSDT perp
-  euler: 'EUL',       // Supply caps, LLTV changes, asset listings — monthly Gauntlet risk updates
-  stacks: 'STX',      // Bitcoin L2 governance — OI-cap reductions, PoX mechanism changes, STXUSDT perp
-  etherfi: 'ETHFI',  // Ether.fi liquid restaking — withdrawal params, validator ejection, ETHFIUSDT perp
-  wormhole: 'W',     // Wormhole bridge governance — guardian set, bridge params, WUSDT perp
-  // frax: REMOVED — 0 trades (re-tested Feb 2026 with body analysis, still 0; treasury/strategy governance)
-  // balancer: REMOVED — no Binance USDT perp for BAL (delisted); had 2 trades +$860 backtest only
-  // venus: REMOVED — 0 trades. Asset listing proposals max conf 0.50 (below 0.55 threshold).
-  // rocketpool: REMOVED — 0 trades. Partnership/staking proposals, no risk-parameter alpha.
 }
 
 // Asset → Protocol mapping (which protocol manages this asset)
@@ -562,46 +527,19 @@ const ASSET_PROTOCOL: Record<string, string> = {
   // Note: WSTETH already mapped to 'aave' (primary collateral context)
   ARB: 'arbitrum',
   CRV: 'curve',
-  OP: 'optimism',
-  CVX: 'convex',
   YFI: 'yearn',
   DYDX: 'dydx',
-  ENA: 'ethena',
+  ENA: 'aave',    // Hebel-4 cascade target (USDe collateral in AAVE → short ENA); keep in TRADEABLE_ASSETS
   EIGEN: 'eigenlayer',
-  ENS: 'ens',
-  // ─── New Protocol Assets ──────────────────────────────────
   GMX: 'gmx',
-  JUP: 'jupiter',
-  TIA: 'celestia',
-  AVAX: 'avalanche',
-  POL: 'polygon',
-  STRK: 'starknet',
   MORPHO: 'morpho',
-  SUI: 'sui',
-  // MNT: REMOVED — no Binance USDT perp, 0 backtest trades
-  SEI: 'sei',
-  NEAR: 'near',
-  ZK: 'zksync',
-  // ─── Gruppe A (Feb 2026) ─────────────────────────────────────
-  DRIFT: 'drift',
-  INJ: 'injective',
-  ATOM: 'cosmos',
-  // ─── Gruppe C (Feb 2026) ─────────────────────────────────────
-  '1INCH': '1inch',
-  JTO: 'jito',
-  PYTH: 'pyth',
   SNX: 'synthetix',
-  // ─── Gruppe D (Feb 2026) ─────────────────────────────────────
-  PENDLE: 'pendle',
-  GRT: 'thegraph',
-  EUL: 'euler',       // Euler Finance governance token
-  STX: 'stacks',      // Stacks Bitcoin L2 governance token
-  ETHFI: 'etherfi',  // Ether.fi liquid restaking governance token
-  W: 'wormhole',     // Wormhole bridge governance token
-  // ─── Removed ─────────────────────────────────────────────────
-  // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis, still 0)
-  // BAL: REMOVED — no Binance USDT perp (delisted)
-  // XVS/RPL: REMOVED — 0 trades in backtest (venus: asset listings; rocketpool: partnership gov)
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // OP/CVX/ENS/JUP/TIA/AVAX/POL/STRK/SUI/SEI/NEAR/ZK: L1/L2 operational governance
+  // DRIFT/INJ/ATOM: Solana/Cosmos operational governance
+  // 1INCH/JTO/PYTH: treasury/oracle/staking governance
+  // PENDLE/GRT/EUL/STX/ETHFI/W: 0 trades confirmed, no risk-parameter alpha
+  // FXS/BAL/XVS/RPL/MNT: no Binance perp or 0 trades in backtest
 }
 
 // ─── Hebel 4: Collateral-Issuer Token Map ────────────────────────────────────
@@ -612,6 +550,9 @@ const COLLATERAL_ISSUER_TOKEN: Record<string, string> = {
   WSTETH: 'LDO',   // Lido issues wstETH — AAVE/Compound degrading wstETH hurts Lido
   STETH:  'LDO',   // Lido issues stETH
   USDE:   'ENA',   // Ethena issues USDe — collateral freeze/degrade hits ENA token
+  DAI:    'SKY',   // MakerDAO issues DAI — AAVE/Compound degrading DAI is bearish for SKY (MakerDAO)
+  USDS:   'SKY',   // Updated MakerDAO stablecoin (rebrand from DAI)
+  SDAI:   'SKY',   // SparkFi savings DAI — SparkFi is MakerDAO's lending protocol
 }
 
 // ─── Hebel 3: Protocol Cascade Map ───────────────────────────────────────────
@@ -641,33 +582,17 @@ const TRADEABLE_ASSETS = new Set([
 //   4. Sufficient Binance liquidity for realistic execution
 const ESTABLISHED_PROTOCOLS = new Set([
   'aave', 'compound', 'uniswap', 'maker',
-  'lido', 'arbitrum', 'optimism',
-  'dydx', 'ethena', 'eigenlayer', 'ens',
-  // ─── Re-enabled with improved strategy (direction-asymmetric + short bias) ──
-  'curve', 'convex', 'yearn',
-  'synthetix',  // Re-enabled with improved NLP — OI-cap/market deprecation signals
-  // ─── New Protocols ─────────────────────────────────────────
-  'gmx', 'jupiter', 'celestia', 'avalanche', 'polygon',
-  'starknet', 'morpho', 'sui', 'sei',
-  // 'mantle': REMOVED — no Binance USDT perp for MNT
-  'near', 'zksync',
-  // ─── Gruppe A (Feb 2026) ─────────────────────────────────────
-  'drift', 'injective', 'cosmos',
-  // ─── Gruppe C (Feb 2026) ─────────────────────────────────────
-  '1inch', 'jito', 'pyth',
-  // ─── Gruppe D (Feb 2026) ─────────────────────────────────────
-  'pendle', 'thegraph',
-  // ─── Euler Finance (Feb 2026) ────────────────────────────────
-  'euler',
-  // ─── New L2/L1 forum data (Mar 2026) ─────────────────────────
-  'stacks',
-  // ─── New protocols (Mar 2026) ─────────────────────────────────
-  'etherfi',   // ETHFI — Ether.fi DAO, etherfi-dao.eth (13 proposals, treasury/buyback)
-  'wormhole',  // W — Wormhole bridge forum, WUSDT perp
-  // ─── Removed ─────────────────────────────────────────────────
-  // 'frax': REMOVED — 0 trades in backtest
-  // 'balancer': REMOVED — no Binance USDT perp for BAL
-  // 'venus', 'rocketpool': REMOVED — 0 trades in backtest
+  'lido', 'arbitrum', 'dydx', 'eigenlayer',
+  'curve', 'yearn',
+  'synthetix',
+  'gmx', 'morpho',
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // convex, optimism, ethena, ens: no alpha
+  // jupiter, celestia, avalanche, polygon, starknet, sui, sei, near, zksync: L1/L2 operational
+  // drift, injective, cosmos: Solana/Cosmos operational governance
+  // 1inch, jito, pyth: treasury/oracle/staking governance
+  // pendle, thegraph, euler, stacks, etherfi, wormhole: 0 trades confirmed
+  // frax, balancer, venus, rocketpool, mantle: no perp or 0 trades
 ])
 
 // Protocols with historically weak governance alpha requiring elevated signal quality.
@@ -826,14 +751,18 @@ function generateDynamicSignals(
   // Empirical: 2 DYDX losses (-$7.4K) from "Winding down Pareto Labs validator" and
   // "HashKey Cloud Validator shutdown" — individual exits, not protocol risk.
   // Also: "Nansen Validator on dYdX: Sunset Notice" (Feb 2026) — "sunset" = company wind-down.
+  // Scoped to dYdX only — dYdX's permissioned validator set makes these announcements frequent.
+  // For other protocols (Ethereum PoS, Lido, etc.) "validator" in governance context
+  // usually means validator-set policy changes, not individual exits — don't filter those.
   if (
+    analysis.protocol === 'dydx' &&
     /\bvalidator\b/i.test(analysis.title) &&
     /\b(wind(?:ing)?\s*down|shutdown|shut\s*down|sunset)\b/i.test(analysis.title) &&
     !/\bvalidator\s+set\b/i.test(analysis.title)
   ) {
     log.debug(
-      { title: analysis.title },
-      'Validator exit filter: individual validator exit — no protocol-level alpha, skipping',
+      { title: analysis.title, protocol: analysis.protocol },
+      'Validator exit filter: individual dYdX validator exit — no protocol-level alpha, skipping',
     )
     return signals
   }
@@ -1146,10 +1075,9 @@ function generateDynamicSignals(
           (spec.direction === 'short' && safeParseFloat(p.size) < 0)
         if (!sameDirection) return false
 
-        // Same asset on same protocol
         if (p.asset === spec.asset && p.protocol === spec.protocol) return true
 
-        // Correlated group check (only ETH/BTC derivatives)
+        // Correlated group check (only ETH/BTC derivatives) — always block
         if (specGroup) {
           const existingGroup = CORRELATION_GROUPS[p.asset.toUpperCase()]
           if (existingGroup === specGroup) return true
@@ -1165,8 +1093,8 @@ function generateDynamicSignals(
         continue
       }
 
-      // Portfolio heat check: max 8 open positions
-      if (currentPositions.length >= 8) {
+      // Portfolio heat check: max 10 open positions
+      if (currentPositions.length >= 10) {
         log.debug({ openPositions: currentPositions.length }, 'Portfolio full — skipping')
         continue
       }
@@ -1234,7 +1162,7 @@ function generateDynamicSignals(
       // Fail-open: no data → no adjustment.
       if (spec.direction === 'short') {
         const ethMom14d = getMomentum('WETH', getClock().now(), 14)
-        if (ethMom14d !== null && ethMom14d > 0.15) {
+        if (ethMom14d !== null && ethMom14d > 0.16) {
           const prevLev = scaledLeverage
           scaledLeverage = Math.max(1, Math.round(scaledLeverage * 0.5 * 10) / 10)
           if (prevLev !== scaledLeverage) {
@@ -1261,14 +1189,14 @@ function generateDynamicSignals(
         const LIQUIDITY_LEV_CAP: Record<string, number> = {
           // Tier 1: Very liquid — no additional cap
           ETH: 7, WETH: 7, BTC: 7, WBTC: 7, CBBTC: 7,
-          AAVE: 7, LINK: 7, UNI: 7, ARB: 7, OP: 7,
-          COMP: 5, // COMP has decent dYdX liquidity — allow up to 5x
+          AAVE: 6, LINK: 7, UNI: 7, ARB: 7, OP: 7,
+          COMP: 4, // COMP has decent dYdX liquidity — allow up to 5x
           // Tier 2: Medium liquidity — max 3x
           SNX: 3, LDO: 3,
           ENA: 3,   // $44k 24h volume — medium liquidity
           // Tier 3: Lower liquidity — max 2x
           CRV: 2, WSTETH: 2, RETH: 2, CBETH: 2,
-          DYDX: 2,  // $235 24h volume — lower liquidity
+          DYDX: 4,  // $235 24h volume — lower liquidity
           EIGEN: 2, // $819 24h volume — lower liquidity
           // Tier 4: Very low liquidity — no leverage
           SKY: 1,
@@ -1487,9 +1415,10 @@ function generateLegacySignals(
         }
 
         // ─── A3: MOMENTUM CONFIRMATION FILTER (Longs only) ──────────
-        // A3b: Block longs in strong 14d downtrend
+        // A3b: Block longs in strong 14d downtrend.
+        // Aligned to dynamic path threshold (-8% not -10%).
         const mom14dLeg = getMomentum(impact.asset, getClock().now(), 14)
-        if (mom14dLeg !== null && mom14dLeg < -0.10) {
+        if (mom14dLeg !== null && mom14dLeg < -0.08) {
           log.debug(
             { asset: impact.asset, mom14d: (mom14dLeg * 100).toFixed(1) + '%' },
             'A3b: Legacy long blocked — asset in strong 14d downtrend',
@@ -1554,7 +1483,7 @@ function generateLegacySignals(
       // Same rules as dynamic path — general trading principles.
       // C1: Discussion stage cap — see dynamic path for rationale (not applied for Tier 1).
       // Protocol tier for legacy path
-      const TIER1_LEG = new Set(['aave', 'compound', 'uniswap', 'maker'])
+      const TIER1_LEG = new Set(['aave', 'compound', 'uniswap', 'maker', 'arbitrum', 'dydx', 'lido'])
       const isTier1Leg = TIER1_LEG.has(analysis.protocol)
       if (!isTier1Leg) {
         legacyLeverage = Math.min(legacyLeverage, 2)
@@ -1600,13 +1529,13 @@ function generateLegacySignals(
         continue
       }
 
-      const existingPosition = currentPositions.find(
-        (p) =>
-          p.asset === impact.asset &&
-          p.protocol === rule.protocol &&
-          ((rule.direction === 'long' && safeParseFloat(p.size) > 0) ||
-           (rule.direction === 'short' && safeParseFloat(p.size) < 0)),
-      )
+      const existingPosition = currentPositions.find((p) => {
+        const sameDirection =
+          (rule.direction === 'long' && safeParseFloat(p.size) > 0) ||
+          (rule.direction === 'short' && safeParseFloat(p.size) < 0)
+        if (!sameDirection) return false
+        return p.asset === impact.asset && p.protocol === rule.protocol
+      })
 
       if (existingPosition) continue
 
@@ -1777,8 +1706,9 @@ async function applyFundingRateBoost(signals: TradeSignal[]): Promise<TradeSigna
         const { getFundingRate } = await import('../clients/binance.js')
         const rate = await getFundingRate(sym)
         rateMap.set(sym, rate)
-      } catch {
+      } catch (err) {
         // Fail-open: missing funding rate does not block the signal
+        log.warn({ err, sym }, 'Funding rate fetch failed — skipping boost for this asset')
       }
     })
   )

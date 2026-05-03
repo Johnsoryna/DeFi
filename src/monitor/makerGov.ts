@@ -214,17 +214,16 @@ function subscribeDSNotes(address: `0x${string}`): void {
       const isSocketClosed = error?.name === 'SocketClosedError' ||
         (error?.message ?? '').includes('socket has been closed')
       if (isSocketClosed) {
-        log.warn({ address }, 'DSNote WSS disconnected — will auto-recover via HTTP polling')
+        log.warn({ address }, 'DSNote WSS disconnected — scheduling reconnect with backfill in 10s')
       } else {
         log.error({ err: error, address }, 'DSNote subscription error')
-        if (!reconnecting) {
-          reconnecting = true
-          log.warn({ address }, 'Scheduling Maker Gov reconnect in 10s')
-          setTimeout(() => {
-            reconnecting = false
-            startMakerGovMonitor().catch((err) => log.error({ err }, 'Maker Gov reconnect failed'))
-          }, 10_000)
-        }
+      }
+      if (!reconnecting) {
+        reconnecting = true
+        setTimeout(() => {
+          reconnecting = false
+          startMakerGovMonitor().catch((err) => log.error({ err }, 'Maker Gov reconnect failed'))
+        }, 10_000)
       }
     },
   })
@@ -246,17 +245,16 @@ function subscribeDSNotes(address: `0x${string}`): void {
       const isSocketClosed = error?.name === 'SocketClosedError' ||
         (error?.message ?? '').includes('socket has been closed')
       if (isSocketClosed) {
-        log.warn('Etch WSS disconnected — will auto-recover via HTTP polling')
+        log.warn('Etch WSS disconnected — scheduling reconnect with backfill in 10s')
       } else {
         log.error({ err: error }, 'Etch subscription error')
-        if (!reconnecting) {
-          reconnecting = true
-          log.warn('Scheduling Maker Gov reconnect in 10s (Etch error)')
-          setTimeout(() => {
-            reconnecting = false
-            startMakerGovMonitor().catch((err) => log.error({ err }, 'Maker Gov reconnect failed'))
-          }, 10_000)
-        }
+      }
+      if (!reconnecting) {
+        reconnecting = true
+        setTimeout(() => {
+          reconnecting = false
+          startMakerGovMonitor().catch((err) => log.error({ err }, 'Maker Gov reconnect failed'))
+        }, 10_000)
       }
     },
   })

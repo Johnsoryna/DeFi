@@ -96,38 +96,16 @@ export const FORUMS = {
   compound: 'https://www.comp.xyz' as const,
   arbitrum: 'https://forum.arbitrum.foundation' as const,
   dydx: 'https://dydx.forum' as const,
-  cosmos: 'https://forum.cosmos.network' as const,
-  '1inch': 'https://gov.1inch.io' as const,
   maker: 'https://forum.makerdao.com' as const,
   curve: 'https://gov.curve.fi' as const,
-  ens: 'https://discuss.ens.domains' as const,
-  near: 'https://gov.near.org' as const,
   morpho: 'https://forum.morpho.org' as const,
   lido: 'https://research.lido.fi' as const,
-  synthetix: 'https://gov.synthetix.io' as const,
-  optimism: 'https://gov.optimism.io' as const,
-  sui: 'https://forums.sui.io' as const,
-  celestia: 'https://forum.celestia.org' as const,
-  avalanche: 'https://forum.avax.network' as const,
-  ethena: 'https://gov.ethenafoundation.com' as const,
   eigenlayer: 'https://forum.eigenlayer.xyz' as const,
-  zksync: 'https://forum.zknation.io' as const,
-  starknet: 'https://community.starknet.io' as const,
-  jupiter: 'https://discuss.jup.ag' as const,
-  pyth: 'https://forum.pyth.network' as const,
-  stacks: 'https://forum.stacks.org' as const,
-  jito: 'https://forum.jito.network' as const,
-  // ─── Gruppe B (Feb 2026) ─────────────────────────────────────────
-  // frax: REMOVED — 0 trades in backtest (no risk-param alpha)
-  balancer: 'https://forum.balancer.fi' as const,
-  // ─── Euler Finance (Feb 2026) ────────────────────────────────────
-  euler: 'https://forum.euler.finance' as const,
-  // ─── Uniswap (Mar 2026) ──────────────────────────────────────────
   uniswap: 'https://gov.uniswap.org' as const,
-  // ─── New protocols (Mar 2026) ────────────────────────────────────
-  // etherfi: forum.ether.fi currently requires auth — monitored via Snapshot only
-  etherfi: 'https://forum.ether.fi' as const,
-  wormhole: 'https://forum.wormhole.com' as const,
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // cosmos/1inch/ens/near/synthetix/optimism/sui/celestia/avalanche/ethena: no alpha
+  // zksync/starknet/jupiter/pyth/stacks/jito/balancer/euler/etherfi/wormhole: 0 trades
+  // frax: 0 trades in backtest
 } as const
 
 // ─── Snapshot Spaces ─────────────────────────────────────────────────
@@ -138,24 +116,22 @@ export const SNAPSHOT_SPACES = [
   'compound-governance.eth',
   'arbitrumfoundation.eth',
   'dydxgov.eth',
-  '1inch.eth',
-  'cvx.eth',
   'lido-snapshot.eth',
   'morpho.eth',
   'veyfi.eth',
   'gmx.eth',
-  'starknet.eth',
-  'ens.eth',
-  'ethenagovernance.eth',
-  // ─── Feb 2026 v2 ─────────────────────────────────────────────────
-  'snxgov.eth',             // SNX: Synthetix Perps governance — OI-cap events
-  // ─── Mar 2026 ─────────────────────────────────────────────────────
-  'etherfi-dao.eth',        // ETHFI: Ether.fi DAO — 13 proposals (treasury/buyback/seasonal rewards)
-  // ─── Removed ──────────────────────────────────────────────────────
-  // 'frax.eth': REMOVED — 0 trades in backtest
-  // 'balancer.eth': REMOVED — no BALUSDT Binance perp (delisted)
-  // 'pendle-politics.eth': 0 proposals in DB (pendle-politics.eth has no history), not added live
-  // 'eulerdao.eth': 0 trades in backtest (routine Gauntlet param updates, neutral sentiment) — kept in replayProvider for future
+  'snxgov.eth',
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // '1inch.eth': fusion protocol operational governance
+  // 'cvx.eth': 563 gauge-weight votes, NLP correctly rejects all
+  // 'starknet.eth': L2 operational governance
+  // 'ens.eth': treasury/delegate compensation governance
+  // 'ethenagovernance.eth': ENA cascade via COLLATERAL_ISSUER_TOKEN, no protocol monitor needed
+  // 'etherfi-dao.eth': treasury/buyback/seasonal rewards (Mar 2026)
+  // 'frax.eth': 0 trades in backtest
+  // 'balancer.eth': no BALUSDT Binance perp (delisted)
+  // 'pendle-politics.eth': 0 proposals in DB
+  // 'eulerdao.eth': routine Gauntlet param updates, neutral NLP, 0 trades
 ] as const
 
 // ─── All Governance Token Addresses (for delegation tracking) ────────

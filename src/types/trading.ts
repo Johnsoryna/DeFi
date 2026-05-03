@@ -63,6 +63,7 @@ export interface Position {
   leverage?: number         // Leverage multiplier (1 = no leverage, >1 = leveraged)
   healthFactor?: number     // Aave only
   lastUpdated: string       // ISO timestamp
+  proposalId?: string       // Source governance proposal (backtest only; undefined for live Binance positions)
 }
 
 // ─── Portfolio ──────────────────────────────────────────────────────

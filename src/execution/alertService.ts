@@ -30,12 +30,16 @@ const SEVERITY_EMOJI: Record<AlertSeverity, string> = {
 
 // ─── Telegram Formatting ────────────────────────────────────────────
 
+function escHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
 function formatTelegramMessage(alert: Alert): string {
   const emoji = SEVERITY_EMOJI[alert.severity]
   const lines = [
-    `${emoji} <b>${alert.title}</b>`,
+    `${emoji} <b>${escHtml(alert.title)}</b>`,
     '',
-    alert.message,
+    escHtml(alert.message),
     '',
     `<i>Type:</i> ${alert.type}`,
     `<i>Severity:</i> ${alert.severity.toUpperCase()}`,
@@ -44,7 +48,7 @@ function formatTelegramMessage(alert: Alert): string {
 
   if (alert.metadata) {
     const metaLines = Object.entries(alert.metadata)
-      .map(([k, v]) => `<i>${k}:</i> ${String(v)}`)
+      .map(([k, v]) => `<i>${escHtml(k)}:</i> ${escHtml(String(v))}`)
     lines.push('', ...metaLines)
   }
 

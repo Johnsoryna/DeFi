@@ -49,7 +49,12 @@ const symbolLocks = new Map<string, Promise<void>>()
 function withSymbolLock<T>(symbol: string, fn: () => Promise<T>): Promise<T> {
   const prev = symbolLocks.get(symbol) ?? Promise.resolve()
   const next = prev.then(fn)
-  symbolLocks.set(symbol, next.then(() => {}, () => {}))
+  const sentinel = next.then(() => {}, () => {})
+  symbolLocks.set(symbol, sentinel)
+  // Clean up the map entry once this chain link settles and no newer chain was appended.
+  sentinel.then(() => {
+    if (symbolLocks.get(symbol) === sentinel) symbolLocks.delete(symbol)
+  })
   return next
 }
 
@@ -60,59 +65,26 @@ const ASSET_TO_SYMBOL: Record<string, string> = {
   ETH: 'ETHUSDT', WETH: 'ETHUSDT',
   BTC: 'BTCUSDT', WBTC: 'BTCUSDT',
   LINK: 'LINKUSDT',
-  // Governance Tokens (curated protocols)
+  // Governance Tokens (curated protocols with alpha)
   AAVE: 'AAVEUSDT',
   UNI: 'UNIUSDT',
   COMP: 'COMPUSDT',
-  MKR: 'MKRUSDT',
+  // MKR: delisted on Binance Futures (replaced by SKY) — removed to prevent failed orders
   SKY: 'SKYUSDT',
   LDO: 'LDOUSDT',
   ARB: 'ARBUSDT',
   CRV: 'CRVUSDT',
-  CVX: 'CVXUSDT',
   YFI: 'YFIUSDT',
-  OP: 'OPUSDT',
   DYDX: 'DYDXUSDT',
-  ENA: 'ENAUSDT',
+  ENA: 'ENAUSDT',   // Hebel-4 cascade target (USDe collateral in AAVE)
   EIGEN: 'EIGENUSDT',
-  ENS: 'ENSUSDT',
-  // New Protocol Governance Tokens
   GMX: 'GMXUSDT',
-  JUP: 'JUPUSDT',
-  TIA: 'TIAUSDT',
-  AVAX: 'AVAXUSDT',
-  POL: 'POLUSDT',
-  STRK: 'STRKUSDT',
-  SUI: 'SUIUSDT',
-  // MNT: REMOVED — no Binance USDT perp (delisted)
-  SEI: 'SEIUSDT',
-  // Cosmos ecosystem
-  ATOM: 'ATOMUSDT',
-  INJ: 'INJUSDT',
-  AXL: 'AXLUSDT',
-  NEAR: 'NEARUSDT',
-  APT: 'APTUSDT',
-  BLUR: 'BLURUSDT',
-  JTO: 'JTOUSDT',
-  ZK: 'ZKUSDT',
-  DRIFT: 'DRIFTUSDT',
-  PYTH: 'PYTHUSDT',
-  STX: 'STXUSDT',
-  // ─── Gruppe C+D (Feb 2026) ──────────────────────────────────────
-  '1INCH': '1INCHUSDT',
+  MORPHO: 'MORPHOUSDT',
   SNX: 'SNXUSDT',
-  PENDLE: 'PENDLEUSDT',
-  GRT: 'GRTUSDT',
-  EUL: 'EULUSDT',    // Euler Finance — EULUSDT active on Binance Futures
-  MORPHO: 'MORPHOUSDT', // Morpho Labs — MORPHOUSDT active on Binance Futures
-  ETHFI: 'ETHFIUSDT', // Ether.fi — ETHFIUSDT active on Binance Futures
-  W: 'WUSDT',         // Wormhole — WUSDT active on Binance Futures
-  // ─── Removed ────────────────────────────────────────────────────
-  // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis — still 0)
-  // BAL: REMOVED — no Binance USDT perp (delisted)
-  // MNT: REMOVED — no Binance USDT perp (delisted)
-  // XVS: REMOVED — 0 trades in backtest
-  // RPL: REMOVED — 0 trades in backtest
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // CVX/OP/ENS/JUP/TIA/AVAX/POL/STRK/SUI/SEI/ATOM/INJ/AXL/NEAR/APT/BLUR
+  // JTO/ZK/DRIFT/PYTH/STX/1INCH/PENDLE/GRT/EUL/ETHFI/W
+  // FXS/BAL/MNT/XVS/RPL: no Binance perp or 0 trades in backtest
 }
 
 // Assets that can appear as trade targets (e.g. Hebel cascade) but have no Binance
@@ -126,32 +98,13 @@ const BINANCE_LIQUIDITY_MULTIPLIER: Record<string, number> = {
   // Tier 1: Extremely liquid ($500M+ 24h vol) — base slippage
   ETH: 1.0, WETH: 1.0, BTC: 1.0, WBTC: 1.0,
   // Tier 2: Very liquid ($50M-500M vol) — 1.2x
-  AAVE: 1.2, LINK: 1.2, UNI: 1.2, ARB: 1.2, OP: 1.2,
-  SUI: 1.2, AVAX: 1.2, TIA: 1.2, NEAR: 1.2, APT: 1.2,
-  ATOM: 1.2, INJ: 1.2,
+  AAVE: 1.2, LINK: 1.2, UNI: 1.2, ARB: 1.2,
   // Tier 3: Liquid ($10M-50M vol) — 1.5x
-  LDO: 1.5, COMP: 1.5, ENA: 1.5, ENS: 1.5,
+  LDO: 1.5, COMP: 1.5, ENA: 1.5,
   MKR: 1.5, CRV: 1.5, YFI: 1.5,
-  SEI: 1.5, DYDX: 1.5, JUP: 1.5, STX: 1.5,
-  BLUR: 1.5, JTO: 1.5, PYTH: 1.5,
+  DYDX: 1.5, SNX: 1.5, MORPHO: 1.5,
   // Tier 4: Medium ($1M-10M vol) — 2.0x
-  CVX: 2.0,
-  SKY: 2.0, EIGEN: 2.0, GMX: 2.0, POL: 2.0,
-  STRK: 2.0, ZK: 2.0, DRIFT: 2.0, AXL: 2.0,
-  // ─── Gruppe C+D (Feb 2026) ──────────────────────────────────────
-  '1INCH': 2.0,   // $5M-15M vol tier
-  SNX: 1.5,       // $30M-80M vol — medium liquid derivatives token
-  PENDLE: 1.5,    // $15M-40M vol — yield tokenization
-  GRT: 2.0,       // $10M-25M vol — indexing protocol
-  EUL: 2.5,       // ~$17M vol — smaller DeFi token, higher slippage
-  MORPHO: 2.0,    // ~$30M vol — mid-cap DeFi lending token
-  ETHFI: 1.5,     // ~$20-40M vol — liquid restaking, Tier 3
-  W: 1.5,         // ~$30-80M vol — bridge token, Tier 3
-  // ─── Removed ────────────────────────────────────────────────────
-  // FXS: REMOVED — 0 trades in backtest (re-tested Feb 2026 with body analysis — still 0)
-  // BAL: REMOVED — no Binance USDT perp
-  // MNT: REMOVED — no Binance USDT perp
-  // XVS/RPL: REMOVED — 0 trades in backtest
+  SKY: 2.0, EIGEN: 2.0, GMX: 2.0,
 }
 
 function resolveSymbol(asset: string): string | null {
@@ -419,6 +372,7 @@ async function placeProtectiveOrders(
       : entryPrice * (1 + signal.stopLossPct)
     const triggerPrice = binanceClient.roundTick(slPrice, tickSize)
 
+    let slFailed = false
     try {
       const result = await binanceClient.placeConditionalAlgo({
         symbol,
@@ -437,7 +391,11 @@ async function placeProtectiveOrders(
       ).catch((alertErr: unknown) => {
         log.error({ alertErr, symbol }, 'Failed to send SL-failure alert')
       })
+      slFailed = true
     }
+    // Abort — do NOT place trailing stop or TP on an unprotected position.
+    // The hard stop-loss is the safety floor; without it, the position has no downside cap.
+    if (slFailed) return
   }
 
   // Trailing Stop (TRAILING_STOP_MARKET) — locks in profits after activation
@@ -522,45 +480,57 @@ export function reduceAndRearm(
   reducePct: number,
 ): Promise<ExecutionResult> {
   return withSymbolLock(symbol, async () => {
+    const state = protectionState.get(symbol)
+
     const result = await reducePosition(symbol, currentSize, reducePct)
     if (!result.success) return result
+
+    // Full close: always cancel stale orders.
+    if (reducePct >= 100) {
+      await cancelPositionOrders(symbol)
+      return result
+    }
+
+    // If protection state is missing after a restart or state-loss scenario,
+    // keep the existing reduce-only protection rather than leaving the
+    // remaining position fully unprotected after a partial reduction.
+    if (!state) {
+      log.warn(
+        { symbol, reducePct },
+        'Protection state missing - keeping existing protective orders to avoid unprotected position',
+      )
+      return result
+    }
 
     // Cancel protective orders that were sized for the old (larger) position
     await cancelPositionOrders(symbol)
 
-    // Re-arm protection for the remaining position (skip if fully closed).
+    // Re-arm protection for the remaining position.
     // Use actual executed size from the reduce result rather than the stale `currentSize`
     // snapshot, which may have drifted if a SL/TP partial-fill happened concurrently.
-    if (reducePct < 100) {
-      const state = protectionState.get(symbol)
-      if (state) {
-        const executedQty = parseFloat(result.executedSize ?? '0')
-        const originalAbs = Math.abs(parseFloat(currentSize))
-        // Prefer: original - executed (most accurate). Fallback: original * (1 - pct/100)
-        const remainingAbs = executedQty > 0
-          ? Math.max(0, originalAbs - executedQty)
-          : originalAbs * (1 - reducePct / 100)
-        // 'round' mode: same floating-point issue as reducePosition — floor can leave a 1-step residual
-        const remainingQty = binanceClient.roundStep(remainingAbs, state.stepSize, 'round')
-        if (parseFloat(remainingQty) > 0) {
-          try {
-            await withRetry(
-              () => placeProtectiveOrders(symbol, state.signal, state.entryPrice, remainingQty, state.tickSize),
-              `rearm-${symbol}`,
-              { maxRetries: 3, baseDelayMs: 500 },
-            )
-            log.info({ symbol, remainingQty, reducePct }, 'Protective orders re-armed after stage reduction')
-          } catch (rearmErr) {
-            log.error({ rearmErr, symbol }, 'CRITICAL: rearm failed — position unprotected after stage reduction')
-            sendAlert('system_error', 'critical', 'Position Unprotected',
-              `Failed to re-arm protection for ${symbol} after stage reduction. Manual intervention required.`
-            ).catch((alertErr: unknown) => {
-              log.error({ alertErr, symbol }, 'Failed to send position-unprotected alert')
-            })
-          }
-        }
-      } else {
-        log.warn({ symbol }, 'No protection state found — remaining position is unprotected after stage reduction')
+    const executedQty = parseFloat(result.executedSize ?? '0')
+    const originalAbs = Math.abs(parseFloat(currentSize))
+    // Prefer: original - executed (most accurate). Fallback: original * (1 - pct/100)
+    const remainingAbs = executedQty > 0
+      ? Math.max(0, originalAbs - executedQty)
+      : originalAbs * (1 - reducePct / 100)
+    // 'round' mode: same floating-point issue as reducePosition — floor can leave a 1-step residual
+    const remainingQty = binanceClient.roundStep(remainingAbs, state.stepSize, 'round')
+    if (parseFloat(remainingQty) > 0) {
+      try {
+        await withRetry(
+          () => placeProtectiveOrders(symbol, state.signal, state.entryPrice, remainingQty, state.tickSize),
+          `rearm-${symbol}`,
+          { maxRetries: 3, baseDelayMs: 500 },
+        )
+        log.info({ symbol, remainingQty, reducePct }, 'Protective orders re-armed after stage reduction')
+      } catch (rearmErr) {
+        log.error({ rearmErr, symbol }, 'CRITICAL: rearm failed — position unprotected after stage reduction')
+        sendAlert('system_error', 'critical', 'Position Unprotected',
+          `Failed to re-arm protection for ${symbol} after stage reduction. Manual intervention required.`
+        ).catch((alertErr: unknown) => {
+          log.error({ alertErr, symbol }, 'Failed to send position-unprotected alert')
+        })
       }
     }
 

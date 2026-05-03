@@ -43,38 +43,16 @@ const PROTOCOL_GOV_TOKENS: Record<string, string> = {
   lido: 'LDO',
   arbitrum: 'ARB',
   curve: 'CRV',
-  optimism: 'OP',
   synthetix: 'SNX',
   dydx: 'DYDX',
-  ethena: 'ENA',
   eigenlayer: 'EIGEN',
-  ens: 'ENS',
-  cosmos: 'ATOM',
-  injective: 'INJ',
-  // ─── Parity with signalGenerator PROTOCOL_GOV_TOKEN ─────────────
   morpho: 'MORPHO',
-  convex: 'CVX',
   yearn: 'YFI',
   gmx: 'GMX',
-  jupiter: 'JUP',
-  celestia: 'TIA',
-  avalanche: 'AVAX',
-  polygon: 'POL',
-  starknet: 'STRK',
-  sui: 'SUI',
-  sei: 'SEI',
-  near: 'NEAR',
-  zksync: 'ZK',
-  drift: 'DRIFT',
-  '1inch': '1INCH',
-  jito: 'JTO',
-  pyth: 'PYTH',
-  pendle: 'PENDLE',
-  thegraph: 'GRT',
-  euler: 'EUL',
-  stacks: 'STX',
-  etherfi: 'ETHFI',
-  wormhole: 'W',
+  // ─── Removed (0 trades, no risk-parameter alpha) ─────────────────────────
+  // optimism, ethena, ens, cosmos, injective, convex: no alpha
+  // jupiter, celestia, avalanche, polygon, starknet, sui, sei, near, zksync: L1/L2 operational
+  // drift, 1inch, jito, pyth, pendle, thegraph, euler, stacks, etherfi, wormhole: 0 trades
 }
 
 // ─── ImpactCategory ↔ ProposalType Bridge ────────────────────────────

@@ -203,16 +203,12 @@ function wireAnalysisPipeline(clock: VirtualClock, riskManager: RiskManager): vo
   resetCorrelator()
 
   // ── governance:proposal → Intelligence Engine → analysis:proposal ──
-  // ETHEREUM CHAINS: On-chain proposals have 0% WR (-$7,602) because forum captures alpha earlier.
-  // COSMOS SDK CHAINS: On-chain proposals ARE the alpha source (no forum-based early signal).
-  // TALLY L2 CHAINS: On-chain proposals from Tally — these are separate from Snapshot votes.
-  // Strategy: Trade Cosmos SDK + Tally L2 chains, record-only for Ethereum chains.
+  // On-chain trading disabled by default.
+  // Ethereum alpha is primarily captured via forum/snapshot signals.
+  // Non-Ethereum on-chain (cosmos/injective/arbitrum) can be re-enabled later if needed.
   // Ethereum DeFi protocols (aave, compound, uniswap, lido, ethena, curve, dydx)
   // are NOT included here — their forum/snapshot signals capture alpha earlier.
-  // Only non-Ethereum chains whose governance IS on-chain are enabled.
-  const ONCHAIN_TRADE_ENABLED = new Set([
-    'cosmos', 'injective', 'arbitrum',
-  ])
+  const ONCHAIN_TRADE_ENABLED = new Set<string>([])
   
   eventBus.on('governance:proposal', (event: GovernanceEvent) => {
     if (event.type !== 'proposal_created') return
@@ -227,7 +223,7 @@ function wireAnalysisPipeline(clock: VirtualClock, riskManager: RiskManager): vo
         if (parsed.length > 0) spellActions = parsed
       }
       const analysis = analyzeOnchainProposal(proposal, spellActions)
-      const _stageKey = `${proposal.protocol}:${proposal.proposalId}`
+      cachedAnalyses.set(analysis.proposalId, analysis)
       recordOnchain(proposal, analysis)
       
       // Trade Cosmos SDK + Tally L2 chains, record-only for Ethereum chains
@@ -293,7 +289,7 @@ function wireAnalysisPipeline(clock: VirtualClock, riskManager: RiskManager): vo
         const reentryAnalysis: IntelligentAnalysis = {
           ...originalAnalysis,
           stage: newStage,
-          proposalId: `${originalAnalysis.proposalId}-reentry`,
+          // Keep original proposalId (no -reentry suffix) — matches live index.ts behaviour.
           confidenceScore: 0.85,
           timestamp: clock.now(),
         }

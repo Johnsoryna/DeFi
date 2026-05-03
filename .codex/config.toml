@@ -1,0 +1,35 @@
+[agents]
+max_threads = 4
+max_depth = 1
+
+[agents.explorer]
+description = "Read-only codebase explorer for mapping the monitor -> analysis -> strategy -> risk -> execution path before changes."
+config_file = "explorer.toml"
+
+[agents.reviewer]
+description = "Read-only reviewer focused on correctness, trading-system risk, regressions, and missing validation."
+config_file = "reviewer.toml"
+
+[agents.quant_strategist]
+description = "Read-only strategy specialist for alpha logic, classifier quality, filters, sizing, and overfitting risk."
+config_file = "quant-strategist.toml"
+
+[agents.execution_risk]
+description = "Read-only live-execution specialist for Binance order safety, protection orders, exits, and state divergence risk."
+config_file = "execution-risk.toml"
+
+[agents.backtest_validator]
+description = "Validation specialist for backtest integrity, replay realism, live/backtest parity, and metric inflation risk."
+config_file = "backtest-validator.toml"
+
+[agents.ops_sre]
+description = "Read-only operations specialist for env safety, deploy flow, alerts, PM2, restart behavior, and DB hygiene."
+config_file = "ops-sre.toml"
+
+[agents.worker]
+description = "Implementation-focused agent for small, targeted fixes after the failure mode is clear."
+config_file = "worker.toml"
+
+[agents.monitor]
+description = "Long-running monitor for backtests, validation commands, PM2 checks, log tails, and repeated status polling."
+config_file = "monitor.toml"

@@ -13,6 +13,7 @@
  * in live trading as they do in backtesting.
  */
 import { getPrice as getLivePrice } from './priceMonitor.js'
+import { getKlines } from '../clients/binance.js'
 import { eventBus } from '../lib/eventBus.js'
 import { createLogger } from '../lib/logger.js'
 import type { PriceService } from '../strategy/priceService.js'
@@ -181,6 +182,46 @@ export function getLivePriceService(): PriceService {
   return _instance
 }
 
+// ─── Startup Warmup ─────────────────────────────────────────────────
+
+/**
+ * Assets to pre-warm on startup. Covers all Tier1 + active trading assets.
+ * Uses Binance Futures symbols (USDT-M perps). Unknown symbols are silently skipped.
+ */
+const WARMUP_ASSETS = [
+  'AAVE', 'ARB', 'DYDX', 'LDO', 'CRV', 'COMP', 'GMX', 'INJ', 'EIGEN',
+  'MORPHO', 'ETH',
+]
+
+/**
+ * Pre-populate the price history cache by fetching the last 48h of 1h klines
+ * from Binance Futures for all key assets.
+ *
+ * This solves the "Stale price guard" on startup: without this, the 24h-ago
+ * price is always null for the first 24h after a fresh start, causing all
+ * signals from backlog processing to be silently dropped.
+ */
+async function warmupPriceHistory(): Promise<void> {
+  let loaded = 0
+  for (const asset of WARMUP_ASSETS) {
+    try {
+      const symbol = `${asset}USDT`
+      const klines = await getKlines(symbol, '1h', 48) // 48 candles = 48h
+      for (const kline of klines) {
+        const closeTime = kline[6] as number   // index 6 = closeTime ms
+        const closePrice = parseFloat(kline[4]) // index 4 = close price
+        if (Number.isFinite(closePrice) && closePrice > 0) {
+          recordPrice(asset, closePrice, closeTime)
+        }
+      }
+      loaded++
+    } catch {
+      // Asset not listed on Binance Futures — silently skip
+    }
+  }
+  log.info({ loaded, total: WARMUP_ASSETS.length }, 'Price history pre-warmed from Binance klines')
+}
+
 /**
  * Start recording price history from the event bus.
  * Must be called AFTER startPriceMonitor().
@@ -192,6 +233,10 @@ export function startLivePriceHistory(): void {
       recordPrice(event.asset, price, Date.now())
     }
   })
+
+  // Pre-warm cache with recent Binance klines so the stale price guard
+  // doesn't block legitimate signals immediately after a bot restart.
+  warmupPriceHistory().catch((err) => log.warn({ err }, 'Price history warmup failed — starting cold'))
 
   log.info('Live price history recording started (14-day rolling cache)')
 }

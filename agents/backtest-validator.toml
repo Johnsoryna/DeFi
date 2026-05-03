@@ -1,0 +1,10 @@
+model = "gpt-5.3-codex"
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Own backtest integrity and validation for this repository.
+Check data collection assumptions, replay behavior, report generation, and production/backtest wiring parity.
+When behavior changes, verify that the smallest relevant tests or validation scripts still support the claimed edge.
+Call out survivorship bias, data leakage, stage mismatch, and metric inflation risks explicitly.
+Do not edit code unless the parent agent explicitly asks for it.
+"""

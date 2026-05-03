@@ -1,0 +1,202 @@
+{
+  "0xd1aeb3ca66b43052d89a9103d5b1c241cd062e71935f3f7dee60bb6842e0ae6b": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x304db4f32ca88cd9d488d08113561c565d6b069e0d7acda67449caead2cc859f": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x04f617e0f1f6a97924374c00c7ce753f93cad033dabba925bbc9338b65d0ddb7": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x358be93d317b7d6c5cf59aa490f417466201154f8bbe8d6699b94aedead0005b": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0xd187826a4f0ac86466f1241dc906aa39fd398c1de37b5047aafb6e321d95d39f": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0x014b9192b3963d60a8fb123fd5ebf0c372ba73424d601753575c1c67dac0184a": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x4869143df036bdd40fa9f98473e05da50e60456ad3158619181d6f107ea0fd37": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0xf3131117324880dc7a28f843b73d4eb8d8ec46a27f2068991ccbce9bd6a16a10": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x60b31cceca2beee55f8845f86b7988ee36f29ad50f5dda636164ab50b561936b": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0x438b460559aa8c3a039f28212362af9a0e3b94a88e4a2b8230fe2c5e8f4d43da": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0x026c3360d4616532952f5ed0d728daa090dd9a9670c7bf58160cd0709c7d73f8": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0x140da3dcb6dc711429700443d3b9f1def51eaae3b791f8b774664676f418a132": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x1938a36120897ddf5db07e4d363f89f80d26a1c9a4fcf8aa974c7daef4c88310": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0x225eda1b88f88fdbdfc0ae01c95123575ea29e416d7ffebe7e5b43bbf428ff7f": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0xb606db67b48f62c0795d1a269c66714cf4ba57bc03cbd4108a6fca7caa1948b4": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0xe2fc56f50b1c434ca2f80d07542b66b5ff035b22891c8d6ebb79afca62664d02": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0x22a6508067f663eb7f777461d965feed0916d6a16bd8cbd1f5f5393707d11263": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0x0e36d5f06520614a91084dfd9c936345641b62149b2a06031f94f4abfd3b657d": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x01b36ffce422831effefd38539451819219c3213d0ca07ea533e7e063b46f28d": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x2d4089d72617eb137d6ee7ab9ae9efbe3cd1e0fcff48df24b926ce6259b734d3": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0xd2a01c01d23804bb3d06a04e9f08e68e8bf70eb6dc2bfb6ad6feb9c0427ad903": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0xcd64c64eee56e75b56a0a0b84f1ffa2b4ea5fb2be76cca96a155137c46305c07": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0xc8cc5b27f566f18e7030a26bfdc57cf27b326120b66c733ca91f369cb92aee70": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x7b38742f5d455e0bba5a967bc965b7f1041bd983b1d057355d0da59dc2fecd2f": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x3fc1467bdfc47a5b5de0ee20d807a636451b503bc77e30ddfb16e52825bf4e45": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x43ff8025dd01609a87090f23e58c9f1e05bfd771dac03bc99d1e26a8f7ed0ba1": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0xf23c591bdabf587669c1ec273201d61664779cc3615ea1b5f90765ce1e66824a": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0x026b4385c96ad6766b4e7ee7775424aff5601fe9c06ffa124c49b5882c5cbb57": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x967b3ba28ba358d9c1047859aeb2730b98112a5f62816e1cc1c10249a08c719d": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x25dc8b275484866182ee83076f48d16a5f7dbc5d99b862a86266d9a4cdd0bb6e": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0xb593c7f78d17ec27dcea9a6232f8dc475b4fd99dc1e6617004fc444c970e5639": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0xee0249fea0fecbeb2d2cab90ae3e6d9c5e21d5456417048c49aea9f48f970afe": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x048fc777a13a3cb7158367d8f86b489479c8e3edb3ee04d08a7b67f481147b27": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0xd8e1ae5b85f8a2176643c1eb985248332dd9b2f7b3facebfc6aaaae64e534aa5": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0x51b194e68fe4da34dbc8b5182df63e6fe435d99e145cd30739042eff3f0bb606": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0xe7251459edae302517bc471776d82069afb13441b058c9fc989e0c878f13c873": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0x1d8d0d25f3b705bf207a130308658d15256e2cebc58d123e4ad9e7e3a177ac11": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x5c744451272991c7fdf8b3830fa2a51fc18dd0e417d95d9c16da765b27f602ff": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  },
+  "0x3b8dd76c89c2ef6fb5cc9e506fbb546a4c3741617c715d327d5aa859b44d554d": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.85
+  },
+  "0x3c7d4cef9ff712bd65c4dd4070c5ace12147e82c69735e91515a0fa32abd8e0e": {
+    "type": "risk_mitigation",
+    "bearish": true,
+    "confidence": 0.9
+  }
+}

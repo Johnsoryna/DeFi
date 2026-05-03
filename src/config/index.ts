@@ -48,8 +48,12 @@ const configSchema = z.object({
   forumPollIntervalMs: z.coerce.number().int().positive().default(300_000),
   onchainTradeEnabledProtocols: z.preprocess(
     (v) => {
-      if (typeof v !== 'string' || v.trim() === '') return []
-      return v
+      // Undefined/null (env var not set) → default OFF
+      // Empty string (ONCHAIN_TRADE_ENABLED_PROTOCOLS=) → explicitly disable all on-chain trading
+      // Comma list → parse normally
+      if (v === undefined || v === null) return []
+      if (typeof v === 'string' && v.trim() === '') return []
+      return (v as string)
         .split(',')
         .map((p) => p.trim().toLowerCase())
         .filter(Boolean)
@@ -103,7 +107,7 @@ function loadConfig(): AppConfig {
     pollingIntervalMs: process.env.POLLING_INTERVAL_MS,
     snapshotPollIntervalMs: process.env.SNAPSHOT_POLL_INTERVAL_MS,
     forumPollIntervalMs: process.env.FORUM_POLL_INTERVAL_MS,
-    onchainTradeEnabledProtocols: process.env.ONCHAIN_TRADE_ENABLED_PROTOCOLS ?? '',
+    onchainTradeEnabledProtocols: process.env.ONCHAIN_TRADE_ENABLED_PROTOCOLS,
     enableWhaleTracker: process.env.ENABLE_WHALE_TRACKER ?? 'false',
     enableDependencyGraph: process.env.ENABLE_DEPENDENCY_GRAPH ?? 'false',
     dbPath: process.env.DB_PATH,
